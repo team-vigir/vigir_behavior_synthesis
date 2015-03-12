@@ -1,1 +1,17 @@
+# ROS
+build	
+bin	
+lib	
+msg_gen	
+srv_gen	
+CMakeLists.txt.user
+
+# Python
+*.pyc
+
+# Synthesis-specific
+temp_bs_files
+
+# Other
+*~
 .DS_Store
