@@ -99,8 +99,11 @@ class GR1Specification(object):
 		
 		filename = self.spec_name + ".structuredslugs"
 
+		# The directory where specs and automata are saved:
+		temp_bs_files = os.path.abspath(os.path.join(os.pardir, os.pardir, os.pardir, 'temp_bs_files'))
+
 		if not folder_path:
-			folder_path = os.path.join(os.getcwd(), self.spec_name)
+			folder_path = os.path.join(temp_bs_files, self.spec_name)
 		else:
 			folder_path = os.path.join(folder_path, self.spec_name)
 
