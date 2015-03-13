@@ -1,7 +1,11 @@
 import os, sys
 import subprocess
 
-from atlas_specification import ControlModeSpecification
+# The directory where specs and automata are saved:
+vigir_bs_specification = os.path.abspath(os.path.join(os.pardir, os.pardir, os.pardir, 'vigir_bs_specification', 'src'))
+sys.path.insert(0, vigir_bs_specification)
+
+from vigir_bs_specification.atlas_specification import ControlModeSpecification
 
 # =====================================================
 # Parse structured SLUGS file and synthesize automaton
@@ -9,10 +13,8 @@ from atlas_specification import ControlModeSpecification
 
 name = "go_to_manipulate"
 
-my_mode_spec = ControlModeSpecification('go_to_manipulate', [], [], 
-										initial_mode = 'stand_prep',
-										modes_of_interest = ['stand_prep', 'stand', 'manipulate']
-									   )
+my_mode_spec = ControlModeSpecification(name, initial_mode = 'stand_prep',
+											  modes_of_interest = ['stand_prep', 'stand', 'manipulate'])
 
 # Add manipulate as a goal (system liveness requirement)
 my_mode_spec.add_control_mode_goal("manipulate")
@@ -45,7 +47,7 @@ with open(name + ".slugsin", "w") as f:
 	sys.stdout = sys.__stdout__
 
 # Synthesize automaton from .slugsin input
-slugs_cmd = [slugs_exec_path, "--sysInitRoboticsSemantics", name + ".slugsin", name + ".aut"] # --jsonOutput
+slugs_cmd = [slugs_exec_path, "--sysInitRoboticsSemantics", name + ".slugsin", name + ".aut"] #TODO: --jsonOutput
 
 synthesis_process = subprocess.Popen(slugs_cmd, stdout=subprocess.PIPE, preexec_fn=os.setsid)
 os.waitpid(synthesis_process.pid, 0)
