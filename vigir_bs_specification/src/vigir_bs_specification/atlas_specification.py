@@ -121,8 +121,7 @@ class ControlModeTransitionSystem(object):
 def main():
 	
 	my_mode_spec = ControlModeSpecification('go_to_manipulate', initial_mode = 'stand_prep',
-											modes_of_interest = ['stand_prep', 'stand', 'manipulate']
-										   )
+											modes_of_interest = ['stand_prep', 'stand', 'manipulate'])
 
 	# Add manipulate as a goal (system liveness requirement)
 	my_mode_spec.add_control_mode_goal("manipulate")

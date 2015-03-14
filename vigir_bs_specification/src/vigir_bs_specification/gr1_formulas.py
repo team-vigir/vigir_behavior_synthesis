@@ -7,7 +7,7 @@ This module contains two main classes:
     in Vasumathi Raman and Hadas Kress-Gazit (ICRA 2013)
 
 The syntax used is that of .structuredslugs, 
-which is meant for use with the SLUGS synthesis tool
+which is meant for use with the SLUGS synthesis tool.
 
 """
 
