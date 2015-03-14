@@ -19,19 +19,16 @@ my_mode_spec = ControlModeSpecification(name, initial_mode = 'stand_prep',
 # Add manipulate as a goal (system liveness requirement)
 my_mode_spec.add_control_mode_goal("manipulate")
 
+# Write specification in .structuredslugs file
 structured_slugs_file, folder_path = my_mode_spec.write_structured_slugs_file()
 
-ltlmop_path = os.path.expanduser("~/Cornell/My Research/LTLMoP/src/")
-slugs_exec_path = os.path.join(ltlmop_path, "etc", "slugs", "src", "slugs")
-
-# Add LTLMoP src folder to Python's path in order to use Strategy
-sys.path.insert(0, ltlmop_path)
-from lib.strategy import createStrategyFromFile
-
-# Add the structured slugs parser directory to the path ...
-slugs_structured_parser_path = os.path.join(ltlmop_path, "etc", "slugs", "tools", "StructuredSlugsParser")
+# Prepare for conversion and synthesis using slugs
+slugs_path = os.path.abspath(os.path.join(os.pardir, os.pardir, os.pardir, os.pardir, 'slugs'))
+slugs_exec_path = os.path.join(slugs_path, 'build', 'slugs') #FIX: This will either have to change or it will be redundant (slugs will be in path)
+slugs_structured_parser_path = os.path.join(slugs_path, "tools", "StructuredSlugsParser")
 sys.path.insert(0, slugs_structured_parser_path)
-# ... and import conversion function from compiler.py
+
+# import conversion function from slugs' compiler.py
 from compiler import performConversion
 
 # Step inside the specification's directory
@@ -57,6 +54,11 @@ os.waitpid(synthesis_process.pid, 0)
 # =====================================================
 # Visualize automaton (Graphviz .dot file)
 # =====================================================
+
+# Add LTLMoP src folder to Python's path in order to use Strategy
+ltlmop_path = os.path.expanduser("~/Cornell/My Research/LTLMoP/src/")
+sys.path.insert(0, ltlmop_path)
+from lib.strategy import createStrategyFromFile
 			
 def visualize_automaton(name):
 	automaton = createStrategyFromFile(name + ".aut", my_mode_spec.env_props, my_mode_spec.sys_props)
