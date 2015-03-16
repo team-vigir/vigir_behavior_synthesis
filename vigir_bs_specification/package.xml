@@ -1,0 +1,21 @@
+<package>
+	
+	<name>vigir_bs_specification</name>
+	<version>1.0.0</version>
+	<description>A service that compiles a complete LTL/GR(1) specification from various sources, including user input, initial conditions, system constraints, etc.</description>
+	
+	<author email="sm2296@cornell.edu">Spyros Maniatopoulos</author>
+	
+	<maintainer email="sm2296@cornell.edu">Spyros Maniatopoulos</maintainer>
+	
+	<license>BSD</license>
+	
+	<buildtool_depend>catkin</buildtool_depend>
+	
+	<build_depend>rospy</build_depend>
+	<build_depend>std_msgs</build_depend>
+	
+	<run_depend>rospy</run_depend>
+	<run_depend>std_msgs</run_depend>
+
+</package>
