@@ -1,13 +1,20 @@
+# The LTL Compilation request consists bits of 
+# partial information in a structured format.
+# The service will fill in the gaps 
+# and return a complete LTL formula.
+
 # The system's initial conditions.
 # Provided by the user when offline.
 # Can be inferred when the system is online.
 string[] initial_conditions
 
-# They system's goal, usually provided by the user
+# The system's goal, usually provided by the user
 string[] goal
 
 # Other
 
 ---
+
+BSErrorCodes error_code
 
 LTLFormula ltl_formula
