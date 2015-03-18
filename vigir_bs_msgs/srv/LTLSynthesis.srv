@@ -1,0 +1,9 @@
+# LTL Synthesis request and response
+
+LTLFormula ltl_specification
+
+---
+
+bool synthesizable
+
+SynthesizedAutomaton automaton
