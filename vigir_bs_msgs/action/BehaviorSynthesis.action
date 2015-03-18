@@ -10,9 +10,9 @@ SynthesisOptions synthesis_options
 BSErrorCodes error_code
 
 # The synthesized behavior as a list of state instantiation descriptions
-StateInstantiation[] states
+#StateInstantiation[] states
 
 ---
 
 # The internal state that the Behavior Synthesis action currently is in
-string state
+string status
