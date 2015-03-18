@@ -3,19 +3,28 @@ project(vigir_bs_msgs)
 
 set(MSG_DEPS
   std_msgs
-  actionlib_msgs)
+  actionlib_msgs
+  #vigir_be_core
+)
 
 find_package(catkin REQUIRED genmsg ${MSG_DEPS})
 
 set(MSG_FILES
 	AutomatonState.msg
+	BSErrorCodes.msg
+	BehaviorSynthesisRequest.msg
+	LTLFormula.msg
+	SynthesisOptions.msg
 	SynthesizedAutomaton.msg
 )
 
 set(SRV_FILES
+	CompileLTL.srv
+	LTLSynthesis.srv
 )
 
 set(ACT_FILES
+	BehaviorSynthesis.action
 )
 
 add_action_files(DIRECTORY action FILES ${ACT_FILES})
