@@ -8,4 +8,4 @@ string[] input_variables
 string[] output_variables
 
 # The automaton itself, consisting of states
-#AutomatonState[] synthesized_automaton
+AutomatonState[] automaton

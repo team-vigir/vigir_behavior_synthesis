@@ -7,7 +7,7 @@ set(MSG_DEPS
   #vigir_be_core
 )
 
-find_package(catkin REQUIRED genmsg ${MSG_DEPS})
+find_package(catkin REQUIRED COMPONENTS message_generation genmsg ${MSG_DEPS})
 
 set(MSG_FILES
 	AutomatonState.msg
