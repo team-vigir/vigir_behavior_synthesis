@@ -1,3 +1,5 @@
+# GOAL
+
 # Behavior Synthesis request passed to the BS manager
 BehaviorSynthesisRequest request
 
@@ -6,13 +8,17 @@ SynthesisOptions synthesis_options
 
 ---
 
+# RESULT
+
 # An error code reflecting what went wrong
 BSErrorCodes error_code
 
 # The synthesized behavior as a list of state instantiation descriptions
-#StateInstantiation[] states
+#vigir_be_core/StateInstantiation[] states
 
 ---
+
+# FEEDBACK
 
 # The internal state that the Behavior Synthesis action currently is in
 string status

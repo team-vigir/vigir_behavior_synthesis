@@ -2,8 +2,9 @@
 # A state consists of the truth value of atomic propositions,
 # the possible transitions out of the state, and the goal rank.
 
-#
-string state_name
+# The state's identifier / number
+# In an automaton, the first state is 0, etc.
+uint16 state_id
 
 # Truth value (True/False, 0/1) of the propositions in this state.
 bool[] proposition_valuation
