@@ -1,0 +1,25 @@
+<package>
+	
+	<name>vigir_bs_sm_generation</name>
+	<version>1.0.0</version>
+	<description>
+        A service that converts the output of the LTL Synthesizer and create
+        class parameters to generate code.
+    </description>
+	
+	<author email="vhp22@cornell.edu">Vitchyr Pong</author>
+	
+	<maintainer email="vhp22@cornell.edu">Vitchyr Pong</maintainer>
+	
+	<license>BSD</license>
+	
+	<buildtool_depend>catkin</buildtool_depend>
+	
+	<build_depend>rospy</build_depend>
+	<build_depend>std_msgs</build_depend>
+	
+	<run_depend>rospy</run_depend>
+	<run_depend>std_msgs</run_depend>
+	<run_depend>message_runtime</run_depend>
+
+</package>
