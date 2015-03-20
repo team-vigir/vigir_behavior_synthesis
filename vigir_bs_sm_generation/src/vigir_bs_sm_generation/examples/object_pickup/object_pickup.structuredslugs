@@ -1,0 +1,56 @@
+[INPUT]
+stand_prep_c
+stand_c
+manipulate_c
+pickup_c
+obj_detected
+
+[OUTPUT]
+stand_prep_a
+stand_a
+manipulate_a
+pickup_a
+
+[SYS_INIT]
+stand_prep_a
+! stand_a
+! manipulate_a
+! pickup_a
+
+[ENV_INIT]
+stand_prep_c
+! stand_c
+! manipulate_c
+! pickup_c
+! obj_detected
+
+[SYS_TRANS]
+stand_prep_c -> (stand_prep_a & ! stand_a & ! manipulate_a) | (stand_a & ! stand_prep_a & ! manipulate_a)
+stand_c -> (stand_prep_a & ! stand_a & ! manipulate_a) | (stand_a & ! stand_prep_a & ! manipulate_a) | (manipulate_a & ! stand_prep_a & ! stand_a)
+manipulate_c -> (manipulate_a & ! stand_prep_a & ! stand_a) | (stand_a & ! stand_prep_a & ! manipulate_a)
+next(!manipulate_c) -> next(!pickup_a)
+
+[ENV_TRANS]
+next(stand_prep_c) <-> ! next(stand_c) & ! next(manipulate_c)
+next(stand_c) <-> ! next(stand_prep_c) & ! next(manipulate_c)
+next(manipulate_c) <-> ! next(stand_prep_c) & ! next(stand_c)
+stand_prep_c & (stand_prep_a & ! stand_a & ! manipulate_a) -> next(stand_prep_c)
+stand_prep_c & (stand_a & ! stand_prep_a & ! manipulate_a) -> (next(stand_prep_c) | next(stand_c))
+stand_c & (stand_prep_a & ! stand_a & ! manipulate_a) -> (next(stand_c) | next(stand_prep_c))
+stand_c & (stand_a & ! stand_prep_a & ! manipulate_a) -> next(stand_c)
+stand_c & (manipulate_a & ! stand_prep_a & ! stand_a) -> (next(stand_c) | next(manipulate_c))
+manipulate_c & (manipulate_a & ! stand_prep_a & ! stand_a) -> next(manipulate_c)
+manipulate_c & (stand_a & ! stand_prep_a & ! manipulate_a) -> (next(manipulate_c) | next(stand_c))
+(pickup_c & pickup_a) -> next(pickup_c)
+(!pickup_c & !pickup_a) -> next(!pickup_c)
+!manipulate_c -> next(!obj_detected)
+next(pickup_c) -> next(!obj_detected)
+obj_detected -> (next(obj_detected & !pickup_c) | next(pickup_c & !obj_detected))
+
+[SYS_LIVENESS]
+obj_detected -> pickup_c
+
+[ENV_LIVENESS]
+((stand_prep_a & ! stand_a & ! manipulate_a) & next(stand_prep_c)) | ((stand_a & ! stand_prep_a & ! manipulate_a) & next(stand_c)) | ((manipulate_a & ! stand_prep_a & ! stand_a) & next(manipulate_c)) | ((stand_prep_a & ! stand_a & ! manipulate_a) & ! next((stand_prep_a & ! stand_a & ! manipulate_a))) | ((stand_a & ! stand_prep_a & ! manipulate_a) & ! next((stand_a & ! stand_prep_a & ! manipulate_a))) | ((manipulate_a & ! stand_prep_a & ! stand_a) & ! next((manipulate_a & ! stand_prep_a & ! stand_a)))
+((pickup_a & next(pickup_c)) | !pickup_a & ! next(pickup_c)) | ((pickup_a & !next(pickup_a)) | (!pickup_a & next(pickup_a)))
+

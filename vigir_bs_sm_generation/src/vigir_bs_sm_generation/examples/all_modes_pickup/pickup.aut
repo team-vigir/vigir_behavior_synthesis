@@ -1,0 +1,8 @@
+State 0 with rank 0 -> <stand_c:0, step_c:0, standprep_c:1, manipulate_c:0, walk_c:0, pickup_a:0, manipulate_a:0, standprep_a:1, stand_a:0, step_a:0, walk_a:0>
+	With successors : 1
+State 1 with rank 0 -> <stand_c:0, step_c:0, standprep_c:1, manipulate_c:0, walk_c:0, pickup_a:0, manipulate_a:0, standprep_a:0, stand_a:1, step_a:0, walk_a:0>
+	With successors : 1, 2
+State 2 with rank 0 -> <stand_c:1, step_c:0, standprep_c:0, manipulate_c:0, walk_c:0, pickup_a:0, manipulate_a:1, standprep_a:0, stand_a:0, step_a:0, walk_a:0>
+	With successors : 3, 2
+State 3 with rank 0 -> <stand_c:0, step_c:0, standprep_c:0, manipulate_c:1, walk_c:0, pickup_a:1, manipulate_a:0, standprep_a:0, stand_a:1, step_a:0, walk_a:0>
+	With successors : 3, 2

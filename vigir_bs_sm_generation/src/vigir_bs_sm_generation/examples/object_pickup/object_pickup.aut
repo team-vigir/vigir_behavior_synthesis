@@ -1,0 +1,14 @@
+State 0 with rank 0 -> <stand_prep_c:1, stand_c:0, manipulate_c:0, pickup_c:0, obj_detected:0, stand_prep_a:1, stand_a:0, manipulate_a:0, pickup_a:0>
+	With successors : 1
+State 1 with rank 0 -> <stand_prep_c:1, stand_c:0, manipulate_c:0, pickup_c:0, obj_detected:0, stand_prep_a:0, stand_a:1, manipulate_a:0, pickup_a:0>
+	With successors : 2, 1
+State 2 with rank 0 -> <stand_prep_c:0, stand_c:1, manipulate_c:0, pickup_c:0, obj_detected:0, stand_prep_a:0, stand_a:0, manipulate_a:1, pickup_a:0>
+	With successors : 3, 2
+State 3 with rank 0 -> <stand_prep_c:0, stand_c:0, manipulate_c:1, pickup_c:0, obj_detected:0, stand_prep_a:0, stand_a:0, manipulate_a:1, pickup_a:0>
+	With successors : 3, 4
+State 4 with rank 0 -> <stand_prep_c:0, stand_c:0, manipulate_c:1, pickup_c:0, obj_detected:1, stand_prep_a:0, stand_a:0, manipulate_a:1, pickup_a:0>
+	With successors : 5
+State 5 with rank 0 -> <stand_prep_c:0, stand_c:0, manipulate_c:1, pickup_c:0, obj_detected:1, stand_prep_a:0, stand_a:0, manipulate_a:1, pickup_a:1>
+	With successors : 5, 6
+State 6 with rank 0 -> <stand_prep_c:0, stand_c:0, manipulate_c:1, pickup_c:1, obj_detected:0, stand_prep_a:0, stand_a:0, manipulate_a:1, pickup_a:0>
+	With successors : 3, 4, 6

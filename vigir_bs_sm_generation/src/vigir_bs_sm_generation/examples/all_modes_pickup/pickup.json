@@ -1,0 +1,31 @@
+{"version": 0,
+ "slugs": "0.0.1",
+
+ "variables": ["stand_c", "step_c", "standprep_c", "manipulate_c", "walk_c", "pickup_a", "manipulate_a", "standprep_a", "stand_a", "step_a", "walk_a"],
+
+ "nodes": {
+"0": {
+	"rank": 0,
+	"state": [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+	"trans": [1]
+},
+
+"1": {
+	"rank": 0,
+	"state": [0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0],
+	"trans": [1, 2]
+},
+
+"2": {
+	"rank": 0,
+	"state": [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+	"trans": [3, 2]
+},
+
+"3": {
+	"rank": 0,
+	"state": [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0],
+	"trans": [3, 2]
+}
+
+}}

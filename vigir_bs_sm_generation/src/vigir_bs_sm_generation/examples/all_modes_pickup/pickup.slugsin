@@ -1,0 +1,65 @@
+[INPUT]
+stand_c
+step_c
+standprep_c
+manipulate_c
+walk_c
+
+[OUTPUT]
+pickup_a
+manipulate_a
+standprep_a
+stand_a
+step_a
+walk_a
+
+[ENV_TRANS]
+| & ! standprep_c' ! & & & ! stand_c' ! manipulate_c' ! step_c' ! walk_c' & standprep_c' & & & ! stand_c' ! manipulate_c' ! step_c' ! walk_c'
+| & ! stand_c' ! & & & ! standprep_c' ! manipulate_c' ! step_c' ! walk_c' & stand_c' & & & ! standprep_c' ! manipulate_c' ! step_c' ! walk_c'
+| & ! manipulate_c' ! & & & ! standprep_c' ! stand_c' ! step_c' ! walk_c' & manipulate_c' & & & ! standprep_c' ! stand_c' ! step_c' ! walk_c'
+| & ! step_c' ! & & & ! standprep_c' ! stand_c' ! manipulate_c' ! walk_c' & step_c' & & & ! standprep_c' ! stand_c' ! manipulate_c' ! walk_c'
+| & ! walk_c' ! & & & ! standprep_c' ! stand_c' ! manipulate_c' ! step_c' & walk_c' & & & ! standprep_c' ! stand_c' ! manipulate_c' ! step_c'
+| ! & & & & & standprep_c ! stand_a ! manipulate_a ! step_a ! walk_a standprep_a | standprep_c' standprep_c'
+| ! & & & & & standprep_c ! standprep_a ! manipulate_a ! step_a ! walk_a stand_a | standprep_c' stand_c'
+| ! & & & & & stand_c ! standprep_a ! manipulate_a ! step_a ! walk_a stand_a | stand_c' stand_c'
+| ! & & & & & stand_c ! stand_a ! manipulate_a ! step_a ! walk_a standprep_a | stand_c' standprep_c'
+| ! & & & & & stand_c ! standprep_a ! stand_a ! step_a ! walk_a manipulate_a | stand_c' manipulate_c'
+| ! & & & & & stand_c ! standprep_a ! stand_a ! manipulate_a ! walk_a step_a | stand_c' step_c'
+| ! & & & & & stand_c ! standprep_a ! stand_a ! manipulate_a ! step_a walk_a | stand_c' walk_c'
+| ! & & & & & manipulate_c ! standprep_a ! stand_a ! step_a ! walk_a manipulate_a | manipulate_c' manipulate_c'
+| ! & & & & & manipulate_c ! standprep_a ! manipulate_a ! step_a ! walk_a stand_a | manipulate_c' stand_c'
+| ! & & & & & step_c ! standprep_a ! stand_a ! manipulate_a ! walk_a step_a | step_c' step_c'
+| ! & & & & & step_c ! standprep_a ! manipulate_a ! step_a ! walk_a stand_a | step_c' stand_c'
+| ! & & & & & walk_c ! standprep_a ! stand_a ! manipulate_a ! step_a walk_a | walk_c' walk_c'
+| ! & & & & & walk_c ! standprep_a ! manipulate_a ! step_a ! walk_a stand_a | walk_c' stand_c'
+
+[ENV_LIVENESS]
+| | | | | | | | | & & & & & ! stand_a ! manipulate_a ! step_a ! walk_a standprep_a standprep_c' & & & & & ! standprep_a ! manipulate_a ! step_a ! walk_a stand_a stand_c' & & & & & ! standprep_a ! stand_a ! step_a ! walk_a manipulate_a manipulate_c' & & & & & ! standprep_a ! stand_a ! manipulate_a ! walk_a step_a step_c' & & & & & ! standprep_a ! stand_a ! manipulate_a ! step_a walk_a walk_c' & & & & & ! stand_a ! manipulate_a ! step_a ! walk_a standprep_a ! & & & & ! stand_a' ! manipulate_a' ! step_a' ! walk_a' standprep_a' & & & & & ! standprep_a ! manipulate_a ! step_a ! walk_a stand_a ! & & & & ! standprep_a' ! manipulate_a' ! step_a' ! walk_a' stand_a' & & & & & ! standprep_a ! stand_a ! step_a ! walk_a manipulate_a ! & & & & ! standprep_a' ! stand_a' ! step_a' ! walk_a' manipulate_a' & & & & & ! standprep_a ! stand_a ! manipulate_a ! walk_a step_a ! & & & & ! standprep_a' ! stand_a' ! manipulate_a' ! walk_a' step_a' & & & & & ! standprep_a ! stand_a ! manipulate_a ! step_a walk_a ! & & & & ! standprep_a' ! stand_a' ! manipulate_a' ! step_a' walk_a'
+
+[ENV_INIT]
+1
+
+[SYS_TRANS]
+| ! standprep_c | & & & & ! stand_a ! manipulate_a ! step_a ! walk_a standprep_a & & & & ! standprep_a ! manipulate_a ! step_a ! walk_a stand_a
+| ! stand_c | | | | & & & & ! standprep_a ! manipulate_a ! step_a ! walk_a stand_a & & & & ! stand_a ! manipulate_a ! step_a ! walk_a standprep_a & & & & ! standprep_a ! stand_a ! step_a ! walk_a manipulate_a & & & & ! standprep_a ! stand_a ! manipulate_a ! walk_a step_a & & & & ! standprep_a ! stand_a ! manipulate_a ! step_a walk_a
+| ! manipulate_c | & & & & ! standprep_a ! stand_a ! step_a ! walk_a manipulate_a & & & & ! standprep_a ! manipulate_a ! step_a ! walk_a stand_a
+| ! step_c | & & & & ! standprep_a ! stand_a ! manipulate_a ! walk_a step_a & & & & ! standprep_a ! manipulate_a ! step_a ! walk_a stand_a
+| ! walk_c | & & & & ! standprep_a ! stand_a ! manipulate_a ! step_a walk_a & & & & ! standprep_a ! manipulate_a ! step_a ! walk_a stand_a
+| ! ! manipulate_c ! pickup_a
+
+[SYS_LIVENESS]
+pickup_a'
+
+[SYS_INIT]
+! pickup_a
+standprep_a
+standprep_c
+! stand_c
+! manipulate_c
+! step_c
+! walk_c
+! stand_a
+! manipulate_a
+! step_a
+! walk_a
+
