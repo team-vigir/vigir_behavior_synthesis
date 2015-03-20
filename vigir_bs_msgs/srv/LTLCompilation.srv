@@ -8,10 +8,12 @@
 # Can be inferred when the system is online.
 string[] initial_conditions
 
-# The system's goal, usually provided by the user
-string[] goal
+# The system's goals, usually provided by the user
+string[] goals
 
-# Other
+# Robot/system to be used for LTL specification compilation
+# For Team ViGIR and the DRC, this field should be set to 'atlas'
+string system
 
 ---
 

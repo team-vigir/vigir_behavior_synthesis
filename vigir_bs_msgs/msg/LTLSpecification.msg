@@ -1,10 +1,10 @@
 # Formula in the GR(1) fragment of LTL
 
-# Environment atomic propositions
-string[] env_props
-
 # System atomic propositions
 string[] sys_props
+
+# Environment atomic propositions
+string[] env_props
 
 # System initial conditions
 string[] sys_init
