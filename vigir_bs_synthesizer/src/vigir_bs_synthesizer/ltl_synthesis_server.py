@@ -6,9 +6,9 @@ import rospy
 
 from vigir_bs_msgs.srv import LTLSynthesis
 from vigir_bs_msgs.msg import AutomatonState, SynthesizedAutomaton, BSErrorCodes, LTLSynthesisResponse
-from vigir_bs_synthesizer.StructuredSlugsParser.compiler import performConversion
+from vigir_bs_synthesizer.StructuredSlugsParser import compiler as slugs_compiler
 
-vigir_repo = os.environ['VIGIR_ROOT_DIR']
+VIGIR_ROOT_DIR = os.environ['VIGIR_ROOT_DIR']
 
 def handle_ltl_synthesis(request):
     '''Handles a request to synthesize an automaton from a LTL specification.'''
@@ -73,7 +73,7 @@ def convert_structured_slugs_to_slugsin(name):
         #TODO: update performConversion so we don't have to do stdout redirection
         #TODO:         -//-        so that it doesn't output formulas in terminal
         sys.stdout = f
-        performConversion(name + ".structuredslugs", thoroughly = True)
+        slugs_compiler.performConversion(name + ".structuredslugs", thoroughly = True)
         sys.stdout = sys.__stdout__
 
     return slugsin_file
@@ -97,7 +97,7 @@ def call_slugs_synthesizer(name):
 def write_structured_slugs_from_msg(specification):
     '''...'''
 
-    specs_folder = os.path.join(vigir_repo, 'catkin_ws/src/vigir_behavior_synthesis/temp_bs_files')
+    specs_folder = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/temp_bs_files')
 
     pass
 
