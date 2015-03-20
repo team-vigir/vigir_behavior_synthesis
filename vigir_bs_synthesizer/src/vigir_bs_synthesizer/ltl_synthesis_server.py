@@ -13,7 +13,7 @@ VIGIR_ROOT_DIR = os.environ['VIGIR_ROOT_DIR']
 def handle_ltl_synthesis(request):
     '''Handles a request to synthesize an automaton from a LTL specification.'''
     
-    specification = request.ltl_specification
+    ltl_spec = request.ltl_specification
 
     if request.spec_name:
         spec_name = request.spec_name # Optional name (just a convenience)
@@ -22,7 +22,7 @@ def handle_ltl_synthesis(request):
         spec_name = 'FYDS-FY_DS' #FIX
 
     # Parse LTL specification msg and write .structuredslugs file
-    structured_slugs_file, folder_path = write_structured_slugs_from_msg(specification)
+    structured_slugs_file, folder_path = write_structured_slugs_from_msg(ltl_spec, spec_name)
     
     # First, step inside the specification's directory
     initial_dir = os.getcwd()
@@ -94,19 +94,94 @@ def call_slugs_synthesizer(name):
 
     return synthesizable, name + ".json"
 
-def write_structured_slugs_from_msg(specification):
-    '''...'''
-
-    specs_folder = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/temp_bs_files')
-
-    pass
-
 def gen_automaton_msg_from_json(json_file):
     '''...'''
 
     automaton = SynthesizedAutomaton()
 
     return automaton
+
+def write_structured_slugs_from_msg(ltl_spec, name):
+    '''...'''
+    
+    # The directory where specs and automata are saved:
+    specs_folder_path = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/temp_bs_files') 
+
+    # The directory where this spec will be saved:
+    this_folder_path = os.path.join(specs_folder_path, name)
+    if not os.path.exists(this_folder_path):
+        os.makedirs(this_folder_path)
+
+    """Create, or open, the structuredslugs file and write the 8 sections."""
+    structured_slugs_file = name + ".structuredslugs"
+
+    full_file_path = os.path.join(this_folder_path, structured_slugs_file)
+    
+    with open(full_file_path, 'w') as spec_file:
+        # System and environment propositions
+        _write_input(ltl_spec, spec_file)
+        _write_output(ltl_spec, spec_file)
+        # Initial Conditions
+        _write_sys_init(ltl_spec, spec_file)
+        _write_env_init(ltl_spec, spec_file)
+        # Safety Requirements & Assumptions
+        _write_sys_trans(ltl_spec, spec_file)
+        _write_env_trans(ltl_spec, spec_file)
+        # Liveness Requirements & Assumptions
+        _write_sys_liveness(ltl_spec, spec_file)
+        _write_env_liveness(ltl_spec, spec_file)
+
+    rospy.loginfo("\nCreated specification file %s in %s \n" % (structured_slugs_file, this_folder_path))
+
+    return structured_slugs_file, this_folder_path
+
+def _write_input(ltl_spec, spec_file):
+    spec_file.write("[INPUT]\n")
+    for prop in spec.env_props:
+        spec_file.write(prop + "\n")
+    spec_file.write("\n")
+
+def _write_output(ltl_spec, spec_file):
+    spec_file.write("[OUTPUT]\n")
+    for prop in spec.sys_props:
+        spec_file.write(prop + "\n")
+    spec_file.write("\n")
+
+def _write_sys_init(ltl_spec, spec_file):
+    spec_file.write("[SYS_INIT]\n")
+    for formula in spec.sys_init:
+        spec_file.write(formula + "\n")
+    spec_file.write("\n")
+
+def _write_env_init(ltl_spec, spec_file):
+    spec_file.write("[ENV_INIT]\n")
+    for formula in spec.env_init:
+        spec_file.write(formula + "\n")
+    spec_file.write("\n")
+
+def _write_sys_trans(ltl_spec, spec_file):
+    spec_file.write("[SYS_TRANS]\n")
+    for formula in spec.sys_trans:
+        spec_file.write(formula + "\n")
+    spec_file.write("\n")
+
+def _write_env_trans(ltl_spec, spec_file):
+    spec_file.write("[ENV_TRANS]\n")
+    for formula in spec.env_trans:
+        spec_file.write(formula + "\n")
+    spec_file.write("\n")
+
+def _write_sys_liveness(ltl_spec, spec_file):
+    spec_file.write("[SYS_LIVENESS]\n")
+    for formula in spec.sys_liveness:
+        spec_file.write(formula + "\n")
+    spec_file.write("\n")
+
+def _write_env_liveness(ltl_spec, spec_file):
+    spec_file.write("[ENV_LIVENESS]\n")
+    for formula in spec.env_liveness:
+        spec_file.write(formula + "\n")
+    spec_file.write("\n")
 
 def ltl_synthesis_server():
     ''''Server'''
