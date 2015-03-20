@@ -12,6 +12,8 @@ int32 BEHAVIOR_SYNTHESIS_FAILED=-1
 
 # LTL Synthesis errors
 int32 SPEC_UNSYNTHESIZABLE=-20
+# ... other
+int32 SYNTHESIS_FAILED=-29
 
 # State machine generation errors
 # ...
