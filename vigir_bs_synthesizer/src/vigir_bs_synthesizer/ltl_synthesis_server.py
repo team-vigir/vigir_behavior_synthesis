@@ -4,8 +4,8 @@ import os, sys, subprocess
 
 import rospy
 
-from vigir_bs_msgs.srv import LTLSynthesis
-from vigir_bs_msgs.msg import AutomatonState, SynthesizedAutomaton, BSErrorCodes, LTLSynthesisResponse
+from vigir_bs_msgs.srv import LTLSynthesis, LTLSynthesisResponse
+from vigir_bs_msgs.msg import AutomatonState, SynthesizedAutomaton, BSErrorCodes
 from vigir_bs_synthesizer.StructuredSlugsParser import compiler as slugs_compiler
 
 VIGIR_ROOT_DIR = os.environ['VIGIR_ROOT_DIR']
@@ -14,12 +14,14 @@ def handle_ltl_synthesis(request):
     '''Handles a request to synthesize an automaton from a LTL specification.'''
     
     ltl_spec = request.ltl_specification
+    output_vars = ltl_spec.sys_props
+    input_vars = ltl_spec.env_props
 
     if request.spec_name:
         spec_name = request.spec_name # Optional name (just a convenience)
     else:
         # Make something up
-        spec_name = 'FYDS-FY_DS' #FIX
+        spec_name = 'nfrewhgdn' #FIX
 
     # Parse LTL specification msg and write .structuredslugs file
     structured_slugs_file, folder_path = write_structured_slugs_from_msg(ltl_spec, spec_name)
@@ -34,7 +36,8 @@ def handle_ltl_synthesis(request):
     try:
         # Call slugs executable on .slugsin file and return output
         synthesizable, automaton_file = call_slugs_synthesizer(spec_name)
-        automaton, error_code = handle_slugs_output(synthesizable, automaton_file)
+        automaton, error_code = handle_slugs_output(synthesizable, automaton_file, input_vars, output_vars)
+    
     except Exception as e:
         synthesizable = False
         automaton = SynthesizedAutomaton() # Return empty automaton
@@ -48,14 +51,15 @@ def handle_ltl_synthesis(request):
 
     return LTLSynthesisResponse(synthesizable, automaton, error_code)
 
-def handle_slugs_output(synthesizable, automaton_file):
+def handle_slugs_output(synthesizable, automaton_file, input_vars, output_vars):
     '''...'''
 
     if synthesizable:
-        error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
         # Parse JSON into SynthesizedAutomaton msg
-        automaton = gen_automaton_msg_from_json(automaton_file)
-        rospy.loginfo('Successfully synthesized an automaton from LTL specification.')
+        automaton = gen_automaton_msg_from_json(automaton_file, input_vars, output_vars)
+        error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
+        rospy.loginfo('Successfully synthesized an automaton from the LTL specification.')
+    
     elif not synthesizable:  
         automaton = SynthesizedAutomaton() # Return empty automaton
         error_code = BSErrorCodes(BSErrorCodes.SPEC_UNSYNTHESIZABLE)
@@ -94,7 +98,7 @@ def call_slugs_synthesizer(name):
 
     return synthesizable, name + ".json"
 
-def gen_automaton_msg_from_json(json_file):
+def gen_automaton_msg_from_json(json_file, input_vars, output_vars):
     '''...'''
 
     automaton = SynthesizedAutomaton()
