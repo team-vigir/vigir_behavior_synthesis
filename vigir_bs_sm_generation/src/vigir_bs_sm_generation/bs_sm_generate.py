@@ -1,8 +1,14 @@
 import json
 import yaml
 import rospy
+import sys
+import logging
+# [BEGIN] ROS CODE
 #from vigir_bs_msgs.srv import *
 #from vigir_bs_msgs.msg import *
+# [END] ROS CODE
+
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 # Fake implementation for testing
 class StateInstantiation():
@@ -172,7 +178,7 @@ def generate_sm(json_file, yaml_file):
     parent_si.outcomes = ['finished', 'failed']
     SIs.append(parent_si)
     for name, data in sorted(nodes.items(), key=lambda x: x[0]):
-        print("\nData for state {0}".format(name))
+        logging.debug("Data for state {0}".format(name))
         si = StateInstantiation()
         si.state_path = "/State{0}".format(name)
         si.state_class = "Concurrent_TODO_State"
@@ -227,22 +233,22 @@ def generate_sm(json_file, yaml_file):
                 #TODO: figure out if there's a way to set the order or preserve
                 # the mapping
             sm_out_data.sort(key=lambda (var, x): input_vars.index(var))
-            sorted_sm_out_vars = [v for v, x in sm_out_data]
+            sorted_sm_out_vars = [sm_out for in_var, sm_out in sm_out_data]
 
             si.outcomes.append(str(sorted_sm_out_vars))
             si.transitions.append("State{0}".format(next_state))
-            print("{0} -> {1} if: {2}".format(name, next_state,
+            logging.debug("{0} -> {1} if: {2}".format(name, next_state,
                                               sorted_sm_out_vars))
 
-        print("Concurrent(")
+        logging.debug("Concurrent(")
         sorted_sms = sm_maps.keys()
         sorted_sms.sort(key=lambda x: input_vars.index(sm_to_in_var[sm]))
         for sm in sorted_sms:
-            print("  {0}".format(sm))
-        print(")")
+            logging.debug("  {0}".format(sm))
+        logging.debug(")")
         SIs.append(si) 
         for sm in perform_sms:
-            print(sm)
+            logging.debug(sm)
 
     # [BEGIN] ROS CODE
     #return SMGenerateResponse(SIs)
