@@ -2,14 +2,14 @@
 
 import rospy
 
-from vigir_bs_msgs.srv import *
+from vigir_bs_msgs.srv import LTLCompilation
 from vigir_bs_msgs.msg import LTLFormula, BSErrorCodes
 
-def handle_ltl_compilation(req):
+def handle_ltl_compilation(request):
     '''Responsible for putting together a complete LTL specification.'''
     
-    initial_conditions = req.initial_conditions
-    goal = req.goal
+    initial_conditions = request.initial_conditions
+    goal = request.goal
 
     ltl_specification = LTLFormula()
     # temp
@@ -19,14 +19,14 @@ def handle_ltl_compilation(req):
     # Behavior Synthesis error code
     error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
 
-    return CompileLTLResponse(error_code, ltl_specification)
+    return LTLCompilationResponse(ltl_specification, error_code)
 
 def ltl_compilation_server():
     ''''Server'''
     
     rospy.init_node('ltl_compilation_server')
     
-    s = rospy.Service('ltl_compilation', CompileLTL, handle_ltl_compilation)
+    s = rospy.Service('ltl_compilation', LTLCompilation, handle_ltl_compilation)
     
     rospy.loginfo("Ready to receive LTL Specification Compilation requests.")
     rospy.spin()
