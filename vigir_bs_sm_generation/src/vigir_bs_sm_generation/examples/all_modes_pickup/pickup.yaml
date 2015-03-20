@@ -14,6 +14,8 @@ output:
     - step_a
     - walk_a
 
+default_autonomy: LOW
+
 # Input variables to robot
 pickup_a:
     class: GraspObjectSM()

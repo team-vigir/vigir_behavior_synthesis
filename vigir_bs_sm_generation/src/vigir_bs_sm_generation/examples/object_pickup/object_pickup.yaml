@@ -12,6 +12,8 @@ output:
     - manipulate_a
     - pickup_a
 
+default_autonomy: LOW
+
 # OUTPUTS
 pickup_a:
     class: GraspObjectSM()

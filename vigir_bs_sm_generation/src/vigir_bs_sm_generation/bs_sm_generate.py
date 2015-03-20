@@ -1,7 +1,31 @@
 import json
 import yaml
+import rospy
+#from vigir_bs_msgs.srv import *
+#from vigir_bs_msgs.msg import *
 
-def get_class_params_from_json(json_file, yaml_file, outfile):
+# Fake implementation for testing
+class StateInstantiation():
+    def __init__(self):
+        self.state_path = "State path not set"
+        self.state_class = "State class not set"
+        self.outcomes = []
+        self.transitions = []
+        self.autonomy = "Autonomy not set"
+    def __str__(self):
+        s = "state_path = {0}\n".format(self.state_path)
+        s += "state_class = {0}\n".format(self.state_class)
+        s += "outcomes = {0}\n".format(self.outcomes)
+        s += "transitions = {0}\n".format(self.transitions)
+        s += "autonomy = {0}".format(self.autonomy)
+        return s
+
+# [BEGIN] ROS CODE
+#def generate_sm(data):
+#    json_file = data.json_file
+#    yaml_file = data.yaml_file # the block that is the destination of the arm's motion
+# [END] ROS CODE
+def generate_sm(json_file, yaml_file):
     """
     This method takes in a JSON file describe an automaton and a YAML file
     describing how the automaton names corresponds to real state machine names
@@ -104,6 +128,23 @@ def get_class_params_from_json(json_file, yaml_file, outfile):
             dic.pop('state', None)
         return nodes
 
+    def add_subsubstate(name, var_config, SIs):
+        """
+        Add a substate to the [name] concurrent substate.
+        @param var_config The configuration for this variable.
+        @param SIs        The global list of state instantiations.
+        """
+        sub_si = StateInstantiation()
+        sub_si.state_path = "/State{0}/State{1}".format(name,
+                                                        class_name)
+        sub_si.state_class = var_config['class']
+        # I'm not sure how concurrent things are going to work, but for
+        # not just don't remap the internal sm's outputs
+        sub_si.outcomes = var_config['output_mapping'].values()
+        sub_si.transitions = sub_si.outcomes
+        sub_si.autonomy = var_config['autonomy']
+        SIs.append(sub_si)
+        
     with open(yaml_file) as yf:
         config = yaml.load(yf)
 
@@ -123,12 +164,19 @@ def get_class_params_from_json(json_file, yaml_file, outfile):
     nodes = reformat(info['nodes'], n_in_vars)
     input_vars = config['input']
 
-    parent_si = StateInstanstiation()
+    SIs = []
+    parent_si = StateInstantiation()
     parent_si.state_path = "/" 
-    parent_si.state_path = "CLASS_STATEMACHINE"
-
+    parent_si.state_class = "CLASS_STATEMACHINE"
+    parent_si.initial_state_name = "/State0" 
+    parent_si.outcomes = ['finished', 'failed']
+    SIs.append(parent_si)
     for name, data in sorted(nodes.items(), key=lambda x: x[0]):
         print("\nData for state {0}".format(name))
+        si = StateInstantiation()
+        si.state_path = "/State{0}".format(name)
+        si.state_class = "Concurrent_TODO_State"
+        si.autonomy = config['default_autonomy']
         transitions = get_transitions(name, nodes)
 
         # extract what output variables the current state is outputting
@@ -147,10 +195,12 @@ def get_class_params_from_json(json_file, yaml_file, outfile):
 
             is_activation = False
             for in_var, state_outcome in out_map.items():
-                if in_var in input_vars:
+                if in_var in input_vars: # This is an Activation variable
                     is_activation = True
                     in_var_to_sm[in_var] = class_name
                     sm_to_in_var[class_name] = in_var
+
+                    add_subsubstate(name, var_config, SIs)
                     break
             if not is_activation:
                 perform_sms.add(class_name)
@@ -159,10 +209,10 @@ def get_class_params_from_json(json_file, yaml_file, outfile):
             conditions = [get_in_var_name(i) for i in condition_idxs]
             sm_out_data = []
             for in_var in conditions:
-                if in_var in in_var_to_sm: # _c type of variable
+                if in_var in in_var_to_sm: # Completion variable
                     sm = in_var_to_sm[in_var]
                     sm_out_data.append((in_var, sm_maps[sm][in_var]))
-                else: # sensor needed
+                else: # Sensor variable
                     var_config = config[in_var]
                     class_name = var_config['class']
                     out_map = var_config['output_mapping']
@@ -171,9 +221,16 @@ def get_class_params_from_json(json_file, yaml_file, outfile):
                     sm_to_in_var[v] = class_name
 
                     sm_out_data.append((in_var, out_map[in_var]))
+
+                    add_subsubstate(name, var_config, SIs)
+
+                #TODO: figure out if there's a way to set the order or preserve
+                # the mapping
             sm_out_data.sort(key=lambda (var, x): input_vars.index(var))
             sorted_sm_out_vars = [v for v, x in sm_out_data]
 
+            si.outcomes.append(str(sorted_sm_out_vars))
+            si.transitions.append("State{0}".format(next_state))
             print("{0} -> {1} if: {2}".format(name, next_state,
                                               sorted_sm_out_vars))
 
@@ -183,16 +240,25 @@ def get_class_params_from_json(json_file, yaml_file, outfile):
         for sm in sorted_sms:
             print("  {0}".format(sm))
         print(")")
+        SIs.append(si) 
         for sm in perform_sms:
             print(sm)
 
-    return "Complete"
+    # [BEGIN] ROS CODE
+    #return SMGenerateResponse(SIs)
+    # [END] ROS CODE
+    return SIs
 
 if __name__ == "__main__":
-    #json_file = "examples/all_modes_pickup/pickup.json"
-    #yaml_file = "examples/all_modes_pickup/pickup.yaml"
-    json_file = "examples/object_pickup/object_pickup.json"
-    yaml_file = "examples/object_pickup/object_pickup.yaml"
-    out_file =  "output/test.json"
-    ps = get_class_params_from_json(json_file, yaml_file, out_file)
-    print(ps)
+    # [BEGIN] ROS CODE
+    #rospy.init_node('bs_sm_generate')
+    #s = rospy.Service('sm_generate', SMGenerate, generate_sm)
+    # [END] ROS CODE
+
+    json_file = "examples/all_modes_pickup/pickup.json"
+    yaml_file = "examples/all_modes_pickup/pickup.yaml"
+    #json_file = "examples/object_pickup/object_pickup.json"
+    #yaml_file = "examples/object_pickup/object_pickup.yaml"
+    SIs = generate_sm(json_file, yaml_file)
+    for si in SIs:
+        print(si)
