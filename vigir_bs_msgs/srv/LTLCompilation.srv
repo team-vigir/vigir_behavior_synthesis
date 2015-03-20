@@ -15,6 +15,6 @@ string[] goal
 
 ---
 
-BSErrorCodes error_code
+LTLSpecification ltl_specification
 
-LTLFormula ltl_formula
+BSErrorCodes error_code

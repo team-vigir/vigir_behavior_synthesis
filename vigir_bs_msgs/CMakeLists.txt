@@ -12,16 +12,16 @@ find_package(catkin REQUIRED COMPONENTS genmsg ${MSG_DEPS})
 # message_generation does not need to be listed explicitly, it is referenced implicitly by actionlib_msgs
 
 set(MSG_FILES
-	AutomatonState.msg
 	BSErrorCodes.msg
 	BehaviorSynthesisRequest.msg
-	LTLFormula.msg
 	SynthesisOptions.msg
+	LTLSpecification.msg
+	AutomatonState.msg
 	SynthesizedAutomaton.msg
 )
 
 set(SRV_FILES
-	CompileLTL.srv
+	LTLCompilation.srv
 	LTLSynthesis.srv
 )
 
