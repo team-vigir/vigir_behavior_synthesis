@@ -3,7 +3,7 @@
 import rospy
 
 from vigir_bs_msgs.srv import LTLCompilation
-from vigir_bs_msgs.msg import LTLFormula, BSErrorCodes
+# from vigir_bs_msgs.msg import LTLSpecification, BSErrorCodes
 
 def ltl_compilation_client():
     '''Client'''
@@ -12,14 +12,18 @@ def ltl_compilation_client():
     
     try:
         ltl_compulation_srv = rospy.ServiceProxy('ltl_compilation', LTLCompilation)
-        resp = ltl_compulation_srv(['stand'], ['manipulate'])
+        response = ltl_compulation_srv(['stand'], ['manipulate'], 'atlas')
         
         #DEBUG
-        # print resp.error_code.value
-        # print resp.ltl_formula.sys_init
-        # print resp.ltl_formula.sys_liveness
+        print response.ltl_specification.sys_init
+        print response.ltl_specification.env_init
+        print response.ltl_specification.sys_trans
+        print response.ltl_specification.env_trans
+        print response.ltl_specification.sys_liveness
+        print response.ltl_specification.env_liveness
+        print response.error_code
         
-        return resp.ltl_formula
+        return response
     
     except rospy.ServiceException as e:
         print("Service call failed: %s" % e)
