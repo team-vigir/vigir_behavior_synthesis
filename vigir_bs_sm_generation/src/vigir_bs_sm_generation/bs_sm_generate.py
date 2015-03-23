@@ -112,7 +112,6 @@ def add_subsubstate(name, var_config, SIs):
     state_class = var_config['class']
     # For Substates within a ConcurrentState, you don't need to remap their
     # outcomes.
-    # outcomes = var_config['output_mapping'].values()
     sub_si = StateInstantiation(state_path, state_class, [], [])
     sub_si.autonomy = var_config['autonomy']
     SIs.append(sub_si)
@@ -236,8 +235,8 @@ def generate_sm(json_file, yaml_file):
             if not is_activation:
                 perform_sms.add(class_name)
 
-        si_outcomes = []
-        si_transitions = []
+        concurrent_si_outcomes = []
+        concurrent_si_transitions = []
         for next_state, condition_idxs in transitions.items():
             conditions = [get_in_var_name(i) for i in condition_idxs]
             sm_to_out = {}
@@ -261,23 +260,19 @@ def generate_sm(json_file, yaml_file):
 
                     add_subsubstate(name, var_config, SIs)
 
-            #sm_out_data.sort(key=lambda (var, x): input_vars.index(var))
-            #sorted_sm_out_vars = [sm_out for in_var, sm_out in sm_out_data]
-
             next_state_name = "State{0}".format(next_state)
             internal_outcomes.append(next_state_name)
             internal_maps.append(sm_to_out)
 
             # Not really needed, but it's good to be explicit
-            si_outcomes.append(next_state_name)
-            si_transitions.append(next_state_name)
+            concurrent_si_outcomes.append(next_state_name)
+            concurrent_si_transitions.append(next_state_name)
             logging.debug("{0} -> {1} if: {2}".format(name, next_state,
                                               sm_to_out))
 
-        # Again, see 'outcomes' and 'outcome_mapping' in the documentation of
-        # ConcurrentState.
         si = StateInstantiation("/State{0}".format(name), "ConcurrentState",
-                                si_outcomes, si_transitions)
+                                concurrent_si_outcomes,
+                                concurrent_si_transitions)
         si.autonomy = config['default_autonomy']
         si.parameter_name = ["outcomes", "outcome_mapping"]
         si.parameter_value = [str(internal_outcomes), str(internal_maps)]
