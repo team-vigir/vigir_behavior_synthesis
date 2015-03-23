@@ -26,6 +26,81 @@ class StateInstantiation():
         s += "autonomy = {0}".format(self.autonomy)
         return s
 
+def get_transitions(name, nodes):
+    """
+    Deduce the transition needed to go to the next states.
+
+    @param name The name of the state to transitions away from
+    @param nodes The dictionary containing all of the node information.
+    @returns A dictionary, that maps next state to indices of the input
+             variables that need to be true to go to that next state.
+
+             For example:
+        {
+            'State1': [1, 2], # input var 1 & 2 need to be true
+            'State2': [1, 3, 4],
+            ...
+        }
+    """
+    node_info = nodes[name]
+    next_states = [str(x) for x in node_info['trans']]
+    next_states = list(set(next_states) - set([name])) # remove self loop
+
+    if len(next_states) == 0:
+        raise Exception("This state has no exit!")
+    if len(next_states) > 1:
+        print("[INFO] Multiple next states for {0}".format(name))
+
+    transitions = {}
+    for next_state in next_states:
+        transitions[next_state] = [idx for (idx, v) in
+                                   enumerate(nodes[next_state]['in_vars'])
+                                   if v == 1]
+    return transitions
+
+def reformat(nodes, n_in_vars):
+    """
+    Reformat automaton dictionary so that input/output variables are
+    separated.  For example, if before the dictionary for a node was
+    {
+        ...
+        "states" : [a, b, c, d, e, f, g] # a-d are input, e-g are output
+        ...
+    }
+    where a-d corresponds to input variables and e-g corresponds to output
+    variables, now it looks like
+    {
+        ...
+        "in_vars" : [a, b, c, d]
+        "out_vars" : [e, f, g]
+        ...
+    }
+    """
+    for name, dic in nodes.items():
+        in_vars = dic['state'][:n_in_vars]
+        out_vars = dic['state'][n_in_vars:]
+        dic['in_vars'] = in_vars
+        dic['out_vars'] = out_vars
+        dic.pop('state', None)
+    return nodes
+
+def add_subsubstate(name, var_config, SIs):
+    """
+    Add a substate to the [name] concurrent substate.
+    @param name       The name of the substate.
+    @param var_config The configuration for this variable.
+    @param SIs        The global list of state instantiations.
+    """
+    sub_si = StateInstantiation()
+    sub_si.state_path = "/State{0}/State{1}".format(name, name)
+    sub_si.state_class = var_config['class']
+    # I'm not sure how concurrent things are going to work, but for
+    # not just don't remap the internal sm's outputs
+    sub_si.outcomes = var_config['output_mapping'].values()
+    sub_si.transitions = sub_si.outcomes
+    sub_si.autonomy = var_config['autonomy']
+    SIs.append(sub_si)
+
 # [BEGIN] ROS CODE
 #def generate_sm(data):
 #    json_file = data.json_file
@@ -76,80 +151,6 @@ def generate_sm(json_file, yaml_file):
     @param yaml_file Path to file containing automaton configuration.
     @param outfile Path to file to save results to.
     """
-    def get_transitions(name, nodes):
-        """
-        Deduce the transition needed to go to the next states.
-
-        @param name The name of the state to transitions away from
-        @param nodes The dictionary containing all of the node information.
-        @returns A dictionary, that maps next state to indices of the input
-                 variables that need to be true to go to that next state.
-                 
-                 For example:
-            {
-                'State1': [1, 2], # input var 1 & 2 need to be true
-                'State2': [1, 3, 4],
-                ...
-            }
-        """
-        node_info = nodes[name]
-        next_states = [str(x) for x in node_info['trans']]
-        next_states = list(set(next_states) - set([name])) # remove self loop
-
-        if len(next_states) == 0:
-            raise Exception("This state has no exit!")
-        if len(next_states) > 1:
-            print("[INFO] Multiple next states for {0}".format(name))
-
-        transitions = {}
-        for next_state in next_states:
-            transitions[next_state] = [idx for (idx, v) in
-                                       enumerate(nodes[next_state]['in_vars'])
-                                       if v == 1]
-        return transitions
-
-    def reformat(nodes, n_in_vars):
-        """
-        Reformat automaton dictionary so that input/output variables are
-        separated.  For example, if before the dictionary for a node was
-        {
-            ...
-            "states" : [a, b, c, d, e, f, g] # a-d are input, e-g are output
-            ...
-        }
-        where a-d corresponds to input variables and e-g corresponds to output
-        variables, now it looks like
-        {
-            ...
-            "in_vars" : [a, b, c, d]
-            "out_vars" : [e, f, g]
-            ...
-        }
-        """
-        for name, dic in nodes.items():
-            in_vars = dic['state'][:n_in_vars]
-            out_vars = dic['state'][n_in_vars:]
-            dic['in_vars'] = in_vars
-            dic['out_vars'] = out_vars
-            dic.pop('state', None)
-        return nodes
-
-    def add_subsubstate(name, var_config, SIs):
-        """
-        Add a substate to the [name] concurrent substate.
-        @param var_config The configuration for this variable.
-        @param SIs        The global list of state instantiations.
-        """
-        sub_si = StateInstantiation()
-        sub_si.state_path = "/State{0}/State{1}".format(name,
-                                                        class_name)
-        sub_si.state_class = var_config['class']
-        # I'm not sure how concurrent things are going to work, but for
-        # not just don't remap the internal sm's outputs
-        sub_si.outcomes = var_config['output_mapping'].values()
-        sub_si.transitions = sub_si.outcomes
-        sub_si.autonomy = var_config['autonomy']
-        SIs.append(sub_si)
         
     with open(yaml_file) as yf:
         config = yaml.load(yf)
@@ -261,10 +262,10 @@ if __name__ == "__main__":
     #s = rospy.Service('sm_generate', SMGenerate, generate_sm)
     # [END] ROS CODE
 
-    json_file = "examples/all_modes_pickup/pickup.json"
-    yaml_file = "examples/all_modes_pickup/pickup.yaml"
-    #json_file = "examples/object_pickup/object_pickup.json"
-    #yaml_file = "examples/object_pickup/object_pickup.yaml"
+    #json_file = "examples/all_modes_pickup/pickup.json"
+    #yaml_file = "examples/all_modes_pickup/pickup.yaml"
+    json_file = "examples/object_pickup/object_pickup.json"
+    yaml_file = "examples/object_pickup/object_pickup.yaml"
     SIs = generate_sm(json_file, yaml_file)
     for si in SIs:
         print(si)
