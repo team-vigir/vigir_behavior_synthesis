@@ -1,9 +1,21 @@
 # LTL Synthesis request and response
 
-LTLFormula ltl_specification
+# A Linear Temporal Logic (LTL) Specification
+LTLSpecification ltl_specification
+
+# Optional name for the specification.
+# Useful for locating the generated files.
+# Does not affect the server's response.
+string spec_name
 
 ---
 
+# Whether the LTL specification is synthesizable
 bool synthesizable
 
+# If the specification is synthesizable, 
+# the result of synthesis is an automaton
 SynthesizedAutomaton automaton
+
+# Errors besides unsynthesizability
+BSErrorCodes error_code

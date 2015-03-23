@@ -24,14 +24,17 @@ class ControlModeSpecification(GR1Specification):
 	"""
 
 	def __init__(self, spec_name, initial_mode, modes_of_interest = []):
-		
-		if initial_mode not in modes_of_interest:
-			raise ValueError("The initial control mode, %s, is not one of the modes of interest: %s" % (initial_mode, str(modes_of_interest)))
 
 		# Get the control mode transition system corresponding to the modes of interest
 		self.control_modes = ControlModeTransitionSystem(modes_of_interest)
-		# And add the control modes of interest as sys props
-		sys_props = self.control_modes.ts.keys() 
+
+		modes_of_interest = self.control_modes.ts.keys() # Refresh
+
+		if initial_mode not in modes_of_interest:
+			raise ValueError("The initial control mode, %s, is not one of the modes of interest: %s" % (initial_mode, str(modes_of_interest)))
+
+		# Add the control modes of interest as sys props
+		sys_props = modes_of_interest 
 		env_props = []	# There are no environment proposition (yet)
 		
 		super(ControlModeSpecification, self).__init__(spec_name, env_props, sys_props) 
