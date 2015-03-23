@@ -13,22 +13,30 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 # Fake implementation for testing
 class StateInstantiation():
     def __init__(self):
-        self.state_path = "State path not set"
-        self.state_class = "State class not set"
+        self.state_path = ""
+        self.state_class = ""
         self.outcomes = []
         self.transitions = []
-        self.autonomy = "Autonomy not set"
+        self.autonomy = ""
         self.parameter_name = []
         self.parameter_value = []
     def __str__(self):
-        s = "state_path = {0}\n".format(self.state_path)
-        s += "state_class = {0}\n".format(self.state_class)
-        s += "outcomes = {0}\n".format(self.outcomes)
-        s += "transitions = {0}\n".format(self.transitions)
-        s += "autonomy = {0}\n".format(self.autonomy)
-        s += "parameter_name = {0}\n".format(self.parameter_name)
-        s += "parameter_value = {0}".format(self.parameter_value)
-        return s
+        lines = []
+        if len(self.state_path) > 0:
+            lines.append("state_path = {0}".format(self.state_path))
+        if len(self.state_class) > 0:
+            lines.append("state_class = {0}".format(self.state_class))
+        if len(self.outcomes) > 0:
+            lines.append("outcomes = {0}".format(self.outcomes))
+        if len(self.transitions) > 0:
+            lines.append("transitions = {0}".format(self.transitions))
+        if len(self.autonomy) > 0:
+            lines.append("autonomy = {0}".format(self.autonomy))
+        if len(self.parameter_name) > 0:
+            lines.append("parameter_name = {0}".format(self.parameter_name))
+        if len(self.parameter_value) > 0:
+            lines.append("parameter_value = {0}".format(self.parameter_value))
+        return "\n".join(lines)
 
 def get_transitions(name, nodes):
     """
