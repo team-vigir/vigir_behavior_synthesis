@@ -12,14 +12,17 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 # Fake implementation for testing
 class StateInstantiation():
-    def __init__(self):
-        self.state_path = ""
-        self.state_class = ""
-        self.outcomes = []
-        self.transitions = []
+    def __init__(self, state_path, state_class, outcomes, transitions,
+        initial_state=""):
+        self.state_path = state_path
+        self.state_class = state_class
+        self.outcomes = outcomes
+        self.transitions = transitions
+        self.initial_state = initial_state
         self.autonomy = ""
         self.parameter_name = []
         self.parameter_value = []
+
     def __str__(self):
         lines = []
         if len(self.state_path) > 0:
@@ -30,6 +33,8 @@ class StateInstantiation():
             lines.append("outcomes = {0}".format(self.outcomes))
         if len(self.transitions) > 0:
             lines.append("transitions = {0}".format(self.transitions))
+        if len(self.initial_state) > 0:
+            lines.append("initial_state = {0}".format(self.initial_state))
         if len(self.autonomy) > 0:
             lines.append("autonomy = {0}".format(self.autonomy))
         if len(self.parameter_name) > 0:
@@ -103,13 +108,12 @@ def add_subsubstate(name, var_config, SIs):
     @param var_config The configuration for this variable.
     @param SIs        The global list of state instantiations.
     """
-    sub_si = StateInstantiation()
-    sub_si.state_path = "/State{0}/State{1}".format(name, name)
-    sub_si.state_class = var_config['class']
-    # I'm not sure how concurrent things are going to work, but for
-    # not just don't remap the internal sm's outputs
-    sub_si.outcomes = var_config['output_mapping'].values()
-    sub_si.transitions = sub_si.outcomes
+    state_path = "/State{0}/State{1}".format(name, name)
+    state_class = var_config['class']
+    # For Substates within a ConcurrentState, you don't need to remap their
+    # outcomes.
+    # outcomes = var_config['output_mapping'].values()
+    sub_si = StateInstantiation(state_path, state_class, [], [])
     sub_si.autonomy = var_config['autonomy']
     SIs.append(sub_si)
 
@@ -193,19 +197,11 @@ def generate_sm(json_file, yaml_file):
     nodes = reformat(info['nodes'], n_in_vars)
     input_vars = config['input']
 
-    SIs = []
-    parent_si = StateInstantiation()
-    parent_si.state_path = "/" 
-    parent_si.state_class = "CLASS_STATEMACHINE"
-    parent_si.initial_state_name = "/State0" 
-    parent_si.outcomes = ['finished', 'failed']
-    SIs.append(parent_si)
+    # Initialize list of StateInstantiation's with parent SI.
+    SIs = [StateInstantiation("/", "CLASS_STATEMACHINE", ['done', 'failed'],
+                              [], initial_state = "/State0")]
     for name, data in sorted(nodes.items(), key=lambda x: x[0]):
         logging.debug("Data for state {0}".format(name))
-        si = StateInstantiation()
-        si.state_path = "/State{0}".format(name)
-        si.state_class = "Concurrent_TODO_State"
-        si.autonomy = config['default_autonomy']
         transitions = get_transitions(name, nodes)
 
         # extract what output variables the current state is outputting
@@ -240,6 +236,8 @@ def generate_sm(json_file, yaml_file):
             if not is_activation:
                 perform_sms.add(class_name)
 
+        si_outcomes = []
+        si_transitions = []
         for next_state, condition_idxs in transitions.items():
             conditions = [get_in_var_name(i) for i in condition_idxs]
             sm_to_out = {}
@@ -271,13 +269,16 @@ def generate_sm(json_file, yaml_file):
             internal_maps.append(sm_to_out)
 
             # Not really needed, but it's good to be explicit
-            si.outcomes.append(next_state_name)
-            si.transitions.append(next_state_name)
+            si_outcomes.append(next_state_name)
+            si_transitions.append(next_state_name)
             logging.debug("{0} -> {1} if: {2}".format(name, next_state,
                                               sm_to_out))
 
         # Again, see 'outcomes' and 'outcome_mapping' in the documentation of
         # ConcurrentState.
+        si = StateInstantiation("/State{0}".format(name), "ConcurrentState",
+                                si_outcomes, si_transitions)
+        si.autonomy = config['default_autonomy']
         si.parameter_name = ["outcomes", "outcome_mapping"]
         si.parameter_value = [str(internal_outcomes), str(internal_maps)]
         SIs.append(si)
@@ -309,4 +310,5 @@ if __name__ == "__main__":
     yaml_file = "examples/object_pickup/object_pickup.yaml"
     SIs = generate_sm(json_file, yaml_file)
     for si in SIs:
+        print("")
         print(si)
