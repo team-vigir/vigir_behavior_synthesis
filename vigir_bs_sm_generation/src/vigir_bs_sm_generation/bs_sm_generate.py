@@ -116,16 +116,6 @@ def add_subsubstate(name, var_config, SIs):
     sub_si.autonomy = var_config['autonomy']
     SIs.append(sub_si)
 
-def get_sm_out(sm_maps, sm_name, in_var):
-    """
-    Given a map from state machine name to its output mapping, get a
-    substate's output that corresponds to a specific input variable.
-    @param sm_maps Map from SM name to its config file output mapping.
-    @param sm_name The name of the SM.
-    @para in_var   The input variable of interest.
-    """
-    return sm_maps[sm_name][in_var]
-
 def get_substate_name(in_var, config):
     """
     Return the readable neam of the substate associated with an input variable.
@@ -218,61 +208,55 @@ def generate_sm(json_file, yaml_file):
                                   for i, v in enumerate(data['out_vars'])
                                   if v == 1]
         perform_sms = set()
-        sm_maps = {} # the map from class_name to its out_map
-        in_var_to_sm = {} # what state machine goes with an input variable?
-        sm_to_in_var = {} # vice versa for fast lookup
+        class_decl_to_out_map = {} # the map from class declaration to its out_map
+        in_var_to_class_decl = {} # what state machine goes with an input variable?
 
         # Internal parameters of the ConcurrentState that we need to build.
-        # See 'outcomes' and 'outcome_mapping' in the documentation of
-        # ConcurrentState for more detail.
+        # See 'states', 'outcomes' and 'outcome_mapping' in the documentation
+        # of ConcurrentState for more detail.
         internal_state_names = {}
         internal_outcomes = []
         internal_maps = []
         for out_var in curr_state_output_vars:
             var_config = config[out_var]
-            class_name = var_config['class']
+            class_decl = var_config['class']
             out_map = var_config['output_mapping']
-            sm_maps[class_name] = out_map
+            class_decl_to_out_map[class_decl] = out_map
 
             is_activation = False
             for in_var, state_outcome in out_map.items():
                 if in_var in input_vars: # This is an Activation variable
                     is_activation = True
-                    in_var_to_sm[in_var] = class_name
-                    sm_to_in_var[class_name] = in_var
+                    in_var_to_class_decl[in_var] = class_decl
 
                     add_subsubstate(name, var_config, SIs)
                     break
             if not is_activation:
-                perform_sms.add(class_name)
+                perform_sms.add(class_decl)
 
         concurrent_si_outcomes = []
         concurrent_si_transitions = []
         for next_state, condition_idxs in transitions.items():
             conditions = [get_in_var_name(i) for i in condition_idxs]
             substate_name_to_out = {}
-            sm_out_data = []
             for in_var in conditions:
                 ss_name = get_substate_name(in_var, config)
-                if in_var in in_var_to_sm: # Completion variable
-                    sm = in_var_to_sm[in_var]
+                if in_var in in_var_to_class_decl: # Completion variable
+                    class_decl = in_var_to_class_decl[in_var]
                     substate_name_to_out[ss_name] =\
-                        get_sm_out(sm_maps, sm, in_var)
-                    sm_out_data.append((in_var, sm_maps[sm][in_var]))
+                        class_decl_to_out_map[class_decl][in_var]
                 else: # Sensor variable
                     var_config = config[in_var]
-                    class_name = var_config['class']
+                    class_decl = var_config['class']
                     out_map = var_config['output_mapping']
-                    sm_maps[class_name] = out_map
-                    in_var_to_sm[in_var] = class_name
-                    sm_to_in_var[class_name] = in_var
+                    class_decl_to_out_map[class_decl] = out_map
+                    in_var_to_class_decl[in_var] = class_decl
 
                     substate_name_to_out[ss_name] =\
-                        get_sm_out(sm_maps, class_name, in_var)
-                    sm_out_data.append((in_var, out_map[in_var]))
+                        class_decl_to_out_map[class_decl][in_var]
 
                     add_subsubstate(name, var_config, SIs)
-                internal_state_names[ss_name] = in_var_to_sm[in_var]
+                internal_state_names[ss_name] = in_var_to_class_decl[in_var]
 
             next_state_name = "State{0}".format(next_state)
             internal_outcomes.append(next_state_name)
@@ -295,16 +279,6 @@ def generate_sm(json_file, yaml_file):
         si.parameter_value = [str(internal_state_names),
                               str(internal_outcomes), str(internal_maps)]
         SIs.append(si)
-
-        # Log things for debugging
-        sorted_sms = sm_maps.keys()
-        sorted_sms.sort(key=lambda x: input_vars.index(sm_to_in_var[sm]))
-        logging.debug("Concurrent(")
-        for sm in sorted_sms:
-            logging.debug("  {0}".format(sm))
-        logging.debug(")")
-        for sm in perform_sms:
-            logging.debug(sm)
 
     # [BEGIN] ROS CODE
     #return SMGenerateResponse(SIs)
