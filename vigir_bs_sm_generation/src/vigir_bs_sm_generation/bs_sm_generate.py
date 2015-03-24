@@ -19,7 +19,6 @@ class StateInstantiation():
         self.outcomes = outcomes
         self.transitions = transitions
         self.initial_state = initial_state
-        self.autonomy = ""
         self.parameter_name = []
         self.parameter_value = []
 
@@ -35,8 +34,6 @@ class StateInstantiation():
             lines.append("transitions = {0}".format(self.transitions))
         if len(self.initial_state) > 0:
             lines.append("initial_state = {0}".format(self.initial_state))
-        if len(self.autonomy) > 0:
-            lines.append("autonomy = {0}".format(self.autonomy))
         if len(self.parameter_name) > 0:
             lines.append("parameter_name = {0}".format(self.parameter_name))
         if len(self.parameter_value) > 0:
@@ -113,7 +110,6 @@ def add_subsubstate(name, var_config, SIs):
     # For Substates within a ConcurrentState, you don't need to remap their
     # outcomes.
     sub_si = StateInstantiation(state_path, state_class, [], [])
-    sub_si.autonomy = var_config['autonomy']
     SIs.append(sub_si)
 
 def get_substate_name(in_var, config):
@@ -274,7 +270,6 @@ def generate_sm(json_file, yaml_file):
         si = StateInstantiation("/State{0}".format(name), "ConcurrentState",
                                 concurrent_si_outcomes,
                                 concurrent_si_transitions)
-        si.autonomy = config['default_autonomy']
         si.parameter_name = ["states", "outcomes", "outcome_mapping"]
         si.parameter_value = [str(internal_state_names),
                               str(internal_outcomes), str(internal_maps)]
