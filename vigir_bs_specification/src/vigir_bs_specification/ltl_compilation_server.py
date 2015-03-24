@@ -58,7 +58,7 @@ def gen_msg_from_specification(spec):
 def ltl_compilation_server():
     ''''Server'''
     
-    rospy.init_node('ltl_compilation_server')
+    rospy.init_node('vigir_ltl_specification')
     
     s = rospy.Service('ltl_compilation', LTLCompilation, handle_ltl_compilation)
     

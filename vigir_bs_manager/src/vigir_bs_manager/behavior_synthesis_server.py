@@ -97,6 +97,6 @@ class BehaviorSynthesisActionServer(object):
         self._as.publish_feedback(self._feedback)
 
 if __name__ == '__main__':
-    rospy.init_node('behavior_synthesis')
+    rospy.init_node('vigir_behavior_synthesis')
     BehaviorSynthesisActionServer(rospy.get_name())
     rospy.spin()

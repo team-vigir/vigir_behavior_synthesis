@@ -190,7 +190,7 @@ def _write_env_liveness(ltl_spec, spec_file):
 def ltl_synthesis_server():
     ''''Server'''
     
-    rospy.init_node('ltl_synthesis_server')
+    rospy.init_node('vigir_ltl_synthesizer')
     
     s = rospy.Service('ltl_synthesis', LTLSynthesis, handle_ltl_synthesis)
     

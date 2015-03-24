@@ -10,7 +10,7 @@ from vigir_bs_msgs.msg import *
 def behavior_synthesis_client():
     # Creates the SimpleActionClient, passing the type of the action
     # (FibonacciAction) to the constructor.
-    client = actionlib.SimpleActionClient('behavior_synthesis', BehaviorSynthesisAction)
+    client = actionlib.SimpleActionClient('vigir_behavior_synthesis', BehaviorSynthesisAction)
 
     # Waits until the action server has started up and started
     # listening for goals.
