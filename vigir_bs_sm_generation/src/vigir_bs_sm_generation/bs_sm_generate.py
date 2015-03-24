@@ -110,6 +110,9 @@ def add_subsubstate(name, var_config, SIs):
     # For Substates within a ConcurrentState, you don't need to remap their
     # outcomes.
     sub_si = StateInstantiation(state_path, state_class, [], [])
+    if 'params' in var_config:
+        sub_si.parameter_name = var_config['params']['names']
+        sub_si.parameter_value = var_config['params']['values']
     SIs.append(sub_si)
 
 def get_substate_name(in_var, config):

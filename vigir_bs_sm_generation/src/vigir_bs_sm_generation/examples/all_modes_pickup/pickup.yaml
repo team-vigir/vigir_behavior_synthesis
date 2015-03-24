@@ -24,32 +24,57 @@ pickup_a:
         pickup_f: failed
     autonomy: LOW
 manipulate_a:
-    class: ChangeControlModeActionState('manipulate')
+    class: ChangeControlModeActionState
     output_mapping:
         manipulate_c: changed
         manipulate_f: failed
+    params:
+        names:
+            - EventState
+        values:
+            - manipulate
     autonomy: LOW
 standprep_a:
-    class: ChangeControlModeActionState('standprep')
+    class: ChangeControlModeActionState
     output_mapping:
         standprep_c: changed
         standprep_f: failed
+    params:
+        names:
+            - EventState
+        values:
+            - standprep
     autonomy: LOW
 stand_a:
-    class: ChangeControlModeActionState('stand')
+    class: ChangeControlModeActionState
     output_mapping:
         stand_c: changed
         stand_f: failed
+    params:
+        names:
+            - EventState
+        values:
+            - stand
     autonomy: LOW
 step_a:
-    class: ChangeControlModeActionState('step')
+    class: ChangeControlModeActionState
     output_mapping:
         step_c: changed
         step_f: failed
+    params:
+        names:
+            - EventState
+        values:
+            - step
     autonomy: LOW
 walk_a:
-    class: ChangeControlModeActionState('walk')
+    class: ChangeControlModeActionState
     output_mapping:
         walk_c: changed
         walk_f: failed
+    params:
+        names:
+            - EventState
+        values:
+            - walk
     autonomy: LOW
