@@ -1,0 +1,8 @@
+---
+# Action Pre-conditions
+pickup_a:
+    - manipulate_c
+#    - pregrasp_c
+
+#footstep_plan_a:
+#    - stand_c
