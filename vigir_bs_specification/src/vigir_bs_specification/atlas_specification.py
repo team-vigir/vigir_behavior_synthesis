@@ -3,18 +3,51 @@
 from gr1_specification import GR1Specification
 from gr1_formulas import GR1Formula, FastSlowFormula
 
+import yaml
 import pprint
 
 """
 Module's docstring #TODO
 """
 
-class AtlasSpecification(object):
-	"""docstring for ClassName"""
-	def __init__(self, arg):
-		super(ClassName, self).__init__()
-		self.arg = arg
+class VigirSpecification(GR1Specification):
+	"""
+	The class encodes requirements related to Team ViGIR's software as GR(1) formulas, written in the structured slugs format. """
+	
+	def __init__(self, spec_name, env_props, sys_props):
+		super(VigirSpecification, self).__init__(spec_name, env_props, sys_props)
+		
+		# ...
+		config_files = ['atlas_preconditions.yaml', 'vigir_preconditions.yaml']
+		self.preconditions = self.load_preconditions_from_config_files(config_files)
 
+		self.precondition_formulas = self.gen_formulas_from_preconditions()
+
+	def gen_formulas_from_preconditions(self):
+
+		precondition_formula = FastSlowFormula([], [])
+		precondition_formulas = list()
+
+		for prop, preconditions in self.preconditions.items():
+
+				formula = precondition_formula.gen_precondition_formula(prop, preconditions)
+				precondition_formulas.append(formula)
+
+		return precondition_formulas
+
+	def load_preconditions_from_config_files(self, files):
+		'''Loads preconditions from configuration files (.yaml)'''
+
+		preconditions = dict()
+
+		for filename in files:
+			with open(filename, 'r') as stream:
+				contents = yaml.load(stream)
+				# Add the preconditions from this file to the rest
+				# This will overwrite any duplicates (there shouldn't be any)
+				preconditions = dict(preconditions, **contents) if contents else preconditions
+
+		return preconditions
 
 class ControlModeSpecification(GR1Specification):
 	"""
@@ -123,26 +156,32 @@ class ControlModeTransitionSystem(object):
 
 def main():
 	
-	my_mode_spec = ControlModeSpecification('go_to_manipulate', initial_mode = 'stand_prep',
+	cm_spec = ControlModeSpecification('go_to_manipulate', initial_mode = 'stand_prep',
 											modes_of_interest = ['stand_prep', 'stand', 'manipulate'])
 
 	# Add manipulate as a goal (system liveness requirement)
-	my_mode_spec.add_control_mode_goal("manipulate")
+	cm_spec.add_control_mode_goal("manipulate")
 
 	print "[SYS_INIT]"
-	pprint.pprint(my_mode_spec.sys_init)
+	pprint.pprint(cm_spec.sys_init)
 	print "[ENV_INIT]"
-	pprint.pprint(my_mode_spec.env_init)
+	pprint.pprint(cm_spec.env_init)
 	print "[SYS_TRANS]"
-	pprint.pprint(my_mode_spec.sys_trans)
+	pprint.pprint(cm_spec.sys_trans)
 	print "[ENV_TRANS]"
-	pprint.pprint(my_mode_spec.env_trans)
+	pprint.pprint(cm_spec.env_trans)
 	print "[SYS_LIVENESS]"
-	pprint.pprint(my_mode_spec.sys_liveness)
+	pprint.pprint(cm_spec.sys_liveness)
 	print "[ENV_LIVENESS]"
-	pprint.pprint(my_mode_spec.env_liveness)
+	pprint.pprint(cm_spec.env_liveness)
 
-	my_mode_spec.write_structured_slugs_file()
+	# cm_spec.write_structured_slugs_file()
+
+	vigir_spec = VigirSpecification('derp', [], [])
+
+	print "[PRECONDITIONS]"
+	pprint.pprint(vigir_spec.preconditions)
+	pprint.pprint(vigir_spec.precondition_formulas)
 
 if __name__ == "__main__":
 	main()

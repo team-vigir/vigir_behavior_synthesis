@@ -133,8 +133,16 @@ class GR1Formula(object):
 
 		return mutex_formulas
 
-	def gen_precondition_formula(self):
-		pass
+	def gen_precondition_formula(self, action, preconditions):
+		'''Conditions that have to hold for an action (prop) to be allowed.'''
+
+		neg_preconditions = map(self.neg, preconditions)
+		left_hand_side = self.disj(neg_preconditions)
+		right_hand_side = self.neg(action)
+
+		precondition_formula = self.implication(left_hand_side, right_hand_side)
+
+		return precondition_formula
 
 	# =====================================================
 	# Various helper methods
