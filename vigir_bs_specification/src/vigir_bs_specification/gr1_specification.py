@@ -32,7 +32,7 @@ class GR1Specification(object):
 	
 	"""
 
-	def __init__(self, spec_name, env_props, sys_props):
+	def __init__(self, spec_name = '', env_props = [], sys_props = []):
 		self.spec_name = spec_name
 
 		self.env_props = env_props	
@@ -45,6 +45,41 @@ class GR1Specification(object):
 		self.env_trans = list()
 		self.sys_liveness = list()
 		self.env_liveness = list()
+
+	# =====================================================
+	# Merge two or more GR(1) specifications
+	# =====================================================
+
+	def merge_gr1_specifications(self, specifications):
+		'''Component-wise mergeing of multiple GR(1) specifications.'''
+		
+		for spec in specifications:
+
+			self.env_props = self.merge_env_propositions(spec.env_props)
+			self.sys_props = self.merge_sys_propositions(spec.sys_props)
+
+			self.sys_init.extend(spec.sys_init)
+			self.env_init.extend(spec.env_init)
+			self.sys_trans.extend(spec.sys_trans)
+			self.env_trans.extend(spec.env_trans)
+			self.sys_liveness.extend(spec.sys_liveness)
+			self.env_liveness.extend(spec.env_liveness)
+
+	def merge_env_propositions(self, props):
+		return self.merge_propositions('env_props', props)
+
+	def merge_sys_propositions(self, props):
+		return self.merge_propositions('sys_props', props)
+
+	def merge_propositions(self, desired_list, props):
+		'''Merge list of propositions without duplication.'''
+
+		all_props = getattr(self, desired_list)
+		all_props.extend(props)
+
+		# Sets have no duplicates by definition
+		# Return list of props without duplicates
+		return list(set(all_props))
 
 	# =====================================================
 	# Load a GR(1) formula
@@ -61,7 +96,7 @@ class GR1Specification(object):
 	# =====================================================
 
 	def add_to_sys_init(self, formulas):	
-			self.add_to_list('sys_init', formulas)
+		self.add_to_list('sys_init', formulas)
 
 	def add_to_env_init(self, formulas):
 		self.add_to_list('env_init', formulas)
