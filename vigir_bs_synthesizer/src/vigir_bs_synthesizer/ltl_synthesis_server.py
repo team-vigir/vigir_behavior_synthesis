@@ -3,6 +3,7 @@
 import os, sys, subprocess
 
 import rospy
+import json
 
 from vigir_bs_msgs.srv import LTLSynthesis, LTLSynthesisResponse
 from vigir_bs_msgs.msg import AutomatonState, SynthesizedAutomaton, BSErrorCodes
@@ -98,10 +99,40 @@ def call_slugs_synthesizer(name):
 
     return synthesizable, name + ".json"
 
-def gen_automaton_msg_from_json(json_file, input_vars, output_vars):
-    '''...'''
+def automaton_state_from_node_info(name, info, n_in_vars):
+    '''
+    Generate an AutomatonState from the info of a node (from the json automaton
+    synthesized file.
 
+    @param name      string     The name of this state.
+    @param info      dictionary As of the writing of this doc, this dictionary
+                                has the rank, state, and transitions.
+    @param n_in_vars int        How many input variables there are
+    '''
+    state = AutomatonState()
+    state.name = name
+    state.output_valuation = info['state'][n_in_vars:]
+    state.input_valuation = info['state'][:n_in_vars]
+    state.transitions = info['trans']
+    state.rank  = info['rank']
+
+    return state
+
+def gen_automaton_msg_from_json(json_file, input_vars, output_vars):
+    '''
+    Generate a SynthesizedAutomaton file from a synthesized json automaton
+    file.
+    @param json_file   string The synthesized json automaton description.
+    @param input_vars  list   Strings of the name of the input variables.
+    @param output_vars list   Strings of the name of the output variables.
+    '''
+
+    with open(json_file) as data_file:
+        data = json.load(data_file)
     automaton = SynthesizedAutomaton()
+    automaton.output_variables = output_vars
+    automaton.input_variables = input_vars
+    automaton.automaton = [automaton_state_from_node_info(i) for i in data['nodes']]
 
     return automaton
 
