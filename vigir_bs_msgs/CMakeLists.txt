@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 2.8.3)
 project(vigir_bs_msgs)
 
 set(MSG_DEPS
-  std_msgs
-  actionlib_msgs
-  vigir_be_core
-  #vigir_be_msgs
+	std_msgs
+	actionlib_msgs
+	# vigir_be_core
+	#vigir_be_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS genmsg ${MSG_DEPS})
@@ -23,7 +23,7 @@ set(MSG_FILES
 set(SRV_FILES
 	LTLCompilation.srv
 	LTLSynthesis.srv
-    SMGenerate.srv
+	SMGenerate.srv
 )
 
 set(ACT_FILES
@@ -34,10 +34,14 @@ add_action_files(DIRECTORY action FILES ${ACT_FILES})
 add_message_files(DIRECTORY msg FILES ${MSG_FILES})
 add_service_files(DIRECTORY srv FILES ${SRV_FILES})
 
-generate_messages(DEPENDENCIES ${MSG_DEPS})
+generate_messages(
+	DEPENDENCIES
+	${MSG_DEPS}
+	vigir_be_core
+)
 
 catkin_package(
-	DEPENDS ${MSG_DEPS}
-	CATKIN_DEPENDS ${MSG_DEPS}
+	CATKIN_DEPENDS vigir_be_core ${MSG_DEPS}
+	DEPENDS vigir_be_core ${MSG_DEPS}
 )
 # The transitive dependency on message_runtime is happening automatically
