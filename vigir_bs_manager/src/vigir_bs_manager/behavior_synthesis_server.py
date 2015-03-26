@@ -53,7 +53,8 @@ class BehaviorSynthesisActionServer(object):
         if success: pass
             # Request State Machine Generation from the corresponding server
             # and also update and publish the appropriate feedback
-            # sm, error_code_value, success = self.handle_sm_generation_request()
+            # TODO: how to get the the yaml_config file?
+            # sm, error_code_value, success = self.handle_sm_generation_request(automaton, yaml_config)
 
         if success:
             self._result.error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
@@ -85,10 +86,25 @@ class BehaviorSynthesisActionServer(object):
 
         pass
 
-    def handle_sm_generation_request(self):
-        '''...'''
+    def handle_sm_generation_request(self, synthesized_automata, yaml_config):
+        '''Generate State Machine definitions based on an automaton and config
+        file.
 
-        pass
+        @param synthesized_automata SynthesizedAutomaton The automaton to
+                                                         synthesize.
+        @param yaml_config          string Path to YAML config file.
+        '''
+        response = sm_generate_client(synthesized_automata, yaml_config)
+
+        # Update success and publish feedback based on response
+        if response.error_code.value is BSErrorCodes.SUCCESS:
+            self.set_and_publish_feedback("Generated State Machine definitions")
+            success = True
+        else:
+            self.set_and_publish_feedback("Unable to generate State Machine.")
+            success = False
+
+        return response.state_definition, response.error_code.value, success
 
     def set_and_publish_feedback(self, status):
         '''Helper method for updating and publishing feedback.''' 
