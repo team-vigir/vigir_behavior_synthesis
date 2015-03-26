@@ -5,4 +5,4 @@ string config_yaml_path
 
 ---
 
-vigir_be_core/StateInstantiation state_definition
+vigir_be_core/StateInstantiation[] state_definition
