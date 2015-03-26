@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(vigir_bs_msgs)
+project(vigir_synthesis_msgs)
 
 set(MSG_DEPS
 	std_msgs
