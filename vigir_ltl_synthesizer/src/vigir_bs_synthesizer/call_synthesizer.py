@@ -3,8 +3,8 @@
 import os, sys
 import subprocess
 
-from vigir_bs_specification.atlas_specification import ControlModeSpecification
-from vigir_bs_synthesizer.StructuredSlugsParser.compiler import performConversion
+from vigir_ltl_specification.atlas_specification import ControlModeSpecification
+from vigir_ltl_synthesizer.StructuredSlugsParser.compiler import performConversion
 
 vigir_repo = os.environ['VIGIR_ROOT_DIR']
 
@@ -20,12 +20,12 @@ my_mode_spec = ControlModeSpecification(name, initial_mode = 'stand_prep',
 # Add manipulate as a goal (system liveness requirement)
 my_mode_spec.add_control_mode_goal("manipulate")
 
-# Write specification in .structuredslugs file in temp_bs_files folder
-specs_folder = os.path.join(vigir_repo, 'catkin_ws/src/vigir_behavior_synthesis/temp_bs_files')
+# Write specification in .structuredslugs file in synthesis_byproducts folder
+specs_folder = os.path.join(vigir_repo, 'catkin_ws/src/vigir_behavior_synthesis/synthesis_byproducts')
 structured_slugs_file, folder_path = my_mode_spec.write_structured_slugs_file(specs_folder)
 
 # Prepare for conversion and synthesis using slugs
-# structured_parser_path = os.path.join(vigir_repo, 'catkin_ws/src/vigir_behavior_synthesis/vigir_bs_synthesizer', "StructuredSlugsParser")
+# structured_parser_path = os.path.join(vigir_repo, 'catkin_ws/src/vigir_behavior_synthesis/vigir_ltl_synthesizer', "StructuredSlugsParser")
 # sys.path.insert(0, structured_parser_path)
 # import conversion function from slugs' compiler.py
 # from compiler import performConversion

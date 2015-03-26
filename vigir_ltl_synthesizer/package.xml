@@ -1,6 +1,6 @@
 <package>
 	
-	<name>vigir_bs_synthesizer</name>
+	<name>vigir_ltl_synthesizer</name>
 	<version>1.0.0</version>
 	<description>An interface between the Behavior Synthesis Manager and the LTL Synthesizer (slugs)</description>
 	

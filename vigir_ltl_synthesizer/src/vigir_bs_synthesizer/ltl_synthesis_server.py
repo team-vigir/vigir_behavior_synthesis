@@ -5,9 +5,9 @@ import os, sys, subprocess
 import rospy
 import json
 
-from vigir_bs_msgs.srv import LTLSynthesis, LTLSynthesisResponse
-from vigir_bs_msgs.msg import AutomatonState, SynthesizedAutomaton, BSErrorCodes
-from vigir_bs_synthesizer.StructuredSlugsParser import compiler as slugs_compiler
+from vigir_synthesis_msgs.srv import LTLSynthesis, LTLSynthesisResponse
+from vigir_synthesis_msgs.msg import AutomatonState, SynthesizedAutomaton, BSErrorCodes
+from vigir_ltl_synthesizer.StructuredSlugsParser import compiler as slugs_compiler
 
 VIGIR_ROOT_DIR = os.environ['VIGIR_ROOT_DIR']
 
@@ -140,7 +140,7 @@ def write_structured_slugs_from_msg(ltl_spec, name):
     '''...'''
     
     # The directory where specs and automata are saved:
-    specs_folder_path = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/temp_bs_files') 
+    specs_folder_path = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/synthesis_byproducts') 
 
     # The directory where this spec will be saved:
     this_folder_path = os.path.join(specs_folder_path, name)

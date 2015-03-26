@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(vigir_bs_synthesizer)
+project(vigir_ltl_synthesizer)
 
 find_package(catkin REQUIRED COMPONENTS message_generation)
 
