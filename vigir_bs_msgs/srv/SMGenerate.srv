@@ -1,5 +1,8 @@
 SynthesizedAutomaton automaton
+
 # Path to the .yaml configuration file
 string config_yaml_path
+
 ---
+
 vigir_be_core/StateInstantiation state_definition

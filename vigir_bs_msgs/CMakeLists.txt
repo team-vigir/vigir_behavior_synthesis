@@ -4,7 +4,6 @@ project(vigir_bs_msgs)
 set(MSG_DEPS
 	std_msgs
 	actionlib_msgs
-	# vigir_be_core
 	#vigir_be_msgs
 )
 
