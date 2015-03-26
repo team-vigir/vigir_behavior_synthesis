@@ -11,6 +11,7 @@ CMakeLists.txt.user
 
 # Synthesis-specific
 temp_bs_files
+synthesis_byproducts
 
 # Other
 *~
