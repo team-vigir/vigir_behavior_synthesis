@@ -4,10 +4,9 @@ project(vigir_bs_msgs)
 set(MSG_DEPS
 	std_msgs
 	actionlib_msgs
-	#vigir_be_msgs
 )
 
-find_package(catkin REQUIRED COMPONENTS genmsg ${MSG_DEPS})
+find_package(catkin REQUIRED genmsg ${MSG_DEPS})
 # message_generation does not need to be listed explicitly, it is referenced implicitly by actionlib_msgs
 
 set(MSG_FILES
@@ -39,8 +38,5 @@ generate_messages(
 	vigir_be_core
 )
 
-catkin_package(
-	CATKIN_DEPENDS vigir_be_core ${MSG_DEPS}
-	DEPENDS vigir_be_core ${MSG_DEPS}
-)
+catkin_package(DEPENDS ${MSG_DEPS})
 # The transitive dependency on message_runtime is happening automatically
