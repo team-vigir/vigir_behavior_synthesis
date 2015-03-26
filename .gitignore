@@ -15,3 +15,4 @@ temp_bs_files
 # Other
 *~
 .DS_Store
+*.swp
