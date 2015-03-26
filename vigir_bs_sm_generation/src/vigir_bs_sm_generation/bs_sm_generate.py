@@ -9,7 +9,6 @@ import logging
 from vigir_bs_msgs.srv import *
 from vigir_bs_msgs.msg import *
 from vigir_be_core.msg import StateInstantiation
-# [END] ROS CODE
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
@@ -43,12 +42,22 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 #            lines.append("parameter_value = {0}".format(self.parameter_value))
 #        return "\n".join(lines)
 
-def get_transitions(name, nodes):
+def get_automaton(name, automata):
+    """
+    Returns the automaton of a given automaton name in the list of automata.
+
+    @param name The name of the automaton of interest.
+    @param automata List of AutomatonStates.
+    """
+    i = [a.name for a in automata].index(name)
+    return automata[i]
+
+def get_transitions(name, automata):
     """
     Deduce the transition needed to go to the next states.
 
     @param name The name of the state to transitions away from
-    @param nodes The dictionary containing all of the node information.
+    @param automata List of all AutomatonState's.
     @returns A dictionary, that maps next state to indices of the input
             variables that need to be true to go to that next state.
 
@@ -59,19 +68,20 @@ def get_transitions(name, nodes):
             ...
         }
     """
-    node_info = nodes[name]
-    next_states = [str(x) for x in node_info['trans']]
+    state = get_automaton(name, automata)
+    next_states = [str(x) for x in state.transitions]
     next_states = list(set(next_states) - set([name])) # remove self loop
 
     if len(next_states) == 0:
         raise Exception("This state has no exit!")
     if len(next_states) > 1:
-        print("[INFO] Multiple next states for {0}".format(name))
+        logging.debug("Multiple next states for {0}".format(name))
 
     transitions = {}
     for next_state in next_states:
+        input_vals = get_automaton(next_state, automata).input_valuation
         transitions[next_state] = [idx for (idx, v) in
-                                   enumerate(nodes[next_state]['in_vars'])
+                                   enumerate(input_vals)
                                    if v == 1]
     return transitions
 
@@ -128,12 +138,8 @@ def get_substate_name(in_var, config):
     """
     return in_var
 
-# [BEGIN] ROS CODE
-def generate_sm(data):
-    json_file = data.json_file
-    yaml_file = data.yaml_file
-# [END] ROS CODE
 #def generate_sm(json_file, yaml_file):
+def generate_sm(data):
     """
     This method takes in a JSON file describe an automaton and a YAML file
     describing how the automaton names corresponds to real state machine names
@@ -174,40 +180,40 @@ def generate_sm(data):
            up complete"), sort these conditions based on the order of the input
            variable in the JSON file.
 
-    @param json_file Path to file containing the automaton specifications.
-    @param yaml_file Path to file containing automaton configuration.
-    @param outfile Path to file to save results to.
+    @param data An instance of SMGenerateRequest with a SynthesizedAutomaton.
+    @return A SMGenerateResponse with generated StateInstantiation.
     """
-        
+    json_file = data.json_file
+    all_out_vars = data.output_variables
+    all_in_vars = data.input_variables
+    automata = data.automaton
+    yaml_file = data.yaml_file
+
     with open(yaml_file) as yf:
         config = yaml.load(yf)
-
-    with open(json_file) as data_file:    
-        info = json.load(data_file)
-    variables = info['variables']
-    n_in_vars = len(config['input'])
 
     # Two short helper functions
     def get_in_var_name(i):
         """Get the input variable name at index [i] in [in_vars] dict."""
-        return variables[i]
+        return all_in_vars[i]
     def get_out_var_name(i):
         """Get the output variable name at index [i] in [out_vars] dict."""
-        return variables[n_in_vars + i]
+        return all_out_vars[i]
 
-    nodes = reformat(info['nodes'], n_in_vars)
     input_vars = config['input']
 
     # Initialize list of StateInstantiation's with parent SI.
     SIs = [StateInstantiation("/", "CLASS_STATEMACHINE", ['done', 'failed'],
                               [], initial_state = "/State0")]
-    for name, data in sorted(nodes.items(), key=lambda x: x[0]):
+    for state in automata:
+        name = state.name
+        out_vals = state.output_valuations
         logging.debug("Data for state {0}".format(name))
-        transitions = get_transitions(name, nodes)
+        transitions = get_transitions(name, automata)
 
         # extract what output variables the current state is outputting
         curr_state_output_vars = [get_out_var_name(i)
-                                  for i, v in enumerate(data['out_vars'])
+                                  for i, v in enumerate(out_vals)
                                   if v == 1]
         perform_sms = set()
         class_decl_to_out_map = {} # the map from class declaration to its out_map
@@ -281,16 +287,11 @@ def generate_sm(data):
                               str(internal_outcomes), str(internal_maps)]
         SIs.append(si)
 
-    # [BEGIN] ROS CODE
     return SMGenerateResponse(SIs)
-    # [END] ROS CODE
-    return SIs
 
 if __name__ == "__main__":
-    # [BEGIN] ROS CODE
     rospy.init_node('bs_sm_generate')
     s = rospy.Service('sm_generate', SMGenerate, generate_sm)
-    # [END] ROS CODE
 
     #json_file = "examples/all_modes_pickup/pickup.json"
     #yaml_file = "examples/all_modes_pickup/pickup.yaml"
