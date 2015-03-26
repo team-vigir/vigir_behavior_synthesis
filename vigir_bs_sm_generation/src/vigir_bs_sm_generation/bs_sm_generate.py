@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import json
 import yaml
 import rospy
 import sys
@@ -41,6 +40,20 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 #        if len(self.parameter_value) > 0:
 #            lines.append("parameter_value = {0}".format(self.parameter_value))
 #        return "\n".join(lines)
+
+def new_si(state_path, state_class, outcomes, transitions, initial_state="",
+    p_names = [], p_vals = []):
+    """ Create a new SI with optional parameters.  """
+    si = StateInstantiation()
+    si.state_path = state_path
+    si.state_class = state_class
+    si.outcomes = outcomes
+    si.transitions = transitions
+    si.initial_state_name = initial_state
+    si.parameter_names = p_names
+    si.parameter_values = p_vals
+
+    return si
 
 def get_automaton(name, automata):
     """
@@ -122,10 +135,14 @@ def add_subsubstate(name, var_config, SIs):
     state_class = var_config['class']
     # For Substates within a ConcurrentState, you don't need to remap their
     # outcomes.
-    sub_si = StateInstantiation(state_path, state_class, [], [])
     if 'params' in var_config:
-        sub_si.parameter_name = var_config['params']['names']
-        sub_si.parameter_value = var_config['params']['values']
+        p_names = var_config['params']['names']
+        p_vals = var_config['params']['values']
+    else:
+        p_names = []
+        p_vals = []
+    sub_si = new_si(state_path, state_class, [], [], p_names=p_names,
+                    p_vals=p_vals)
     SIs.append(sub_si)
 
 def get_substate_name(in_var, config):
@@ -183,11 +200,11 @@ def generate_sm(data):
     @param data An instance of SMGenerateRequest with a SynthesizedAutomaton.
     @return A SMGenerateResponse with generated StateInstantiation.
     """
-    json_file = data.json_file
-    all_out_vars = data.output_variables
-    all_in_vars = data.input_variables
-    automata = data.automaton
-    yaml_file = data.yaml_file
+    sa = data.automaton # SynthesizedAutomaton
+    all_out_vars = sa.output_variables
+    all_in_vars = sa.input_variables
+    automata = sa.automaton
+    yaml_file = data.config_yaml_path
 
     with open(yaml_file) as yf:
         config = yaml.load(yf)
@@ -203,11 +220,11 @@ def generate_sm(data):
     input_vars = config['input']
 
     # Initialize list of StateInstantiation's with parent SI.
-    SIs = [StateInstantiation("/", "CLASS_STATEMACHINE", ['done', 'failed'],
+    SIs = [new_si("/", "CLASS_STATEMACHINE", ['done', 'failed'],
                               [], initial_state = "/State0")]
     for state in automata:
         name = state.name
-        out_vals = state.output_valuations
+        out_vals = state.output_valuation
         logging.debug("Data for state {0}".format(name))
         transitions = get_transitions(name, automata)
 
@@ -279,19 +296,25 @@ def generate_sm(data):
             logging.debug("{0} -> {1} if: {2}".format(name, next_state,
                                               substate_name_to_out))
 
-        si = StateInstantiation("/State{0}".format(name), "ConcurrentState",
-                                concurrent_si_outcomes,
-                                concurrent_si_transitions)
-        si.parameter_name = ["states", "outcomes", "outcome_mapping"]
-        si.parameter_value = [str(internal_state_names),
-                              str(internal_outcomes), str(internal_maps)]
+        p_names = ["states", "outcomes", "outcome_mapping"]
+        p_vals = [str(internal_state_names), str(internal_outcomes),
+                  str(internal_maps)]
+        si = new_si("/State{0}".format(name), "ConcurrentState",
+                    concurrent_si_outcomes, concurrent_si_transitions,
+                    p_names=p_names, p_vals=p_vals)
         SIs.append(si)
 
     return SMGenerateResponse(SIs)
 
-if __name__ == "__main__":
+def sm_gen_server():
+    '''Start the SM Generation server.'''
     rospy.init_node('bs_sm_generate')
     s = rospy.Service('sm_generate', SMGenerate, generate_sm)
+    rospy.loginfo("Ready to receive SM Generation requests.")
+    rospy.spin()
+
+if __name__ == "__main__":
+    sm_gen_server()
 
     #json_file = "examples/all_modes_pickup/pickup.json"
     #yaml_file = "examples/all_modes_pickup/pickup.yaml"
