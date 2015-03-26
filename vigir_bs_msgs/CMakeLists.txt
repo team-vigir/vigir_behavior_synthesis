@@ -4,8 +4,8 @@ project(vigir_bs_msgs)
 set(MSG_DEPS
   std_msgs
   actionlib_msgs
+  vigir_be_core
   #vigir_be_msgs
-  #vigir_be_core
 )
 
 find_package(catkin REQUIRED COMPONENTS genmsg ${MSG_DEPS})
@@ -23,6 +23,7 @@ set(MSG_FILES
 set(SRV_FILES
 	LTLCompilation.srv
 	LTLSynthesis.srv
+    SMGenerate.srv
 )
 
 set(ACT_FILES
