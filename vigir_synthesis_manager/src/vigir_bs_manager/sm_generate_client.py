@@ -2,7 +2,7 @@
 
 import rospy
 
-from vigir_bs_msgs.srv import SMGenerate
+from vigir_synthesis_msgs.srv import SMGenerate
 
 def sm_generate_client(synthesized_automata, yaml_config):
     '''Client'''

@@ -2,8 +2,8 @@
 
 import rospy
 
-from vigir_bs_msgs.srv import LTLCompilation
-# from vigir_bs_msgs.msg import LTLSpecification, BSErrorCodes
+from vigir_synthesis_msgs.srv import LTLCompilation
+# from vigir_synthesis_msgs.msg import LTLSpecification, BSErrorCodes
 
 def ltl_compilation_client():
     '''Client'''

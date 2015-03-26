@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 
-import roslib; roslib.load_manifest('vigir_bs_manager')
+import roslib; roslib.load_manifest('vigir_synthesis_manager')
 
 import rospy
 import actionlib
 
-from vigir_bs_msgs.msg import BehaviorSynthesisAction, BehaviorSynthesisFeedback, BehaviorSynthesisResult, BSErrorCodes
+from vigir_synthesis_msgs.msg import BehaviorSynthesisAction, BehaviorSynthesisFeedback, BehaviorSynthesisResult, BSErrorCodes
 
 import ltl_compilation_client
 
@@ -31,8 +31,8 @@ class BehaviorSynthesisActionServer(object):
         self.set_and_publish_feedback("Received behavior synthesis request.")
 
         # Examine the goal message
-        bs_goal = goal.request
-        bs_options = goal.synthesis_options
+        synthesis_goal = goal.request
+        synthesis_options = goal.synthesis_options
 
         #TODO: receive a callback when a preempt request is received
         if self._as.is_preempt_requested():

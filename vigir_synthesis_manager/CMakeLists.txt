@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(vigir_bs_manager)
+project(vigir_synthesis_manager)
 
 find_package(catkin REQUIRED actionlib)
 

@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 
-import roslib; roslib.load_manifest('vigir_bs_manager')
+import roslib; roslib.load_manifest('vigir_synthesis_manager')
 
 import rospy
 import actionlib
 
-from vigir_bs_msgs.msg import *
+from vigir_synthesis_msgs.msg import *
 
 def behavior_synthesis_client():
     # Creates the SimpleActionClient, passing the type of the action
