@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(vigir_bs_specification)
+project(vigir_ltl_specification)
 
 find_package(catkin REQUIRED COMPONENTS message_generation)
 

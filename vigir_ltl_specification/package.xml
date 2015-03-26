@@ -1,6 +1,6 @@
 <package>
 	
-	<name>vigir_bs_specification</name>
+	<name>vigir_ltl_specification</name>
 	<version>1.0.0</version>
 	<description>A service that compiles a complete LTL/GR(1) specification from various sources, including user input, initial conditions, system constraints, etc.</description>
 	

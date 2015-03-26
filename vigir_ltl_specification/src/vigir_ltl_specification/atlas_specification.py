@@ -14,16 +14,34 @@ class VigirSpecification(GR1Specification):
 	"""
 	The class encodes requirements related to Team ViGIR's software as GR(1) formulas, written in the structured slugs format. """
 	
-	def __init__(self, spec_name, env_props, sys_props):
+	def __init__(self, spec_name, env_props = [], sys_props = []):
 		super(VigirSpecification, self).__init__(spec_name, env_props, sys_props)
 		
 		# ...
 		config_files = ['atlas_preconditions.yaml', 'vigir_preconditions.yaml']
 		self.preconditions = self.load_preconditions_from_config_files(config_files)
 
-		self.precondition_formulas = self.gen_formulas_from_preconditions()
+		#TODO: Actions and preconditions need to be added to sys and env props, respectively
+		# This is assuming that all preconditions are completion (env) propositions.
+
+		self.sys_trans.extend(self.gen_formulas_from_preconditions())
+
+	def recurse_action_preconditions(prop):
+		'''
+		Recursively get the preconditions of the given proposition,
+		as well as the preconditions of those preconditions, etc.
+		'''
+
+		pass
+
+	def get_action_preconditions(prop):
+		'''Given a proposition, find its preconditions.'''
+
+		pass
 
 	def gen_formulas_from_preconditions(self):
+		'''...'''
+		#TODO: Assume preconditions are completion props and action is an activiation prop.
 
 		precondition_formula = FastSlowFormula([], [])
 		precondition_formulas = list()
@@ -177,11 +195,18 @@ def main():
 
 	# cm_spec.write_structured_slugs_file()
 
-	vigir_spec = VigirSpecification('derp', [], [])
+	vigir_spec = VigirSpecification('preconditions')
 
 	print "[PRECONDITIONS]"
 	pprint.pprint(vigir_spec.preconditions)
-	pprint.pprint(vigir_spec.precondition_formulas)
+	pprint.pprint(vigir_spec.sys_trans)
+
+	complete_spec = GR1Specification('pickup')
+	individual_specs = [cm_spec, vigir_spec]
+
+	complete_spec.merge_gr1_specifications(individual_specs)
+
+	complete_spec.write_structured_slugs_file()
 
 if __name__ == "__main__":
 	main()

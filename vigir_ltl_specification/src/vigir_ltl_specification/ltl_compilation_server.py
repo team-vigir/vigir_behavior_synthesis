@@ -2,9 +2,9 @@
 
 import rospy
 
-from vigir_bs_msgs.srv import LTLCompilation, LTLCompilationResponse
-from vigir_bs_msgs.msg import LTLSpecification, BSErrorCodes
-from vigir_bs_specification.atlas_specification import ControlModeSpecification
+from vigir_synthesis_msgs.srv import LTLCompilation, LTLCompilationResponse
+from vigir_synthesis_msgs.msg import LTLSpecification, BSErrorCodes
+from vigir_ltl_specification.atlas_specification import ControlModeSpecification
 
 def handle_ltl_compilation(request):
     '''Responsible for putting together a complete LTL specification.'''
