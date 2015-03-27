@@ -8,12 +8,19 @@ import actionlib
 from vigir_synthesis_msgs.msg import BehaviorSynthesisAction, BehaviorSynthesisFeedback, BehaviorSynthesisResult, BSErrorCodes
 
 import ltl_compilation_client
+import ltl_synthesis_client
 import sm_generate_client
 
-SYSTEM = "atlas"
-
 class BehaviorSynthesisActionServer(object):
-    '''...'''
+    '''ROS Action server that handles the following processes:
+
+    * LTL Specification Compilation
+    * LTL Synthesis (resulting in an automaton)
+    * State Machine Generation/Instantiation
+
+    Depending on the synthesis request's options, all 
+    or a subset of the above step will be carried out.
+    '''
 
     # Messages that are used to publish feedback/result
     _feedback = BehaviorSynthesisFeedback()
@@ -21,7 +28,8 @@ class BehaviorSynthesisActionServer(object):
 
     def __init__(self, name):
         self._action_name = name
-        self._as = actionlib.SimpleActionServer(self._action_name, BehaviorSynthesisAction, execute_cb=self.execute_cb, auto_start = False)
+        self._as = actionlib.SimpleActionServer(self._action_name, BehaviorSynthesisAction,
+                                                execute_cb = self.execute_cb, auto_start = False)
         self._as.start()
 
     def execute_cb(self, goal):
@@ -46,18 +54,18 @@ class BehaviorSynthesisActionServer(object):
         if success:  
             # Request LTL Specification Compilation from the corresponding server
             # and also update and publish the appropriate feedback
-            ltl_spec, error_code_value, success = self.handle_ltl_specification_request()
+            ltl_spec, error_code_value, success = self.handle_ltl_specification_request(synthesis_goal)
 
-        if success: pass
+        if success:
             # Request LTL Synthesis from the corresponding server
             # and also update and publish the appropriate feedback
-            # automaton, error_code_value, success = self.handle_ltl_synthesis_request()
+            automaton, error_code_value, success = self.handle_ltl_synthesis_request(ltl_spec)
 
         if success: pass
             # Request State Machine Generation from the corresponding server
             # and also update and publish the appropriate feedback
             # TODO: how to get the the yaml_config file?
-            # sm, error_code_value, success = self.handle_sm_generation_request(automaton, SYSTEM)
+            # sm, error_code_value, success = self.handle_sm_generation_request(automaton, synthesis_goal.system)
 
         if success:
             self._result.error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
@@ -67,12 +75,17 @@ class BehaviorSynthesisActionServer(object):
         else:
             self._result.error_code = BSErrorCodes(error_code_value)
             rospy.logerr('%s: Failed' % self._action_name)
-            self._as.set_failed(self._result)
+            self._as.set_aborted(self._result)
     
-    def handle_ltl_specification_request(self):
+    def handle_ltl_specification_request(self, synthesis_goal):
         '''...'''
 
-        response = ltl_compilation_client.ltl_compilation_client()
+        system = synthesis_goal.system
+        goals = synthesis_goal.goals
+        initial_conditions = synthesis_goal.initial_conditions
+        custom_ltl = synthesis_goal.ltl_specification #TODO: handle this (currently ignored)
+
+        response = ltl_compilation_client.ltl_compilation_client(system, goals, initial_conditions)
         
         # Update success and publish feedback based on response
         if response.error_code.value is BSErrorCodes.SUCCESS:
@@ -84,10 +97,19 @@ class BehaviorSynthesisActionServer(object):
 
         return response.ltl_specification, response.error_code.value, success
 
-    def handle_ltl_synthesis_request(self):
+    def handle_ltl_synthesis_request(self, ltl_spec):
         '''...'''
 
-        pass
+        response = ltl_synthesis_client.ltl_synthesis_client(ltl_spec, '') # no name
+
+        if response.synthesizable:
+            self.set_and_publish_feedback("The LTL Specification is synthesizable")
+            success = True
+        else:
+            self.set_and_publish_feedback("The LTL Specification is unsynthesizable")
+            success = False
+
+        return response.automaton, response.error_code, success
 
     def handle_sm_generation_request(self, synthesized_automata, system):
         '''Generate State Machine definitions based on an automaton and config
