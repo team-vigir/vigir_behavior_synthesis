@@ -96,27 +96,6 @@ def reformat(nodes, n_in_vars):
         dic.pop('state', None)
     return nodes
 
-def add_subsubstate(name, var_config, SIs):
-    """
-    Add a substate to the [name] concurrent substate.
-    @param name       The name of the substate.
-    @param var_config The configuration for this variable.
-    @param SIs        The global list of state instantiations.
-    """
-    state_path = "/State{0}/State{1}".format(name, name)
-    state_class = var_config['class']
-    # For Substates within a ConcurrentState, you don't need to remap their
-    # outcomes.
-    if 'params' in var_config:
-        p_names = var_config['params']['names']
-        p_vals = var_config['params']['values']
-    else:
-        p_names = []
-        p_vals = []
-    sub_si = new_si(state_path, state_class, [], [], p_names=p_names,
-                    p_vals=p_vals)
-    SIs.append(sub_si)
-
 def get_substate_name(in_var, config):
     """
     Return the readable neam of the substate associated with an input variable.
@@ -196,7 +175,7 @@ def generate_sm(request):
         return all_out_vars[i]
 
     # Initialize list of StateInstantiation's with parent SI.
-    SIs = [new_si("/", "CLASS_STATEMACHINE", ['done', 'failed'],
+    SIs = [new_si("/", "CLASS_STATEMACHINE", ['finished', 'failed'],
                               [], initial_state = "/State0")]
     for state in automata:
         name = state.name
@@ -220,17 +199,16 @@ def generate_sm(request):
         internal_maps = []
         for out_var in curr_state_output_vars:
             var_config = config[out_var]
-            class_decl = var_config['class']
+            class_decl = var_config['class_decl']
             out_map = var_config['output_mapping']
             class_decl_to_out_map[class_decl] = out_map
 
+            # Decide if this is an activation output or not.
             is_activation = False
             for in_var, state_outcome in out_map.items():
                 if in_var in all_in_vars: # This is an Activation variable
                     is_activation = True
                     in_var_to_class_decl[in_var] = class_decl
-
-                    add_subsubstate(name, var_config, SIs)
                     break
             if not is_activation:
                 perform_sms.add(class_decl)
@@ -248,7 +226,7 @@ def generate_sm(request):
                         class_decl_to_out_map[class_decl][in_var]
                 else: # Sensor variable
                     var_config = config[in_var]
-                    class_decl = var_config['class']
+                    class_decl = var_config['class_decl']
                     out_map = var_config['output_mapping']
                     class_decl_to_out_map[class_decl] = out_map
                     in_var_to_class_decl[in_var] = class_decl
@@ -256,7 +234,6 @@ def generate_sm(request):
                     substate_name_to_out[ss_name] =\
                         class_decl_to_out_map[class_decl][in_var]
 
-                    add_subsubstate(name, var_config, SIs)
                 internal_state_names[ss_name] = in_var_to_class_decl[in_var]
 
             next_state_name = "State{0}".format(next_state)
