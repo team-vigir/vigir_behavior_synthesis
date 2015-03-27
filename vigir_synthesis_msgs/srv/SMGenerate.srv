@@ -1,7 +1,7 @@
 SynthesizedAutomaton automaton
 
-# Path to the .yaml configuration file
-string config_yaml_path
+# System name, e.g. "atlas"
+string system
 
 ---
 
