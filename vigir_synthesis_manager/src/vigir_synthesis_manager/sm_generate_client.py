@@ -14,7 +14,7 @@ def sm_generate_client(synthesized_automata, system):
         response = sm_generate_srv(synthesized_automata, system)
         
         #DEBUG
-        for si i response.state_definition:
+        for si in response.state_definition:
             print(si)
         
         return response
