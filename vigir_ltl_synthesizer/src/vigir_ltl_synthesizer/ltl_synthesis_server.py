@@ -50,6 +50,8 @@ def handle_ltl_synthesis(request):
     # Finally, step out of the specification's / automaton's directory
     os.chdir(initial_dir)
 
+    #FIX: Having synthesizable as a separate field is redundant since there's an error_code for that
+
     return LTLSynthesisResponse(synthesizable, automaton, error_code)
 
 def handle_slugs_output(synthesizable, automaton_file, input_vars, output_vars):
@@ -172,49 +174,49 @@ def write_structured_slugs_from_msg(ltl_spec, name):
 
 def _write_input(ltl_spec, spec_file):
     spec_file.write("[INPUT]\n")
-    for prop in spec.env_props:
+    for prop in ltl_spec.env_props:
         spec_file.write(prop + "\n")
     spec_file.write("\n")
 
 def _write_output(ltl_spec, spec_file):
     spec_file.write("[OUTPUT]\n")
-    for prop in spec.sys_props:
+    for prop in ltl_spec.sys_props:
         spec_file.write(prop + "\n")
     spec_file.write("\n")
 
 def _write_sys_init(ltl_spec, spec_file):
     spec_file.write("[SYS_INIT]\n")
-    for formula in spec.sys_init:
+    for formula in ltl_spec.sys_init:
         spec_file.write(formula + "\n")
     spec_file.write("\n")
 
 def _write_env_init(ltl_spec, spec_file):
     spec_file.write("[ENV_INIT]\n")
-    for formula in spec.env_init:
+    for formula in ltl_spec.env_init:
         spec_file.write(formula + "\n")
     spec_file.write("\n")
 
 def _write_sys_trans(ltl_spec, spec_file):
     spec_file.write("[SYS_TRANS]\n")
-    for formula in spec.sys_trans:
+    for formula in ltl_spec.sys_trans:
         spec_file.write(formula + "\n")
     spec_file.write("\n")
 
 def _write_env_trans(ltl_spec, spec_file):
     spec_file.write("[ENV_TRANS]\n")
-    for formula in spec.env_trans:
+    for formula in ltl_spec.env_trans:
         spec_file.write(formula + "\n")
     spec_file.write("\n")
 
 def _write_sys_liveness(ltl_spec, spec_file):
     spec_file.write("[SYS_LIVENESS]\n")
-    for formula in spec.sys_liveness:
+    for formula in ltl_spec.sys_liveness:
         spec_file.write(formula + "\n")
     spec_file.write("\n")
 
 def _write_env_liveness(ltl_spec, spec_file):
     spec_file.write("[ENV_LIVENESS]\n")
-    for formula in spec.env_liveness:
+    for formula in ltl_spec.env_liveness:
         spec_file.write(formula + "\n")
     spec_file.write("\n")
 
