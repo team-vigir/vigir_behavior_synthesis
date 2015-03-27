@@ -1,6 +1,6 @@
 <package>
 	
-	<name>vigir_bs_sm_generation</name>
+	<name>vigir_sm_generation</name>
 	<version>1.0.0</version>
 	<description>
         A service that converts the output of the LTL Synthesizer and create

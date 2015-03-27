@@ -5,8 +5,8 @@ import rospy
 import sys
 import logging
 
-from vigir_bs_msgs.srv import *
-from vigir_bs_msgs.msg import *
+from vigir_synthesis_msgs.srv import *
+from vigir_synthesis_msgs.msg import *
 from vigir_be_core.msg import StateInstantiation
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
@@ -308,7 +308,7 @@ def generate_sm(data):
 
 def sm_gen_server():
     '''Start the SM Generation server.'''
-    rospy.init_node('bs_sm_generate')
+    rospy.init_node('sm_generation')
     s = rospy.Service('sm_generate', SMGenerate, generate_sm)
     rospy.loginfo("Ready to receive SM Generation requests.")
     rospy.spin()
