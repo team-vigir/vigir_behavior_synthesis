@@ -1,19 +1,28 @@
+# Behavior Synthesis error code
+
 int32 value
 
+# Error code constants:
+
 # Overall result
-int32 SUCCESS=1
-int32 FAILURE=99999
+int32 SUCCESS = 1
+int32 FAILURE = 99999
 
 # Synthesis management errors
-int32 BEHAVIOR_SYNTHESIS_FAILED=-1
+int32 BEHAVIOR_SYNTHESIS_FAILED = -1
+int32 PREEMPTED = -9
+# ...
 
 # Specification compilation errors
-int32 LTL_SPEC_COMPILATION_FAILED=-1
+int32 LTL_SPEC_COMPILATION_FAILED = -10
+# ...
 
 # LTL Synthesis errors
-int32 SPEC_UNSYNTHESIZABLE=-20
-# ... other
-int32 SYNTHESIS_FAILED=-29
+int32 SYNTHESIS_FAILED = -20
+int32 SPEC_UNSYNTHESIZABLE = -21
+# ... 
 
 # State machine generation errors
+int32 SM_GENERATION_FAILED = -30
 int32 NO_SYSTEM_CONFIG = -31
+# ...
