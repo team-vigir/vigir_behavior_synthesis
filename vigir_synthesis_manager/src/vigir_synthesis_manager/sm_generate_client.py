@@ -4,15 +4,14 @@ import rospy
 
 from vigir_synthesis_msgs.srv import SMGenerate
 
-def sm_generate_client(synthesized_automata, yaml_config):
-    '''Client'''
+def sm_generate_client(synthesized_automata, system):
+    '''A wrapper for a call to the SMGenerate service.'''
 
     rospy.wait_for_service('sm_generate')
     
     try:
         sm_generate_srv = rospy.ServiceProxy('sm_generate', SMGenerate)
-        yaml_config = "../vigir_repo/catkin_ws/src/vigir_behavior_synthesis/examples/all_modes_pickup/pickup.yaml"
-        response = sm_generate_srv(synthesized_automata, yaml_config)
+        response = sm_generate_srv(synthesized_automata, system)
         
         #DEBUG
         for si i response.state_definition:

@@ -8,6 +8,9 @@ import actionlib
 from vigir_synthesis_msgs.msg import BehaviorSynthesisAction, BehaviorSynthesisFeedback, BehaviorSynthesisResult, BSErrorCodes
 
 import ltl_compilation_client
+import sm_generate_client
+
+SYSTEM = "atlas"
 
 class BehaviorSynthesisActionServer(object):
     '''...'''
@@ -54,7 +57,7 @@ class BehaviorSynthesisActionServer(object):
             # Request State Machine Generation from the corresponding server
             # and also update and publish the appropriate feedback
             # TODO: how to get the the yaml_config file?
-            # sm, error_code_value, success = self.handle_sm_generation_request(automaton, yaml_config)
+            # sm, error_code_value, success = self.handle_sm_generation_request(automaton, SYSTEM)
 
         if success:
             self._result.error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
@@ -86,15 +89,15 @@ class BehaviorSynthesisActionServer(object):
 
         pass
 
-    def handle_sm_generation_request(self, synthesized_automata, yaml_config):
+    def handle_sm_generation_request(self, synthesized_automata, system):
         '''Generate State Machine definitions based on an automaton and config
         file.
 
         @param synthesized_automata SynthesizedAutomaton The automaton to
                                                          synthesize.
-        @param yaml_config          string Path to YAML config file.
+        @param system               string System name. e.g. "atlas"
         '''
-        response = sm_generate_client(synthesized_automata, yaml_config)
+        response = sm_generate_client.sm_generate_client(synthesized_automata, system)
 
         # Update success and publish feedback based on response
         if response.error_code.value is BSErrorCodes.SUCCESS:
