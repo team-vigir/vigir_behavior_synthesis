@@ -1,19 +1,16 @@
-# The LTL Compilation request consists bits of 
-# partial information in a structured format.
+# The LTL Compilation request consists of a 
+# partial specification in a structured format.
 # The service will fill in the gaps 
 # and return a complete LTL formula.
 
-# The system's initial conditions.
-# Provided by the user when offline.
-# Can be inferred when the system is online.
-string[] initial_conditions
+# Robot/system to be used for LTL specification compilation
+string system
 
 # The system's goals, usually provided by the user
 string[] goals
 
-# Robot/system to be used for LTL specification compilation
-# For Team ViGIR and the DRC, this field should be set to 'atlas'
-string system
+# The system's initial conditions.
+string[] initial_conditions
 
 ---
 
