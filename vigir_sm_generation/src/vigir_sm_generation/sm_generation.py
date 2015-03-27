@@ -5,8 +5,8 @@ import rospy
 import sys
 import logging
 
-from vigir_synthesis_msgs.srv import *
-from vigir_synthesis_msgs.msg import *
+from vigir_synthesis_msgs.srv import SMGenerate, SMGenerateResponse
+from vigir_synthesis_msgs.msg import BSErrorCodes
 from vigir_be_core.msg import StateInstantiation
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
@@ -163,8 +163,8 @@ def generate_sm(request):
         with open(yaml_file) as yf:
             config = yaml.load(yf)
     else:
-        return SMGenerateResponse([])
-
+        error_code = BSErrorCodes(BSErrorCodes.NO_SYSTEM_CONFIG)
+        return SMGenerateResponse([], error_code)
 
     # Two short helper functions
     def get_in_var_name(i):
@@ -257,7 +257,7 @@ def generate_sm(request):
                     p_names=p_names, p_vals=p_vals)
         SIs.append(si)
 
-    return SMGenerateResponse(SIs)
+    return SMGenerateResponse(SIs, BSErrorCodes(BSErrorCodes.SUCCESS))
 
 def sm_gen_server():
     '''Start the SM Generation server.'''
