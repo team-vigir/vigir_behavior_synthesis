@@ -19,6 +19,7 @@ LTLSpecification ltl_specification
 
 # System constants
 # Currently only Atlas is supported
+# String constants are defined without quotes ('', "")
 
-string ATLAS = 'atlas'
-string OTHER = 'other'
+string ATLAS = atlas
+string OTHER = other
