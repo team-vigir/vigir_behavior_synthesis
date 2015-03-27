@@ -16,4 +16,4 @@ int32 SPEC_UNSYNTHESIZABLE=-20
 int32 SYNTHESIS_FAILED=-29
 
 # State machine generation errors
-# ...
+int32 NO_SYSTEM_CONFIG = -31

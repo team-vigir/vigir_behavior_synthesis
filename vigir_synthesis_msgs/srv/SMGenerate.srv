@@ -6,3 +6,6 @@ string system
 ---
 
 vigir_be_core/StateInstantiation[] state_definition
+
+# Errors when trying to generating StateInstantiations
+BSErrorCodes error_code
