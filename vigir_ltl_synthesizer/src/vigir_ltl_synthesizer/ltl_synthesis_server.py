@@ -43,7 +43,7 @@ def handle_ltl_synthesis(request):
         synthesizable = False
         automaton = SynthesizedAutomaton() # Return empty automaton
         error_code = BSErrorCodes(BSErrorCodes.SYNTHESIS_FAILED)
-        rospy.logerr('Could not infer synthesizability from SLUGS output!\n%s' % str(e))
+        rospy.logerr('Could not infer synthesizability from SLUGS output!\n %s' % str(e))
 
     #TODO: Find a way to visualize automata without relying on LTLMoP
 
@@ -99,7 +99,9 @@ def call_slugs_synthesizer(name):
     synthesis_process = subprocess.Popen(slugs_cmd, stdout=subprocess.PIPE, preexec_fn=os.setsid)
     os.waitpid(synthesis_process.pid, 0)
 
-    return synthesizable, name + ".json"
+    automaton_file = name + ".json"
+
+    return synthesizable, automaton_file
 
 def automaton_state_from_node_info(name, info, n_in_vars):
     '''
@@ -112,10 +114,11 @@ def automaton_state_from_node_info(name, info, n_in_vars):
     @param n_in_vars int        How many input variables there are
     '''
     state = AutomatonState()
-    state.name = name
+    state.name = str(name) # convert integer to string
+
     state.output_valuation = info['state'][n_in_vars:]
     state.input_valuation = info['state'][:n_in_vars]
-    state.transitions = info['trans']
+    state.transitions = [str(t) for t in info['trans']] # convert integers to strings
     state.rank  = info['rank']
 
     return state
@@ -131,10 +134,15 @@ def gen_automaton_msg_from_json(json_file, input_vars, output_vars):
 
     with open(json_file) as data_file:
         data = json.load(data_file)
+    
     automaton = SynthesizedAutomaton()
     automaton.output_variables = output_vars
     automaton.input_variables = input_vars
-    automaton.automaton = [automaton_state_from_node_info(i) for i in data['nodes']]
+    n_in_vars = len(input_vars)
+    
+    states = data['nodes'] # The automaton's states are called nodes in the synthesizer's output
+
+    automaton.automaton = [automaton_state_from_node_info(i, states[i], n_in_vars) for i in states]
 
     return automaton
 
