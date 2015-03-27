@@ -4,7 +4,7 @@
 
 	<node name="vigir_ltl_specification" pkg="vigir_ltl_specification" type="ltl_compilation_server.py" output="screen" />
 	<node name="vigir_ltl_synthesizer" pkg="vigir_ltl_synthesizer" type="ltl_synthesis_server.py" output="screen" />
-    <node name="vigir_sm_generation" pkg="vigir_bs_sm_generation" type="bs_sm_generate.py" output="screen" />
+    <node name="vigir_sm_generation" pkg="vigir_sm_generation" type="sm_generation.py" output="screen" />
 
 	<node name="vigir_behavior_synthesis" pkg="vigir_synthesis_manager" type="behavior_synthesis_server.py" output="screen" />
 
