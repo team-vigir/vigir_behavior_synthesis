@@ -13,36 +13,6 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 vigir_repo = os.environ['VIGIR_ROOT_DIR']
 
-# Fake implementation for testing
-#class StateInstantiation():
-#    def __init__(self, state_path, state_class, outcomes, transitions,
-#        initial_state=""):
-#        self.state_path = state_path
-#        self.state_class = state_class
-#        self.outcomes = outcomes
-#        self.transitions = transitions
-#        self.initial_state = initial_state
-#        self.parameter_name = []
-#        self.parameter_value = []
-#
-#    def __str__(self):
-#        lines = []
-#        if len(self.state_path) > 0:
-#            lines.append("state_path = {0}".format(self.state_path))
-#        if len(self.state_class) > 0:
-#            lines.append("state_class = {0}".format(self.state_class))
-#        if len(self.outcomes) > 0:
-#            lines.append("outcomes = {0}".format(self.outcomes))
-#        if len(self.transitions) > 0:
-#            lines.append("transitions = {0}".format(self.transitions))
-#        if len(self.initial_state) > 0:
-#            lines.append("initial_state = {0}".format(self.initial_state))
-#        if len(self.parameter_name) > 0:
-#            lines.append("parameter_name = {0}".format(self.parameter_name))
-#        if len(self.parameter_value) > 0:
-#            lines.append("parameter_value = {0}".format(self.parameter_value))
-#        return "\n".join(lines)
-
 def new_si(state_path, state_class, outcomes, transitions, initial_state="",
     p_names = [], p_vals = []):
     """ Create a new SI with optional parameters.  """
@@ -321,12 +291,3 @@ def sm_gen_server():
 
 if __name__ == "__main__":
     sm_gen_server()
-
-    #json_file = "examples/all_modes_pickup/pickup.json"
-    #yaml_file = "examples/all_modes_pickup/pickup.yaml"
-    #json_file = "examples/object_pickup/object_pickup.json"
-    #yaml_file = "examples/object_pickup/object_pickup.yaml"
-    #SIs = generate_sm(json_file, yaml_file)
-    #for si in SIs:
-    #    print("")
-    #    print(si)
