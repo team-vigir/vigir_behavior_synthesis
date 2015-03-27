@@ -5,40 +5,45 @@ import roslib; roslib.load_manifest('vigir_synthesis_manager')
 import rospy
 import actionlib
 
-from vigir_synthesis_msgs.msg import *
+from vigir_synthesis_msgs.msg import BehaviorSynthesisAction, BehaviorSynthesisGoal, BehaviorSynthesisRequest, SynthesisOptions
 
 def behavior_synthesis_client():
-    # Creates the SimpleActionClient, passing the type of the action
-    # (FibonacciAction) to the constructor.
+    '''...'''
+
+    # Create the SimpleActionClient, passing the type of the action to the constructor.
     client = actionlib.SimpleActionClient('vigir_behavior_synthesis', BehaviorSynthesisAction)
 
-    # Waits until the action server has started up and started
-    # listening for goals.
+    # Wait until the action server has started up.
     client.wait_for_server()
 
-    # Creates a goal to send to the action server.
+    # Create a goal to send to the action server.
     goal = BehaviorSynthesisGoal()
-    goal.request = BehaviorSynthesisRequest()
-    goal.request.objective = 'manipulate'
-    goal.synthesis_options = SynthesisOptions()
-    goal.synthesis_options.something = False
 
-    # Sends the goal to the action server.
+    # Fill out the request part of the message.
+    goal.request = BehaviorSynthesisRequest()
+    goal.request.system = BehaviorSynthesisRequest.ATLAS
+    goal.request.goals = ['manipulate']
+    goal.request.initial_conditions = ['stand_prep']
+    
+    # Fill ot any options (all False by default).
+    goal.synthesis_options = SynthesisOptions()
+
+    # Send the goal to the action server.
     client.send_goal(goal)
 
-    # Waits for the server to finish performing the action.
+    # Wait for the server to finish performing the action.
     client.wait_for_result()
 
-    # Prints out the result of executing the action
     return client.get_result()
 
 if __name__ == '__main__':
     
     try:
-        # Initializes a rospy node so that the SimpleActionClient can publish and subscribe over ROS.
+        # Initialize a rospy node so that the SimpleActionClient can publish and subscribe over ROS.
         rospy.init_node('behavior_synthesis_client_py')
         result = behavior_synthesis_client()
-        print('Result: %s' % str(result.error_code.value))
+        print('Result: %s \n' % str(result.error_code.value))
+        print(result.states)
     except rospy.ROSInterruptException:
         print "Program interrupted before completion"
 
