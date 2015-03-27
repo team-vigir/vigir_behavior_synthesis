@@ -11,6 +11,8 @@ from vigir_be_core.msg import StateInstantiation
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
+vigir_repo = os.environ['VIGIR_ROOT_DIR']
+
 # Fake implementation for testing
 #class StateInstantiation():
 #    def __init__(self, state_path, state_class, outcomes, transitions,
@@ -156,7 +158,7 @@ def get_substate_name(in_var, config):
     return in_var
 
 #def generate_sm(json_file, yaml_file):
-def generate_sm(data):
+def generate_sm(request):
     """
     This method takes in a JSON file describe an automaton and a YAML file
     describing how the automaton names corresponds to real state machine names
@@ -197,17 +199,23 @@ def generate_sm(data):
            up complete"), sort these conditions based on the order of the input
            variable in the JSON file.
 
-    @param data An instance of SMGenerateRequest with a SynthesizedAutomaton.
+    @param request An instance of SMGenerateRequest
     @return A SMGenerateResponse with generated StateInstantiation.
     """
-    sa = data.automaton # SynthesizedAutomaton
+    sa = request.automaton # SynthesizedAutomaton
     all_out_vars = sa.output_variables
     all_in_vars = sa.input_variables
     automata = sa.automaton
-    yaml_file = data.config_yaml_path
+    system_name = request.system
 
-    with open(yaml_file) as yf:
-        config = yaml.load(yf)
+    config = {}
+    if system_name == 'atlas':
+        yaml_file = os.path.join(vigir_repo, 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/src/vigir_sm_generation/configs/atlas.yaml')
+        with open(yaml_file) as yf:
+            config = yaml.load(yf)
+    else:
+        return SMGenerateResponse([])
+
 
     # Two short helper functions
     def get_in_var_name(i):
@@ -216,8 +224,6 @@ def generate_sm(data):
     def get_out_var_name(i):
         """Get the output variable name at index [i] in [out_vars] dict."""
         return all_out_vars[i]
-
-    input_vars = config['input']
 
     # Initialize list of StateInstantiation's with parent SI.
     SIs = [new_si("/", "CLASS_STATEMACHINE", ['done', 'failed'],
@@ -250,7 +256,7 @@ def generate_sm(data):
 
             is_activation = False
             for in_var, state_outcome in out_map.items():
-                if in_var in input_vars: # This is an Activation variable
+                if in_var in all_in_vars: # This is an Activation variable
                     is_activation = True
                     in_var_to_class_decl[in_var] = class_decl
 

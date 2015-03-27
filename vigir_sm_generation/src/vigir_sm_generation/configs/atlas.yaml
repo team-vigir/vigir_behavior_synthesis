@@ -1,0 +1,73 @@
+name: atlas
+
+pickup_a:
+    class: GraspObjectSM
+    output_mapping:
+        pickup_c: changed
+        failed : failed
+    autonomy: LOW
+manipulate_a:
+    class: ChangeControlModeActionState
+    output_mapping:
+        manipulate_c: changed
+        failed : failed
+    params:
+        names:
+            - EventState
+        values:
+            - manipulate
+    autonomy: LOW
+stand_prep_a:
+    class: ChangeControlModeActionState
+    output_mapping:
+        stand_prep_c: changed
+        failed : failed
+    params:
+        names:
+            - EventState
+        values:
+            - stand_prep
+    autonomy: LOW
+stand_a:
+    class: ChangeControlModeActionState
+    output_mapping:
+        stand_c: changed
+        failed : failed
+    params:
+        names:
+            - EventState
+        values:
+            - stand
+    autonomy: LOW
+step_a:
+    class: ChangeControlModeActionState
+    output_mapping:
+        step_c: changed
+        failed : failed
+    params:
+        names:
+            - EventState
+        values:
+            - step
+    autonomy: LOW
+walk_a:
+    class: ChangeControlModeActionState
+    output_mapping:
+        walk_c: changed
+        failed : failed
+    params:
+        names:
+            - EventState
+        values:
+            - walk
+    autonomy: LOW
+obj_detected:
+    class: SensorReading
+    output_mapping:
+        obj_detected: found
+    params:
+        names:
+            - obj_name
+        values:
+            - drill
+    autonomy: LOW
