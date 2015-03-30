@@ -8,7 +8,7 @@ import logging
 
 from vigir_synthesis_msgs.srv import SMGenerate, SMGenerateResponse
 from vigir_synthesis_msgs.msg import BSErrorCodes
-from vigir_be_core.msg import StateInstantiation
+from vigir_be_msgs.msg import StateInstantiation
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
@@ -176,7 +176,7 @@ def generate_sm(request):
         return all_out_vars[i]
 
     # Initialize list of StateInstantiation's with parent SI.
-    SIs = [new_si("/", "CLASS_STATEMACHINE", ['finished', 'failed'],
+    SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE, ['finished', 'failed'],
                               [], initial_state = "/State0")]
     for state in automata:
         name = state.name
