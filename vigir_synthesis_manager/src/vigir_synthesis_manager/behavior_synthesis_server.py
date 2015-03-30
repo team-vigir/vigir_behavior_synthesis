@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import roslib; roslib.load_manifest('vigir_synthesis_manager')
+# import roslib; roslib.load_manifest('vigir_synthesis_manager')
 
 import rospy
 import actionlib
@@ -61,15 +61,15 @@ class BehaviorSynthesisActionServer(object):
             # and also update and publish the appropriate feedback
             automaton, error_code_value, success = self.handle_ltl_synthesis_request(ltl_spec)
 
-        if success: pass
+        if success:
             # Request State Machine Generation from the corresponding server
             # and also update and publish the appropriate feedback
             # TODO: how to get the the yaml_config file?
-            # sm, error_code_value, success = self.handle_sm_generation_request(automaton, synthesis_goal.system)
+            sm, error_code_value, success = self.handle_sm_generation_request(automaton, synthesis_goal.system)
 
         if success:
             self._result.error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
-            # self._result.states = sm
+            self._result.states = sm
             rospy.loginfo('%s: Succeeded' % self._action_name)
             self._as.set_succeeded(self._result)
         else:
@@ -112,12 +112,10 @@ class BehaviorSynthesisActionServer(object):
         return response.automaton, response.error_code, success
 
     def handle_sm_generation_request(self, synthesized_automata, system):
-        '''Generate State Machine definitions based on an automaton and config
-        file.
+        '''Generate State Machine definitions based on an automaton and config file.
 
-        @param synthesized_automata SynthesizedAutomaton The automaton to
-                                                         synthesize.
-        @param system               string System name. e.g. "atlas"
+        @param synthesized_automata SynthesizedAutomaton    The automaton to synthesize.
+        @param system               string                  System name. e.g. "atlas"
         '''
         response = sm_generate_client.sm_generate_client(synthesized_automata, system)
 

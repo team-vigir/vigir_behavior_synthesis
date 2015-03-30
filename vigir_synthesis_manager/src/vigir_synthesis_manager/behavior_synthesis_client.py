@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import roslib; roslib.load_manifest('vigir_synthesis_manager')
+# import roslib; roslib.load_manifest('vigir_synthesis_manager')
 
 import rospy
 import actionlib
@@ -42,9 +42,10 @@ if __name__ == '__main__':
         # Initialize a rospy node so that the SimpleActionClient can publish and subscribe over ROS.
         rospy.init_node('behavior_synthesis_client_py')
         result = behavior_synthesis_client()
-        print('Result: %s \n' % str(result.error_code.value))
+        print('Behavior Synthesis result: %s \n' % str(result.error_code.value))
+        print('State Instantiation:')
         print(result.states)
     except rospy.ROSInterruptException:
-        print "Program interrupted before completion"
+        print "Client interrupted before completion"
 
     rospy.sleep(1.0) # Dirty way of avoiding a ROSHandshakeException
