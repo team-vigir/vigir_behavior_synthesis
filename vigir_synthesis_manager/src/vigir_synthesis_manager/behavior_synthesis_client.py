@@ -1,13 +1,11 @@
 #! /usr/bin/env python
 
-# import roslib; roslib.load_manifest('vigir_synthesis_manager')
-
 import rospy
 import actionlib
 
 from vigir_synthesis_msgs.msg import BehaviorSynthesisAction, BehaviorSynthesisGoal, BehaviorSynthesisRequest, SynthesisOptions
 
-def behavior_synthesis_client():
+def behavior_synthesis_client(system, goals, initial_conditions):
     '''...'''
 
     # Create the SimpleActionClient, passing the type of the action to the constructor.
@@ -17,19 +15,19 @@ def behavior_synthesis_client():
     client.wait_for_server()
 
     # Create a goal to send to the action server.
-    goal = BehaviorSynthesisGoal()
+    action_goal = BehaviorSynthesisGoal()
 
     # Fill out the request part of the message.
-    goal.request = BehaviorSynthesisRequest()
-    goal.request.system = BehaviorSynthesisRequest.ATLAS
-    goal.request.goals = ['manipulate']
-    goal.request.initial_conditions = ['stand_prep']
+    action_goal.request = BehaviorSynthesisRequest()
+    action_goal.request.system = system
+    action_goal.request.goals = goals
+    action_goal.request.initial_conditions = initial_conditions
     
     # Fill ot any options (all False by default).
-    goal.synthesis_options = SynthesisOptions()
+    action_goal.synthesis_options = SynthesisOptions()
 
     # Send the goal to the action server.
-    client.send_goal(goal)
+    client.send_goal(action_goal)
 
     # Wait for the server to finish performing the action.
     client.wait_for_result()
@@ -41,7 +39,14 @@ if __name__ == '__main__':
     try:
         # Initialize a rospy node so that the SimpleActionClient can publish and subscribe over ROS.
         rospy.init_node('behavior_synthesis_client_py')
-        result = behavior_synthesis_client()
+        
+        # Request arguments:
+        system = BehaviorSynthesisRequest.ATLAS
+        goals = ['manipulate']
+        initial_conditions = ['stand_prep']
+        
+        result = behavior_synthesis_client(system, goals, initial_conditions)
+
         print('Behavior Synthesis result: %s \n' % str(result.error_code.value))
         print('State Instantiation:')
         print(result.states)
