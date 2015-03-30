@@ -59,7 +59,8 @@ def get_transitions(name, automata):
     next_states = list(set(next_states) - set([name])) # remove self loop
 
     if len(next_states) == 0:
-        raise Exception("This state has no exit!")
+        print("State {s} has no transitions out of it!".format(s = name))
+        #TODO: Report an appropriate error code instead of raising and exception
     if len(next_states) > 1:
         logging.debug("Multiple next states for {0}".format(name))
 
