@@ -14,7 +14,7 @@ SynthesisOptions synthesis_options
 BSErrorCodes error_code
 
 # The synthesized behavior as a list of state instantiation descriptions
-vigir_be_core/StateInstantiation[] states
+vigir_be_msgs/StateInstantiation[] states
 
 ---
 

@@ -4,6 +4,7 @@ project(vigir_synthesis_msgs)
 set(MSG_DEPS
 	std_msgs
 	actionlib_msgs
+	vigir_be_msgs
 )
 
 find_package(catkin REQUIRED genmsg ${MSG_DEPS})
@@ -35,7 +36,7 @@ add_service_files(DIRECTORY srv FILES ${SRV_FILES})
 generate_messages(
 	DEPENDENCIES
 	${MSG_DEPS}
-	vigir_be_core
+	vigir_be_msgs
 )
 
 catkin_package(DEPENDS ${MSG_DEPS})
