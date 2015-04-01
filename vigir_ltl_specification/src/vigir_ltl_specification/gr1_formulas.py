@@ -28,7 +28,7 @@ class GR1Formula(object):
 
 	"""
 	
-	def __init__(self, env_props, sys_props, ts = {}):
+	def __init__(self, env_props = [], sys_props = [], ts = {}):
 		
 		self.sys_props = sys_props
 		self.env_props = env_props
@@ -230,7 +230,7 @@ class FastSlowFormula(GR1Formula):
 
 	"""
 
-	def __init__(self, env_props, sys_props, ts = {}):
+	def __init__(self, env_props = [], sys_props = [], ts = {}):
 		super(FastSlowFormula, self).__init__(env_props, sys_props, ts) # Initializes a bunch of attributes
 
 		self.activation = []
