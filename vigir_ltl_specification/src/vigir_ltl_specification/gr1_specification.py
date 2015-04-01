@@ -129,18 +129,12 @@ class GR1Specification(object):
 	# Composition of the Structured SLUGS file
 	# =====================================================
 
-	def write_structured_slugs_file(self, folder_path = ""):
+	def write_structured_slugs_file(self, folder_path):
 		"""Create, or open, a structuredslugs file and write the 8 sections."""	
 		
 		filename = self.spec_name + ".structuredslugs"
 
-		# The directory where specs and automata are saved:
-		temp_bs_files = os.path.abspath(os.path.join(os.pardir, os.pardir, os.pardir, 'temp_bs_files'))
-
-		if not folder_path:
-			folder_path = os.path.join(temp_bs_files, self.spec_name)
-		else:
-			folder_path = os.path.join(folder_path, self.spec_name)
+		folder_path = os.path.join(folder_path, self.spec_name)
 
 		if not os.path.exists(folder_path):
 			os.makedirs(folder_path)
