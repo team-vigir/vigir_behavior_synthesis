@@ -17,6 +17,10 @@ string[] initial_conditions
 # be included in the LTL compilation process
 LTLSpecification ltl_specification
 
+# Optional. Useful for locating the generated files.
+# Does not affect the server's response.
+string name
+
 # System constants
 # Currently only Atlas is supported
 # String constants are defined without quotes ('', "")
