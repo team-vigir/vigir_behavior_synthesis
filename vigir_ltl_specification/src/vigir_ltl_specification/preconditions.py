@@ -21,7 +21,7 @@ def get_action_preconditions(prop):
 
 	pass
 
-def gen_formulas_from_preconditions(preconditions, fast_slow = True):
+def gen_formulas_from_preconditions(preconditions, fast_slow):
 	'''Generates LTL formulas of the precondition format from a dictionary of preconditions.'''
 	#TODO: Assume preconditions are completion props and action is an activation prop.
 
@@ -35,6 +35,24 @@ def gen_formulas_from_preconditions(preconditions, fast_slow = True):
 		precondition_formulas.append(formula)
 
 	return precondition_formulas
+
+def convert_preconditions_to_fastslow(preconditions):
+	
+	preconditions_fs = dict()
+	sys_props = list()
+	env_props = list()
+
+	for key, values in preconditions.items():
+
+		v_fs = [v + '_c' for v in values] 	# completion propositions
+		env_props.extend(v_fs)
+
+		k_fs = key + '_a' 					# activation proposition
+		sys_props.append(k_fs)
+
+		preconditions_fs[k_fs] = v_fs
+
+	return preconditions_fs, env_props, sys_props
 
 def load_preconditions_from_config_files(files):
 	'''Loads preconditions as a single dictionary from one or more configuration YAML files'''
