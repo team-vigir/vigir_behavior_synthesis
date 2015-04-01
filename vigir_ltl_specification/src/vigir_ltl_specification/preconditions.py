@@ -37,20 +37,29 @@ def gen_formulas_from_preconditions(preconditions, fast_slow):
 	return precondition_formulas
 
 def convert_preconditions_to_fastslow(preconditions):
-	
+	'''
+	Converts the elements of a preconditions dictionary to activation and completion propositions (fast-slow).
+
+	In addition to the revised dictionary, it returns the activation and completion propositions.
+	'''
+
 	preconditions_fs = dict()
 	sys_props = list()
 	env_props = list()
 
 	for key, values in preconditions.items():
 
-		v_fs = [v + '_c' for v in values] 	# completion propositions
-		env_props.extend(v_fs)
+		v_c = [v + '_c' for v in values] 	# completion propositions
+		env_props.extend(v_c)
 
-		k_fs = key + '_a' 					# activation proposition
-		sys_props.append(k_fs)
+		k_a = key + '_a' 					# activation proposition
+		sys_props.append(k_a)
+		
+		k_c = key + '_c'					# proposition for the completion of this action		
+		env_props.append(k_c)
 
-		preconditions_fs[k_fs] = v_fs
+		# The activation of k is preconditioned on the completion of vs:
+		preconditions_fs[k_a] = v_c
 
 	return preconditions_fs, env_props, sys_props
 
