@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
+import os
+import pprint
+
+import preconditions as precond
 from gr1_specification import GR1Specification
 from gr1_formulas import GR1Formula, FastSlowFormula
-
-import yaml
-import pprint
 
 """
 Module's docstring #TODO
 """
+
+VIGIR_ROOT_DIR = os.environ['VIGIR_ROOT_DIR']
 
 class VigirSpecification(GR1Specification):
 	"""
@@ -17,55 +20,51 @@ class VigirSpecification(GR1Specification):
 	def __init__(self, spec_name, env_props = [], sys_props = []):
 		super(VigirSpecification, self).__init__(spec_name, env_props, sys_props)
 		
-		# ...
 		config_files = ['atlas_preconditions.yaml', 'vigir_preconditions.yaml']
-		self.preconditions = self.load_preconditions_from_config_files(config_files)
+		self.handle_atlas_preconditions(config_files)
+		# self.gen_formulas_for_actions(self.sys_props)
 
-		#TODO: Actions and preconditions need to be added to sys and env props, respectively
-		# This is assuming that all preconditions are completion (env) propositions.
+	def handle_atlas_preconditions(self, files):
+		'''Loads precondtions, converts to fast-slow, adds propositions and formulas to specification.'''
+		
+		preconditions = precond.load_preconditions_from_config_files(files)
 
-		self.sys_trans.extend(self.gen_formulas_from_preconditions())
+		# Assume that all preconditions are completion (env) propositions
+		self.preconditions, new_env_props, new_sys_props = precond.convert_preconditions_to_fastslow(preconditions)
+		self.env_props = self.merge_env_propositions(new_env_props)
+		self.sys_props = self.merge_sys_propositions(new_sys_props)
 
-	def recurse_action_preconditions(prop):
-		'''
-		Recursively get the preconditions of the given proposition,
-		as well as the preconditions of those preconditions, etc.
-		'''
+		precondition_formulas = precond.gen_formulas_from_preconditions(self.preconditions, fast_slow = True)
 
-		pass
+		self.add_to_sys_trans(precondition_formulas)
 
-	def get_action_preconditions(prop):
-		'''Given a proposition, find its preconditions.'''
+	def add_action_goal(self, action):
+		'''Generate (fast-slow) system liveness requirement from an action.'''
 
-		pass
+		_ , action_c = self.convert_action_to_props(action)
 
-	def gen_formulas_from_preconditions(self):
-		'''...'''
-		#TODO: Assume preconditions are completion props and action is an activiation prop.
+		self.gen_formulas_for_actions([action])
 
-		precondition_formula = FastSlowFormula([], [])
-		precondition_formulas = list()
+		self.add_to_sys_liveness(action_c)
 
-		for prop, preconditions in self.preconditions.items():
+	def gen_formulas_for_actions(self, actions):
+		
+		action_formula = FastSlowFormula([], actions)
 
-				formula = precondition_formula.gen_precondition_formula(prop, preconditions)
-				precondition_formulas.append(formula)
+		# Generate and add fast-slow formulas that govern action completion
+		action_completion = action_formula.gen_action_completion_formula()
+		self.add_to_env_trans(action_completion)
 
-		return precondition_formulas
+		# Generate and add fairness conditions for the actions
+		action_fairness = action_formula.gen_generic_fairness_formula()
+		self.add_to_env_liveness(action_fairness)
 
-	def load_preconditions_from_config_files(self, files):
-		'''Loads preconditions from configuration files (.yaml)'''
+	def convert_action_to_props(self, action):
+		
+		fs_formula = FastSlowFormula([], [action])
 
-		preconditions = dict()
-
-		for filename in files:
-			with open(filename, 'r') as stream:
-				contents = yaml.load(stream)
-				# Add the preconditions from this file to the rest
-				# This will overwrite any duplicates (there shouldn't be any)
-				preconditions = dict(preconditions, **contents) if contents else preconditions
-
-		return preconditions
+		# Return the activation and completion props corresponding to this action
+		return fs_formula.activation[0], fs_formula.completion[0]
 
 class ControlModeSpecification(GR1Specification):
 	"""
@@ -178,22 +177,7 @@ def main():
 											modes_of_interest = ['stand_prep', 'stand', 'manipulate'])
 
 	# Add manipulate as a goal (system liveness requirement)
-	cm_spec.add_control_mode_goal("manipulate")
-
-	print "[SYS_INIT]"
-	pprint.pprint(cm_spec.sys_init)
-	print "[ENV_INIT]"
-	pprint.pprint(cm_spec.env_init)
-	print "[SYS_TRANS]"
-	pprint.pprint(cm_spec.sys_trans)
-	print "[ENV_TRANS]"
-	pprint.pprint(cm_spec.env_trans)
-	print "[SYS_LIVENESS]"
-	pprint.pprint(cm_spec.sys_liveness)
-	print "[ENV_LIVENESS]"
-	pprint.pprint(cm_spec.env_liveness)
-
-	# cm_spec.write_structured_slugs_file()
+	# cm_spec.add_control_mode_goal("manipulate")
 
 	vigir_spec = VigirSpecification('preconditions')
 
@@ -201,12 +185,32 @@ def main():
 	pprint.pprint(vigir_spec.preconditions)
 	pprint.pprint(vigir_spec.sys_trans)
 
+	vigir_spec.add_action_goal('pickup')
+
 	complete_spec = GR1Specification('pickup')
 	individual_specs = [cm_spec, vigir_spec]
 
 	complete_spec.merge_gr1_specifications(individual_specs)
 
-	complete_spec.write_structured_slugs_file()
+	print "[SYS_INIT]"
+	pprint.pprint(complete_spec.sys_init)
+	print "[ENV_INIT]"
+	pprint.pprint(complete_spec.env_init)
+	print "[SYS_TRANS]"
+	pprint.pprint(complete_spec.sys_trans)
+	print "[ENV_TRANS]"
+	pprint.pprint(complete_spec.env_trans)
+	print "[SYS_LIVENESS]"
+	pprint.pprint(complete_spec.sys_liveness)
+	print "[ENV_LIVENESS]"
+	pprint.pprint(complete_spec.env_liveness)
+
+	# Write the specification to a file
+
+	# The directory where specs and automata are saved:
+	synthesis_byproducts = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/synthesis_byproducts')
+
+	complete_spec.write_structured_slugs_file(synthesis_byproducts)
 
 if __name__ == "__main__":
 	main()
