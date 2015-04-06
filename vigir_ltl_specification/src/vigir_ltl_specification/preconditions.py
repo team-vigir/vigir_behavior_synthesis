@@ -16,10 +16,18 @@ def recurse_action_preconditions(prop):
 
 	pass
 
-def get_action_preconditions(prop):
+def get_action_preconditions(prop, preconditions):
 	'''Given a proposition, find its preconditions.'''
 
-	pass
+	action_preconditions = dict()
+
+	if preconditions[prop]:
+		action_preconditions[prop] = preconditions[prop]
+	else:
+		action_preconditions[prop] = []
+		print('Action {a} does not have any preconditions.'.format(a = prop))
+
+	return action_preconditions
 
 def gen_formulas_from_preconditions(preconditions, fast_slow):
 	'''Generates LTL formulas of the precondition format from a dictionary of preconditions.'''
