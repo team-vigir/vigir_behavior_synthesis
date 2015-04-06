@@ -29,4 +29,4 @@ def ltl_compilation_client(system, goals, initial_conditions, custom_ltl = None)
         print("Service call failed: %s" % e)
 
 if __name__ == "__main__":
-    ltl_compilation_client('atlas', ['manipulate'], ['stand'])
+    ltl_compilation_client('atlas', ['pickup'], ['stand'])

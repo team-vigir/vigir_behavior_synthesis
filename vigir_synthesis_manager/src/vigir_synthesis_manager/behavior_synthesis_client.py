@@ -42,7 +42,7 @@ if __name__ == '__main__':
         
         # Request arguments:
         system = BehaviorSynthesisRequest.ATLAS
-        goals = ['manipulate']
+        goals = ['pickup']
         initial_conditions = ['stand_prep']
         
         result = behavior_synthesis_client(system, goals, initial_conditions)
