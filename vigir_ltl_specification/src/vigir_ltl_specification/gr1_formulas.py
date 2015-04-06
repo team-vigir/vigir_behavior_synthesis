@@ -174,8 +174,6 @@ class GR1Formula(object):
 	def get_other_trans_props(self, prop):
 		"""For some proposition \pi_r, get all propositions \pi_r' such that r' =/= r."""
 		
-		# return [p for p in self.ts.keys() if p != prop] # This will return completion props instead of activation in fs
-
 		if prop in self.sys_props:
 			return [p for p in self.sys_props if p != prop]
 		elif prop in self.env_props:
@@ -307,9 +305,37 @@ class FastSlowFormula(GR1Formula):
 
 		return self.gen_sys_trans_formulas(future = False) # In present tense for fast-slow transition system formulas
 
-	def gen_action_competion_formula(self):
-		"""Eq. (4)"""
-		pass
+	def gen_action_completion_formula(self, actions = []):
+		"""Eq. (3-4)
+
+		@param 	actions 	Propositions (NOT of the activation-completion type)
+		"""
+		
+		actions = self.sys_props if not actions else actions
+
+		eq3_formulas = list()
+		eq4_formulas = list()
+
+		for act in actions:
+
+			pi_c = self._get_c_prop(act)
+			pi_a = self._get_a_prop(act)
+
+			# Generate Eq. (3)
+			eq3_left_hand_side = self.conj([pi_c, pi_a])
+			eq3_right_hand_side = self.prime(pi_c)
+			eq3 = self.implication(eq3_left_hand_side, eq3_right_hand_side)
+			eq3_formulas.append(eq3)
+
+			# Generate Eq. (4)
+			not_pi_c = self.neg(pi_c)
+			not_pi_a = self.neg(pi_a)
+			eq4_left_hand_side = self.conj([not_pi_c, not_pi_a])
+			eq4_right_hand_side = self.prime(not_pi_c)
+			eq4 = self.implication(eq4_left_hand_side, eq4_right_hand_side)
+			eq4_formulas.append(eq4)
+
+		return eq3_formulas + eq4_formulas
 
 	def gen_generic_fairness_formula(self):
 		"""Section V-B (4)"""
@@ -382,18 +408,20 @@ class FastSlowFormula(GR1Formula):
 		For each system proposition (action, region ,etc.), create the corresponding activation and completion propositions.		
 		"""
 
+		#TODO: I've commented out removal of sys_props. If that turns out OK, delete those lines below.
+
 		original_props = list()
 		for sys_prop in self.sys_props:		
 			if sys_prop[-2:] != "_a": 	# activation props always end with '_a'
 				
 				# Add activation proposition and mark original system proposition for removal
 				self.activation.append(self._get_a_prop(sys_prop))
-				original_props.append(sys_prop)
+				# original_props.append(sys_prop)
 				# Also add the corresponding completion proposition
 				self.completion.append(self._get_c_prop(sys_prop))
 
-		for sys_prop in original_props:
-			self.sys_props.remove(sys_prop)
+		# for sys_prop in original_props:
+			# self.sys_props.remove(sys_prop)
 
 	def get_other_trans_props(self, prop):
 		"""For some proposition \pi_r, get all propositions \pi_r' such that r' =/= r."""
