@@ -14,6 +14,7 @@ def ltl_synthesis_client(ltl_spec, name):
         response = ltl_synthesis_srv(ltl_spec, name)
         
         #DEBUG
+        print 'LTL Synthesis client reporting:'
         print response.automaton
         print 'LTL Synthesis error code: ', response.error_code
         

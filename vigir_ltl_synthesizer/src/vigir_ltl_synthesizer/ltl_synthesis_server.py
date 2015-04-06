@@ -2,8 +2,9 @@
 
 import os, sys, subprocess
 
-import rospy
 import json
+
+import rospy
 
 from vigir_synthesis_msgs.srv import LTLSynthesis, LTLSynthesisResponse
 from vigir_synthesis_msgs.msg import AutomatonState, SynthesizedAutomaton, BSErrorCodes
@@ -22,7 +23,7 @@ def handle_ltl_synthesis(request):
         spec_name = request.spec_name # Optional name (just a convenience)
     else:
         # Make something up
-        spec_name = 'nfrewhgdn' #FIX
+        spec_name = 'nfrewhgdn' #TODO: Generate name based on system goals
 
     # Parse LTL specification msg and write .structuredslugs file
     structured_slugs_file, folder_path = write_structured_slugs_from_msg(ltl_spec, spec_name)
@@ -148,7 +149,7 @@ def gen_automaton_msg_from_json(json_file, input_vars, output_vars):
 
 def write_structured_slugs_from_msg(ltl_spec, name):
     '''...'''
-    
+
     # The directory where specs and automata are saved:
     specs_folder_path = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/synthesis_byproducts') 
 
