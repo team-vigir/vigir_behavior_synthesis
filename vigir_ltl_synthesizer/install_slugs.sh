@@ -2,6 +2,10 @@
 # on Linux and Darwin
 #
 # https://github.com/LTLMoP/slugs
+#
+# This script is an extension of 
+# the one written by https://github.com/johnyf
+# for https://github.com/johnyf/openpromela/
 set -e
 
 INSTALL=/usr/local/bin
