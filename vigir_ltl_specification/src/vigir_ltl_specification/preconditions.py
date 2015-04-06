@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import yaml
+import os, yaml
 
 from gr1_formulas import GR1Formula, FastSlowFormula
 
@@ -71,13 +71,16 @@ def convert_preconditions_to_fastslow(preconditions):
 
 	return preconditions_fs, env_props, sys_props
 
-def load_preconditions_from_config_files(files):
+def load_preconditions_from_config_files(location, files):
 	'''Loads preconditions as a single dictionary from one or more configuration YAML files'''
 
 	preconditions = dict()
 
 	for filename in files:
-		with open(filename, 'r') as stream:
+		
+		full_file_path = os.path.join(location, filename)
+
+		with open(full_file_path, 'r') as stream:
 			contents = yaml.load(stream)
 			# Add the preconditions from this file to the rest
 			# This will overwrite any duplicates (there shouldn't be any)
