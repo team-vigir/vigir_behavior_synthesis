@@ -4,7 +4,8 @@ import rospy
 
 from vigir_synthesis_msgs.srv import LTLCompilation, LTLCompilationResponse
 from vigir_synthesis_msgs.msg import LTLSpecification, BSErrorCodes
-from vigir_ltl_specification.atlas_specification import ControlModeSpecification
+from vigir_ltl_specification.atlas_specification import ControlModeSpecification, VigirSpecification
+from vigir_ltl_specification.gr1_specification import GR1Specification
 
 def handle_ltl_compilation(request):
     '''Responsible for putting together a complete LTL specification.'''
@@ -21,15 +22,24 @@ def handle_ltl_compilation(request):
 def gen_ltl_spec_for_atlas(name, initial_conditions, goals):
     ''''''
 
-    spec = ControlModeSpecification(name, initial_mode = initial_conditions[0])
+    cm_spec = ControlModeSpecification('atlas_cm', initial_mode = initial_conditions[0],
+                                       modes_of_interest = ['stand_prep', 'stand', 'manipulate'])
     # Optional argument example: modes_of_interest = ['stand_prep', 'stand', 'manipulate']
+    
+    vigir_spec = VigirSpecification()
 
-    # Add control mode goals (system liveness requirements)
     for goal in goals:
-        spec.add_control_mode_goal(goal)
+        #FIX: Not all goals are going to be control modes! Check 'if goal in spec.control_modes'
+        # spec.add_control_mode_goal(goal)
+        vigir_spec.add_action_goal(goal)
+
+    complete_spec = GR1Specification(name)
+    individual_specs = [cm_spec, vigir_spec]
+
+    complete_spec.merge_gr1_specifications(individual_specs)
 
     # Compile an LTL specification that fulfills the request
-    ltl_specification_msg = gen_msg_from_specification(spec)
+    ltl_specification_msg = gen_msg_from_specification(complete_spec)
 
     # Behavior Synthesis error code
     error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
@@ -37,7 +47,7 @@ def gen_ltl_spec_for_atlas(name, initial_conditions, goals):
     return ltl_specification_msg, error_code
 
 def gen_msg_from_specification(spec):
-    '''...'''
+    '''Creates an LTLSpecification message from a structured slugs formatted specification.'''
 
     ltl_specification_msg = LTLSpecification()
 
@@ -56,7 +66,7 @@ def gen_msg_from_specification(spec):
     return ltl_specification_msg
 
 def ltl_compilation_server():
-    ''''Server'''
+    ''''The LTL Specification Compilation server/node.'''
     
     rospy.init_node('vigir_ltl_specification')
     
