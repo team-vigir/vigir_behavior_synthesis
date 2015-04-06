@@ -17,7 +17,7 @@ class VigirSpecification(GR1Specification):
 	"""
 	The class encodes requirements related to Team ViGIR's software as GR(1) formulas, written in the structured slugs format. """
 	
-	def __init__(self, spec_name, env_props = [], sys_props = []):
+	def __init__(self, spec_name = '', env_props = [], sys_props = []):
 		super(VigirSpecification, self).__init__(spec_name, env_props, sys_props)
 		
 		config_files = ['atlas_preconditions.yaml', 'vigir_preconditions.yaml']
@@ -27,7 +27,9 @@ class VigirSpecification(GR1Specification):
 	def handle_atlas_preconditions(self, files):
 		'''Loads precondtions, converts to fast-slow, adds propositions and formulas to specification.'''
 		
-		preconditions = precond.load_preconditions_from_config_files(files)
+		location = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/vigir_ltl_specification/src/vigir_ltl_specification/config')
+
+		preconditions = precond.load_preconditions_from_config_files(location, files)
 
 		# Assume that all preconditions are completion (env) propositions
 		self.preconditions, new_env_props, new_sys_props = precond.convert_preconditions_to_fastslow(preconditions)
@@ -41,11 +43,15 @@ class VigirSpecification(GR1Specification):
 	def add_action_goal(self, action):
 		'''Generate (fast-slow) system liveness requirement from an action.'''
 
-		_ , action_c = self.convert_action_to_props(action)
+		action_a, action_c = self.convert_action_to_props(action)
 
 		self.gen_formulas_for_actions([action])
 
+		# Add action as goal
 		self.add_to_sys_liveness(action_c)
+
+		# And also set it to False at the beginning
+		self.add_false_initial_conditions(action_a, action_c)
 
 	def gen_formulas_for_actions(self, actions):
 		
@@ -58,6 +64,11 @@ class VigirSpecification(GR1Specification):
 		# Generate and add fairness conditions for the actions
 		action_fairness = action_formula.gen_generic_fairness_formula()
 		self.add_to_env_liveness(action_fairness)
+
+	def add_false_initial_conditions(self, pi_a, pi_c):
+		
+		self.add_to_sys_init('! ' + pi_a)
+		self.add_to_env_init('! ' + pi_c)
 
 	def convert_action_to_props(self, action):
 		
