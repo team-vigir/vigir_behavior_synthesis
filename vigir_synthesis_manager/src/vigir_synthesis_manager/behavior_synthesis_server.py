@@ -1,7 +1,5 @@
 #! /usr/bin/env python
 
-# import roslib; roslib.load_manifest('vigir_synthesis_manager')
-
 import rospy
 import actionlib
 
