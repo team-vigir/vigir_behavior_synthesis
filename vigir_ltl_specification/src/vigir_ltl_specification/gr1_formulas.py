@@ -137,8 +137,9 @@ class GR1Formula(object):
 		'''Conditions that have to hold for an action (prop) to be allowed.'''
 
 		neg_preconditions = map(self.neg, preconditions)
-		left_hand_side = self.disj(neg_preconditions)
-		right_hand_side = self.neg(action)
+		next_neg_preconditions = map(self.prime, neg_preconditions)
+		left_hand_side = self.disj(next_neg_preconditions)
+		right_hand_side = self.prime(self.neg(action))
 
 		precondition_formula = self.implication(left_hand_side, right_hand_side)
 
@@ -316,10 +317,10 @@ class FastSlowFormula(GR1Formula):
 		eq3_formulas = list()
 		eq4_formulas = list()
 
-		for act in actions:
+		for pi in actions:
 
-			pi_c = self._get_c_prop(act)
-			pi_a = self._get_a_prop(act)
+			pi_c = self._get_c_prop(pi)
+			pi_a = self._get_a_prop(pi)
 
 			# Generate Eq. (3)
 			eq3_left_hand_side = self.conj([pi_c, pi_a])
@@ -337,9 +338,36 @@ class FastSlowFormula(GR1Formula):
 
 		return eq3_formulas + eq4_formulas
 
-	def gen_generic_fairness_formula(self):
-		"""Section V-B (4)"""
-		pass
+	def gen_generic_fairness_formula(self, actions = []):
+		"""Section V-B (4)
+
+		Fairness conditions ensure that every action eventually completes.
+		"""
+		
+		actions = self.sys_props if not actions else actions
+
+		fairness_formulas = list()
+
+		for pi in actions:
+
+			pi_c = self._get_c_prop(pi)
+			pi_a = self._get_a_prop(pi)
+			not_pi_c = self.neg(pi_c)
+			not_pi_a = self.neg(pi_a)
+
+			completion_disjunct_1 = self.conj([pi_a, self.prime(pi_c)])
+			completion_disjunct_2 = self.conj([not_pi_a, self.prime(not_pi_c)])
+			completion_formula = self.disj([completion_disjunct_1, completion_disjunct_2])
+
+			change_disjunt_1 = self.conj([pi_a, self.prime(not_pi_a)])
+			change_disjunt_2 = self.conj([not_pi_a, self.prime(pi_a)])
+			change_formula = self.disj([change_disjunt_1, change_disjunt_2])
+
+			fairness_condition = self.disj([completion_formula, change_formula])
+
+			fairness_formulas.append(fairness_condition)
+
+		return fairness_formulas
 
 	def gen_mutex_fairness_formula(self):
 		"""
