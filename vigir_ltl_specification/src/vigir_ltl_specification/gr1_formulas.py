@@ -145,6 +145,39 @@ class GR1Formula(object):
 
 		return precondition_formula
 
+	def gen_success_condition(self, mem_props, success = 'finished'):
+		'''Creates a formula that turns 'finshed' to True when all memory propositions have been set.'''
+
+		conjunct = self.conj(mem_props)
+
+		success_condition = self.iff(success, conjunct)
+
+		return success_condition
+
+	def gen_goal_memory_formula(self, goal):
+		'''For a proposition corresponding to a desired objective,
+		creates a memory proposition and formulas for remembering achievement of that objective.'''
+
+		mem_prop = self.gen_memory_prop(goal)
+
+		set_mem_formula = self.implication(goal, self.prime(mem_prop))
+		remembrance_formula = self.implication(mem_prop, self.prime(mem_prop))
+		precondition = self.conj([self.neg(mem_prop), self.neg(goal)])
+		guard_formula = self.implication(precondition, self.prime(self.neg(mem_prop)))
+
+		goal_memory_formula = list([set_mem_formula, remembrance_formula, guard_formula])
+
+		return mem_prop, goal_memory_formula
+
+	def gen_memory_prop(self, prop):
+		'''Creates a memory proposition from the given proposition and adds it to the system propositions.'''
+
+		mem_prop = 'm_' + prop
+
+		self.sys_props.append(mem_prop)
+
+		return mem_prop
+
 	# =====================================================
 	# Various helper methods
 	# =====================================================
