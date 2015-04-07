@@ -172,7 +172,10 @@ class GR1Formula(object):
 	def gen_memory_prop(self, prop):
 		'''Creates a memory proposition from the given proposition and adds it to the system propositions.'''
 
-		mem_prop = 'm_' + prop
+		if prop[-2:] == '_c':
+			mem_prop = prop.replace('_c', '_m')
+		else:
+			mem_prop = prop + '_m'
 
 		self.sys_props.append(mem_prop)
 
