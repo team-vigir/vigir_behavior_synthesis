@@ -43,15 +43,34 @@ class VigirSpecification(GR1Specification):
 	def add_action_goal(self, action):
 		'''Generate (fast-slow) system liveness requirement from an action.'''
 
+		#TODO: Extend to handle multiple goals (memory part is problematic atm)
+
 		action_a, action_c = self.convert_action_to_props(action)
 
 		self.gen_formulas_for_actions([action])
 
 		# Add action as goal
-		self.add_to_sys_liveness(action_c)
+		# self.add_to_sys_liveness(action_c)
 
-		# And also set it to False at the beginning
+		# Create a memory proposition for the action
+		memory = GR1Formula()
+
+		mem_prop, mem_formula = memory.gen_goal_memory_formula(action_c)
+
+		success_condition = memory.gen_success_condition([mem_prop], 'finished')
+
+		# Add the new propositions to the specification
+		self.sys_props.extend([mem_prop, 'finished'])
+
+		# Add the memory and success -related formulas to the specification
+		self.add_to_sys_trans(mem_formula)
+		self.add_to_sys_trans(success_condition)
+		self.add_to_sys_liveness('finished')
+
+		# And also set action and memory props to False at the beginning
 		self.add_false_initial_conditions(action_a, action_c)
+		self.add_false_initial_conditions(mem_prop)
+		self.add_false_initial_conditions('finished')
 
 	def gen_formulas_for_actions(self, actions):
 		
@@ -65,10 +84,12 @@ class VigirSpecification(GR1Specification):
 		action_fairness = action_formula.gen_generic_fairness_formula()
 		self.add_to_env_liveness(action_fairness)
 
-	def add_false_initial_conditions(self, pi_a, pi_c):
+	def add_false_initial_conditions(self, pi_a = '', pi_c = ''):
 		
-		self.add_to_sys_init('! ' + pi_a)
-		self.add_to_env_init('! ' + pi_c)
+		if pi_a:
+			self.add_to_sys_init('! ' + pi_a)
+		if pi_c:
+			self.add_to_env_init('! ' + pi_c)
 
 	def convert_action_to_props(self, action):
 		
