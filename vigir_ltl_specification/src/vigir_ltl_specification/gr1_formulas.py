@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+from ltl import LTL
+
 """Formulas for the GR(1) fragment of Linear Temporal Logic
 
 This module contains two main classes:
@@ -21,7 +24,7 @@ class GR1Formula(object):
 	  							Implicitly contains some propositions in the keys.
 
 	Attributes:
-	  formula 	(list of str)	...
+	  formula 	(list of str)	#TODO ...
 
 	Raises:
 	  ValueError:				When a proposition is neither a system or an environment proposition
@@ -54,9 +57,9 @@ class GR1Formula(object):
 				if prop_assignment[prop] is True:
 					sys_init.append(prop)
 				else:
-					sys_init.append(self.neg(prop))
+					sys_init.append(LTL.neg(prop))
 			else:
-				sys_init.append(self.neg(prop))
+				sys_init.append(LTL.neg(prop))
 		
 		return sys_init
 
@@ -72,9 +75,9 @@ class GR1Formula(object):
 				if prop_assignment[prop]:
 					env_init.append(prop)
 				else:
-					env_init.append(self.neg(prop))
+					env_init.append(LTL.neg(prop))
 			else:
-				env_init.append(self.neg(prop))
+				env_init.append(LTL.neg(prop))
 		
 		return env_init
 
@@ -94,11 +97,11 @@ class GR1Formula(object):
 			
 			for adj_prop in self.ts[prop]:
 				adj_phi_prop = self.gen_phi_prop(adj_prop)
-				disjunct = self.prime(adj_phi_prop) if future else adj_phi_prop
+				disjunct = LTL.next(adj_phi_prop) if future else adj_phi_prop
 				right_hand_side.append(disjunct)
 
-			right_hand_side = self.disj(right_hand_side)
-			sys_trans_formulas.append(self.implication(left_hand_side, right_hand_side))
+			right_hand_side = LTL.disj(right_hand_side)
+			sys_trans_formulas.append(LTL.implication(left_hand_side, right_hand_side))
 
 		return sys_trans_formulas
 
@@ -121,36 +124,36 @@ class GR1Formula(object):
 			negated_props = list()
 			for prop_prime in other_props:
 				if future:
-					left_hand_side = self.prime(prop)
-					neg_prop = self.neg(self.prime(prop_prime)) # not(next(p'))
+					left_hand_side = LTL.next(prop)
+					neg_prop = LTL.neg(LTL.next(prop_prime)) # not(next(p'))
 				else:
 					left_hand_side = prop
-					neg_prop = self.neg(prop_prime)
+					neg_prop = LTL.neg(prop_prime)
 				negated_props.append(neg_prop)
-			right_hand_side = self.conj(negated_props)
+			right_hand_side = LTL.conj(negated_props)
 			
-			mutex_formulas.append(self.iff(left_hand_side, right_hand_side)) # left -> right
+			mutex_formulas.append(LTL.iff(left_hand_side, right_hand_side)) # left -> right
 
 		return mutex_formulas
 
 	def gen_precondition_formula(self, action, preconditions):
 		'''Conditions that have to hold for an action (prop) to be allowed.'''
 
-		neg_preconditions = map(self.neg, preconditions)
-		next_neg_preconditions = map(self.prime, neg_preconditions)
-		left_hand_side = self.disj(next_neg_preconditions)
-		right_hand_side = self.prime(self.neg(action))
+		neg_preconditions = map(LTL.neg, preconditions)
+		next_neg_preconditions = map(LTL.next, neg_preconditions)
+		left_hand_side = LTL.disj(next_neg_preconditions)
+		right_hand_side = LTL.next(LTL.neg(action))
 
-		precondition_formula = self.implication(left_hand_side, right_hand_side)
+		precondition_formula = LTL.implication(left_hand_side, right_hand_side)
 
 		return precondition_formula
 
 	def gen_success_condition(self, mem_props, success = 'finished'):
 		'''Creates a formula that turns 'finshed' to True when all memory propositions have been set.'''
 
-		conjunct = self.conj(mem_props)
+		conjunct = LTL.conj(mem_props)
 
-		success_condition = self.iff(success, conjunct)
+		success_condition = LTL.iff(success, conjunct)
 
 		return success_condition
 
@@ -160,10 +163,10 @@ class GR1Formula(object):
 
 		mem_prop = self.gen_memory_prop(goal)
 
-		set_mem_formula = self.implication(goal, self.prime(mem_prop))
-		remembrance_formula = self.implication(mem_prop, self.prime(mem_prop))
-		precondition = self.conj([self.neg(mem_prop), self.neg(goal)])
-		guard_formula = self.implication(precondition, self.prime(self.neg(mem_prop)))
+		set_mem_formula = LTL.implication(goal, LTL.next(mem_prop))
+		remembrance_formula = LTL.implication(mem_prop, LTL.next(mem_prop))
+		precondition = LTL.conj([LTL.neg(mem_prop), LTL.neg(goal)])
+		guard_formula = LTL.implication(precondition, LTL.next(LTL.neg(mem_prop)))
 
 		goal_memory_formula = list([set_mem_formula, remembrance_formula, guard_formula])
 
@@ -202,9 +205,9 @@ class GR1Formula(object):
 
 		other_props = self.get_other_trans_props(prop)
 		for other_prop in other_props:
-			props_in_phi.append(self.neg(other_prop)) # All pi_r' are negated
+			props_in_phi.append(LTL.neg(other_prop)) # All pi_r' are negated
 
-		phi_prop = self.conj(props_in_phi)
+		phi_prop = LTL.conj(props_in_phi)
 
 		return '(' + phi_prop + ')'
 
@@ -217,32 +220,6 @@ class GR1Formula(object):
 			return [p for p in self.env_props if p != prop]
 		else:
 			raise ValueError("Unknown type for proposition: %s" % prop)
-
-	# =====================================================
-	# LTL Operators
-	# =====================================================
-
-	def conj(self, terms):
-		return " & ".join(terms)
-
-	def disj(self, terms):
-		return " | ".join(terms)
-
-	def neg(self, term):
-		return "! " + term
-
-	def prime(self, proposition):
-		# return proposition + "'"
-		return "next(" + proposition + ")"
-
-	def implication(self, left_hand_side, right_hand_side):
-		return left_hand_side + " -> " + right_hand_side 	#TODO: add parentheses to right side ?
-
-	def iff(self, left_hand_side, right_hand_side):
-		return left_hand_side + " <-> " + right_hand_side #TODO: add parentheses to right side ?
-
-	def par(self, term):
-		return "(" + term + ")"
 
 
 class FastSlowFormula(GR1Formula):
@@ -359,17 +336,17 @@ class FastSlowFormula(GR1Formula):
 			pi_a = self._get_a_prop(pi)
 
 			# Generate Eq. (3)
-			eq3_left_hand_side = self.conj([pi_c, pi_a])
-			eq3_right_hand_side = self.prime(pi_c)
-			eq3 = self.implication(eq3_left_hand_side, eq3_right_hand_side)
+			eq3_left_hand_side = LTL.conj([pi_c, pi_a])
+			eq3_right_hand_side = LTL.next(pi_c)
+			eq3 = LTL.implication(eq3_left_hand_side, eq3_right_hand_side)
 			eq3_formulas.append(eq3)
 
 			# Generate Eq. (4)
-			not_pi_c = self.neg(pi_c)
-			not_pi_a = self.neg(pi_a)
-			eq4_left_hand_side = self.conj([not_pi_c, not_pi_a])
-			eq4_right_hand_side = self.prime(not_pi_c)
-			eq4 = self.implication(eq4_left_hand_side, eq4_right_hand_side)
+			not_pi_c = LTL.neg(pi_c)
+			not_pi_a = LTL.neg(pi_a)
+			eq4_left_hand_side = LTL.conj([not_pi_c, not_pi_a])
+			eq4_right_hand_side = LTL.next(not_pi_c)
+			eq4 = LTL.implication(eq4_left_hand_side, eq4_right_hand_side)
 			eq4_formulas.append(eq4)
 
 		return eq3_formulas + eq4_formulas
@@ -388,18 +365,18 @@ class FastSlowFormula(GR1Formula):
 
 			pi_c = self._get_c_prop(pi)
 			pi_a = self._get_a_prop(pi)
-			not_pi_c = self.neg(pi_c)
-			not_pi_a = self.neg(pi_a)
+			not_pi_c = LTL.neg(pi_c)
+			not_pi_a = LTL.neg(pi_a)
 
-			completion_disjunct_1 = self.conj([pi_a, self.prime(pi_c)])
-			completion_disjunct_2 = self.conj([not_pi_a, self.prime(not_pi_c)])
-			completion_formula = self.disj([completion_disjunct_1, completion_disjunct_2])
+			completion_disjunct_1 = LTL.conj([pi_a, LTL.next(pi_c)])
+			completion_disjunct_2 = LTL.conj([not_pi_a, LTL.next(not_pi_c)])
+			completion_formula = LTL.disj([completion_disjunct_1, completion_disjunct_2])
 
-			change_disjunt_1 = self.conj([pi_a, self.prime(not_pi_a)])
-			change_disjunt_2 = self.conj([not_pi_a, self.prime(pi_a)])
-			change_formula = self.disj([change_disjunt_1, change_disjunt_2])
+			change_disjunt_1 = LTL.conj([pi_a, LTL.next(not_pi_a)])
+			change_disjunt_2 = LTL.conj([not_pi_a, LTL.next(pi_a)])
+			change_formula = LTL.disj([change_disjunt_1, change_disjunt_2])
 
-			fairness_condition = self.disj([completion_formula, change_formula])
+			fairness_condition = LTL.disj([completion_formula, change_formula])
 
 			fairness_formulas.append(fairness_condition)
 
@@ -423,18 +400,18 @@ class FastSlowFormula(GR1Formula):
 			phi = self.gen_phi_prop(pi_a)
 
 			pi_c = self._get_c_prop(pi)
-			next_pi_c = self.prime(pi_c)
-			not_next_phi = self.neg(self.prime(phi))
+			next_pi_c = LTL.next(pi_c)
+			not_next_phi = LTL.neg(LTL.next(phi))
 
-			completion_term = self.par(self.conj([phi, next_pi_c]))
+			completion_term = LTL.paren(LTL.conj([phi, next_pi_c]))
 			completion_terms.append(completion_term)
 			
-			change_term = self.par(self.conj([phi, not_next_phi]))
+			change_term = LTL.paren(LTL.conj([phi, not_next_phi]))
 			change_terms.append(change_term)
 
-		completion_formula = self.disj(completion_terms)
-		change_formula = self.disj(change_terms)
-		fairness_formula = self.disj([completion_formula, change_formula])
+		completion_formula = LTL.disj(completion_terms)
+		change_formula = LTL.disj(change_terms)
+		fairness_formula = LTL.disj([completion_formula, change_formula])
 
 		return fairness_formula
 
@@ -450,18 +427,18 @@ class FastSlowFormula(GR1Formula):
 				pi_prime_a = self._get_a_prop(pi_prime)
 				phi = self.gen_phi_prop(pi_prime_a)
 
-				left_hand_side = self.conj([pi_c, phi])
+				left_hand_side = LTL.conj([pi_c, phi])
 
-				next_pi_c = self.prime(pi_c)
+				next_pi_c = LTL.next(pi_c)
 				pi_prime_c = self._get_c_prop(pi_prime)
-				next_pi_prime_c = self.prime(pi_prime_c)
+				next_pi_prime_c = LTL.next(pi_prime_c)
 
 				if next_pi_c == next_pi_prime_c:
 					right_hand_side = next_pi_prime_c
 				else:
-					right_hand_side = self.par(self.disj([next_pi_c, next_pi_prime_c]))
+					right_hand_side = LTL.paren(LTL.disj([next_pi_c, next_pi_prime_c]))
 
-				implication = self.implication(left_hand_side, right_hand_side)
+				implication = LTL.implication(left_hand_side, right_hand_side)
 
 				all_formulas.append(implication)
 
@@ -504,6 +481,7 @@ class FastSlowFormula(GR1Formula):
 
 	def _get_c_prop(self, prop):
 		return prop + "_c"
+
 
 # =========================================================
 # Entry point
