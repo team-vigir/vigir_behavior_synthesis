@@ -140,9 +140,8 @@ class GR1Formula(object):
 		'''Conditions that have to hold for an action (prop) to be allowed.'''
 
 		neg_preconditions = map(LTL.neg, preconditions)
-		next_neg_preconditions = map(LTL.next, neg_preconditions)
-		left_hand_side = LTL.disj(next_neg_preconditions)
-		right_hand_side = LTL.next(LTL.neg(action))
+		left_hand_side = LTL.disj(neg_preconditions)
+		right_hand_side = LTL.neg(action)
 
 		precondition_formula = LTL.implication(left_hand_side, right_hand_side)
 
