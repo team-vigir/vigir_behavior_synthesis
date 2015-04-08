@@ -29,9 +29,10 @@ def gen_ltl_spec_for_atlas(name, initial_conditions, goals):
     vigir_spec = VigirSpecification()
 
     for goal in goals:
-        #FIX: Not all goals are going to be control modes! Check 'if goal in spec.control_modes'
+        # FIX: Not all goals are going to be action!
+        # For control modes, check 'if goal in spec.control_modes'
         # spec.add_control_mode_goal(goal)
-        vigir_spec.add_action_goal(goal)
+        vigir_spec.handle_new_action_goal(goal)
 
     complete_spec = GR1Specification(name)
     individual_specs = [cm_spec, vigir_spec]
