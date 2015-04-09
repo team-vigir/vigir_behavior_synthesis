@@ -2,14 +2,15 @@
 
 from ltl import LTL
 
-"""Formulas for the GR(1) fragment of Linear Temporal Logic
+"""
+Formulas for the GR(1) fragment of Linear Temporal Logic
 
 This module contains two main classes:
   * GR1Formula for vanilla GR(1) formulas
   * FastSlowFormula for extended GR(1) formulas following the paradigm 
     in Vasumathi Raman and Hadas Kress-Gazit (ICRA 2013)
 
-The syntax used is that of .structuredslugs, 
+The LTL syntax used is that of .structuredslugs, 
 which is meant for use with the SLUGS synthesis tool.
 
 """
@@ -39,14 +40,19 @@ class GR1Formula(object):
 
 		self._add_props_from_ts()
 
-		self.formula = [] #TODO: The formula(s) should be stored in the object, not just returned by methods
+		# TODO: The formula(s) should be stored in the object,
+		# not just returned by the formula generation methods.
+		self.formula = []
 	
 	# =====================================================
 	# System and environment initial conditions
 	# =====================================================
 
 	def gen_sys_init_from_prop_assignment(self, prop_assignment, props = "sys_props"):
-		"""Set the given propositions to the desired truth value in the system initial conditions formula. Set all the others to False."""
+		"""
+		Set the given propositions to the desired truth value in the
+		system initial conditions formula. Set all the others to False.
+		"""
 		
 		sys_init = list()
 
@@ -64,7 +70,10 @@ class GR1Formula(object):
 		return sys_init
 
 	def gen_env_init_from_prop_assignment(self, prop_assignment, props = "env_props"):
-		"""Set the given propositions to the desired truth value in the environment initial conditions formula. Set all the others to False."""
+		"""
+		Set the given propositions to the desired truth value in the
+		environment initial conditions formula. Set all the others to False.
+		"""
 		
 		env_init = list()
 
@@ -86,9 +95,11 @@ class GR1Formula(object):
 	# =====================================================
 
 	def gen_sys_trans_formulas(self, future = True):
-		"""Generate system requirement formulas that encode the transition system (e.g. workspace topology).
+		"""
+		Generate system requirement formulas that
+		encode the transition system (e.g. workspace topology).
 
-		The transition system TS, 'self.ts', is provided in the form of a dictionary.
+		The transition system TS, is provided in the form of a dictionary.
 		"""
 		sys_trans_formulas = list()
 		for prop in self.ts.keys():
@@ -96,12 +107,13 @@ class GR1Formula(object):
 			right_hand_side = list()
 			
 			for adj_prop in self.ts[prop]:
-				adj_phi_prop = self.gen_phi_prop(adj_prop)
+				adj_phi_prop = self._gen_phi_prop(adj_prop)
 				disjunct = LTL.next(adj_phi_prop) if future else adj_phi_prop
 				right_hand_side.append(disjunct)
 
 			right_hand_side = LTL.disj(right_hand_side)
-			sys_trans_formulas.append(LTL.implication(left_hand_side, right_hand_side))
+			sys_trans_formulas.append(LTL.implication(left_hand_side,
+													  right_hand_side))
 
 		return sys_trans_formulas
 
@@ -110,11 +122,12 @@ class GR1Formula(object):
 	# =====================================================
 
 	def gen_mutex_formulas(self, mutex_props, future):
-		"""Eq. (1) 
-		Create a set of formulas that enforce mutual exclusion between the given propositions.
+		""" 
+		Create a set of formulas that enforce mutual exclusion
+		between the given propositions, see Eq. (1).
 
-		The argument 'future' dictates whether the propositions will be primed (True) or not (False).
-		'future' should be set to True in fast-slow formulas.
+		The argument 'future' dictates whether the propositions will be
+		primed (T) or not (F). Should be set to True in fast-slow formulas.
 		"""
 
 		mutex_formulas = list()
@@ -132,7 +145,7 @@ class GR1Formula(object):
 				negated_props.append(neg_prop)
 			right_hand_side = LTL.conj(negated_props)
 			
-			mutex_formulas.append(LTL.iff(left_hand_side, right_hand_side)) # left -> right
+			mutex_formulas.append(LTL.iff(left_hand_side, right_hand_side))
 
 		return mutex_formulas
 
@@ -148,7 +161,9 @@ class GR1Formula(object):
 		return precondition_formula
 
 	def gen_success_condition(self, mem_props, success = 'finished'):
-		'''Creates a formula that turns 'finshed' to True when all memory propositions have been set.'''
+		'''
+		Creates a formula that turns 'finshed' to True
+		when all memory propositions corresponding to success have been set.'''
 
 		conjunct = LTL.conj(mem_props)
 
@@ -157,8 +172,9 @@ class GR1Formula(object):
 		return success_condition
 
 	def gen_goal_memory_formula(self, goal):
-		'''For a proposition corresponding to a desired objective,
-		creates a memory proposition and formulas for remembering achievement of that objective.'''
+		'''
+		For a proposition corresponding to a desired objective, creates a memory
+		proposition and formulas for remembering achievement of that objective.'''
 
 		mem_prop = self.gen_memory_prop(goal)
 
@@ -172,12 +188,11 @@ class GR1Formula(object):
 		return mem_prop, goal_memory_formula
 
 	def gen_memory_prop(self, prop):
-		'''Creates a memory proposition from the given proposition and adds it to the system propositions.'''
+		'''
+		Creates a memory proposition from the given proposition
+		and adds the memory proposition to the system propositions.'''
 
-		if prop[-2:] == '_c':
-			mem_prop = prop.replace('_c', '_m')
-		else:
-			mem_prop = prop + '_m'
+		mem_prop = prop + '_m'
 
 		self.sys_props.append(mem_prop)
 
@@ -197,12 +212,12 @@ class GR1Formula(object):
 
 		self.sys_props = list(set(self.sys_props + props_to_add))
 
-	def gen_phi_prop(self, prop):
+	def _gen_phi_prop(self, prop):
 		"""Generate (non-atomic) proposition of the form \phi_r, i.e., mutex version of \pi_r (where prop = \pi_r)"""
 		
 		props_in_phi = [prop] # Initialize with pi_r
 
-		other_props = self.get_other_trans_props(prop)
+		other_props = self._get_other_trans_props(prop)
 		for other_prop in other_props:
 			props_in_phi.append(LTL.neg(other_prop)) # All pi_r' are negated
 
@@ -210,7 +225,7 @@ class GR1Formula(object):
 
 		return '(' + phi_prop + ')'
 
-	def get_other_trans_props(self, prop):
+	def _get_other_trans_props(self, prop):
 		"""For some proposition \pi_r, get all propositions \pi_r' such that r' =/= r."""
 		
 		if prop in self.sys_props:
@@ -242,21 +257,17 @@ class FastSlowFormula(GR1Formula):
 	"""
 
 	def __init__(self, env_props = [], sys_props = [], ts = {}):
-		super(FastSlowFormula, self).__init__(env_props, sys_props, ts) # Initializes a bunch of attributes
+		super(FastSlowFormula, self).__init__(env_props, sys_props, ts)
 
 		self.activation = []
 		self.completion = []
 
 		self._gen_a_c_propositions()
 
-		# Save the original (non fast-slow) TS, then convert to a "fast-slow" transition system
+		# Store the original (non fast-slow) TS,
+		# then convert to a "fast-slow" transition system
 		self.ts_original = ts
 		self._convert_ts_to_fs()
-
-	# =====================================================
-	# Activation / Competion (fast-slow) formulas
-	# Equation and section numbers are w.r.t. Vasumathi Raman and Hadas Kress-Gazit (ICRA 2013)
-	# =====================================================
 
 	def _convert_ts_to_fs(self):
 		"""..."""
@@ -309,6 +320,12 @@ class FastSlowFormula(GR1Formula):
 
 		return sys_init, env_init
 
+	# =====================================================
+	# Activation / Competion (fast-slow) formulas
+	# Equation and section numbers are w.r.t.
+	# Vasumathi Raman and Hadas Kress-Gazit (ICRA 2013)
+	# =====================================================
+
 	def gen_fs_sys_transitions(self):
 		"""
 		Section V-B-2
@@ -316,12 +333,14 @@ class FastSlowFormula(GR1Formula):
 		Encodes a transition system in terms of 'fast-slow' safety requirement formulas.
 		"""
 
-		return self.gen_sys_trans_formulas(future = False) # In present tense for fast-slow transition system formulas
+		# Present tense for fast-slow transition system formulas
+		return self.gen_sys_trans_formulas(future = False)
 
 	def gen_action_completion_formula(self, actions = []):
-		"""Eq. (3-4)
+		"""
+		Eq. (3-4)
 
-		@param 	actions 	Propositions (NOT of the activation-completion type)
+		actions:	Propositions (NOT of the activation-completion type)
 		"""
 		
 		actions = self.sys_props if not actions else actions
@@ -351,7 +370,8 @@ class FastSlowFormula(GR1Formula):
 		return eq3_formulas + eq4_formulas
 
 	def gen_generic_fairness_formula(self, actions = []):
-		"""Section V-B (4)
+		"""
+		From Section V-B (4)
 
 		Fairness conditions ensure that every action eventually completes.
 		"""
@@ -383,7 +403,7 @@ class FastSlowFormula(GR1Formula):
 
 	def gen_mutex_fairness_formula(self):
 		"""
-		Section V-B (4)
+		From Section V-B (4)
 
 		Generates environment fairness conditions for the special case of 
 		mutually exclusive propositions, such as regions of the workspace.
@@ -396,7 +416,7 @@ class FastSlowFormula(GR1Formula):
 		for pi in self.ts_original.keys():
 
 			pi_a = self._get_a_prop(pi)
-			phi = self.gen_phi_prop(pi_a)
+			phi = self._gen_phi_prop(pi_a)
 
 			pi_c = self._get_c_prop(pi)
 			next_pi_c = LTL.next(pi_c)
@@ -424,7 +444,7 @@ class FastSlowFormula(GR1Formula):
 			for pi_prime in self.ts_original[pi]:
 				pi_c = self._get_c_prop(pi)
 				pi_prime_a = self._get_a_prop(pi_prime)
-				phi = self.gen_phi_prop(pi_prime_a)
+				phi = self._gen_phi_prop(pi_prime_a)
 
 				left_hand_side = LTL.conj([pi_c, phi])
 
@@ -443,31 +463,39 @@ class FastSlowFormula(GR1Formula):
 
 		return all_formulas
 
+	# =====================================================
+	# Various helper methods specific to fast-slow formulas
+	# =====================================================
+
+	def gen_memory_prop(self, prop):
+		'''
+		Creates a memory proposition from the given proposition
+		and adds the memory proposition to the system propositions.'''
+
+		if self._is_completion(prop):
+			mem_prop = prop.replace('_c', '_m')
+		else:
+			mem_prop = prop + '_m'
+
+		self.sys_props.append(mem_prop)
+
+		return mem_prop
+
 	def _gen_a_c_propositions(self):
 		"""
 		For each system proposition (action, region ,etc.), create the corresponding activation and completion propositions.		
 		"""
 
-		#TODO: I've commented out removal of sys_props. If that turns out OK, delete those lines below.
-
-		original_props = list()
 		for sys_prop in self.sys_props:		
-			if sys_prop[-2:] != "_a": 	# activation props always end with '_a'
-				
+			if not self._is_activation(sys_prop):			
 				# Add activation proposition and mark original system proposition for removal
 				self.activation.append(self._get_a_prop(sys_prop))
-				# original_props.append(sys_prop)
 				# Also add the corresponding completion proposition
 				self.completion.append(self._get_c_prop(sys_prop))
 
-		# for sys_prop in original_props:
-			# self.sys_props.remove(sys_prop)
-
-	def get_other_trans_props(self, prop):
+	def _get_other_trans_props(self, prop):
 		"""For some proposition \pi_r, get all propositions \pi_r' such that r' =/= r."""
 		
-		# return [p for p in self.ts.keys() if p != prop] # This will return completion props instead of activation in fs
-
 		if prop in self.activation:
 			return [p for p in self.activation if p != prop]
 		elif prop in self.completion:
@@ -481,6 +509,12 @@ class FastSlowFormula(GR1Formula):
 	def _get_c_prop(self, prop):
 		return prop + "_c"
 
+	def _is_activation(self, prop):
+		return prop[-2:] == "_a"
+
+	def _is_completion(self, prop):
+		return prop[-2:] == "_c"
+
 
 # =========================================================
 # Entry point
@@ -488,8 +522,8 @@ class FastSlowFormula(GR1Formula):
 
 def main():
 	
-	my_gr1_formula = GR1Formula([], [])
-	my_fs_formula = FastSlowFormula([], [])
+	my_gr1_formula = GR1Formula()
+	my_fs_formula = FastSlowFormula()
 
 if __name__ == "__main__":
 	main()

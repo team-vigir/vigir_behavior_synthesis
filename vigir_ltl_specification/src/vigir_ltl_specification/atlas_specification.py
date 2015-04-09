@@ -83,7 +83,7 @@ class VigirSpecification(GR1Specification):
 		action_a, action_c = self.convert_action_to_fs_props(action)
 
 		# Create a memory proposition for the action
-		memory = GR1Formula()
+		memory = FastSlowFormula()
 
 		mem_prop, mem_formula = memory.gen_goal_memory_formula(action_c)
 
