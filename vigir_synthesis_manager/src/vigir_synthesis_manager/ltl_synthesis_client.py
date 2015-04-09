@@ -4,7 +4,7 @@ import rospy
 
 from vigir_synthesis_msgs.srv import LTLSynthesis
 
-def ltl_synthesis_client(ltl_spec, name):
+def ltl_synthesis_client(ltl_spec, name = ''):
     '''Client'''
 
     rospy.wait_for_service('ltl_synthesis')
