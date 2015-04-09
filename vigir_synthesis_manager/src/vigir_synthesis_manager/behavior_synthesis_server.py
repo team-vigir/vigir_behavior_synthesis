@@ -3,7 +3,7 @@
 import rospy
 import actionlib
 
-from vigir_synthesis_msgs.msg import BehaviorSynthesisAction, BehaviorSynthesisFeedback, BehaviorSynthesisResult, BSErrorCodes
+from vigir_synthesis_msgs.msg import *
 
 import ltl_compilation_client
 import ltl_synthesis_client
@@ -26,14 +26,16 @@ class BehaviorSynthesisActionServer(object):
 
     def __init__(self, name):
         self._action_name = name
-        self._as = actionlib.SimpleActionServer(self._action_name, BehaviorSynthesisAction,
-                                                execute_cb = self.execute_cb, auto_start = False)
+        self._as = actionlib.SimpleActionServer(self._action_name,
+                                                BehaviorSynthesisAction,
+                                                execute_cb = self.execute_cb,
+                                                auto_start = False)
         self._as.start()
 
     def execute_cb(self, goal):
-        '''...'''
+        '''The code to be executed when a BehaviorSynthesisActionGoal is received.'''
 
-        r = rospy.Rate(1)   #FIX: What should this be?
+        r = rospy.Rate(1)   # FIX: What should this be?
         success = True      # start optimistically
 
         # Acknowledge goal reception
@@ -76,14 +78,21 @@ class BehaviorSynthesisActionServer(object):
             self._as.set_aborted(self._result)
     
     def handle_ltl_specification_request(self, synthesis_goal):
-        '''...'''
+        '''
+        Makes a LTL Specification Compilation request 
+        to the corresponding service and handles the response.
+
+        synthesis_goal: BehaviorSynthesisRequest    A partial specification.
+        '''
 
         system = synthesis_goal.system
         goals = synthesis_goal.goals
         initial_conditions = synthesis_goal.initial_conditions
         custom_ltl = synthesis_goal.ltl_specification #TODO: handle this (currently ignored)
 
-        response = ltl_compilation_client.ltl_compilation_client(system, goals, initial_conditions)
+        response = ltl_compilation_client.ltl_compilation_client(system,
+                                                                 goals,
+                                                                 initial_conditions)
         
         # Update success and publish feedback based on response
         if response.error_code.value is BSErrorCodes.SUCCESS:
@@ -96,9 +105,14 @@ class BehaviorSynthesisActionServer(object):
         return response.ltl_specification, response.error_code.value, success
 
     def handle_ltl_synthesis_request(self, ltl_spec):
-        '''...'''
+        '''
+        Makes a LTL Synthesis request 
+        to the corresponding service and handles the response.
 
-        response = ltl_synthesis_client.ltl_synthesis_client(ltl_spec, '') # no name
+        ltl_spec:   LTLSpecification    A complete LTL specification.
+        '''
+
+        response = ltl_synthesis_client.ltl_synthesis_client(ltl_spec)
 
         if response.synthesizable:
             self.set_and_publish_feedback("The LTL Specification is synthesizable")
@@ -110,9 +124,11 @@ class BehaviorSynthesisActionServer(object):
         return response.automaton, response.error_code, success
 
     def handle_sm_generation_request(self, synthesized_automata, system):
-        '''Generate State Machine definitions based on an automaton and config file.
+        '''
+        Generate State Machine definitions for a given 
+        robotic system based on a synthesized automaton.
 
-        @param synthesized_automata SynthesizedAutomaton    The automaton to synthesize.
+        @param synthesized_automata SynthesizedAutomaton    The automaton to instantiate as a SM.
         @param system               string                  System name. e.g. "atlas"
         '''
         response = sm_generate_client.sm_generate_client(synthesized_automata, system)
