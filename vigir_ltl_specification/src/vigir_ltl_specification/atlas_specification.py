@@ -21,58 +21,87 @@ class VigirSpecification(GR1Specification):
 		super(VigirSpecification, self).__init__(spec_name, env_props, sys_props)
 		
 		config_files = ['atlas_preconditions.yaml', 'vigir_preconditions.yaml']
-		self.handle_atlas_preconditions(config_files)
-		# self.gen_formulas_for_actions(self.sys_props)
+		self.preconditions = VigirSpecification.load_vigir_preconditions(config_files)
 
-	def handle_atlas_preconditions(self, files):
+	@staticmethod
+	def load_vigir_preconditions(files):
 		'''Loads precondtions, converts to fast-slow, adds propositions and formulas to specification.'''
 		
 		location = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/vigir_ltl_specification/src/vigir_ltl_specification/config')
 
 		preconditions = precond.load_preconditions_from_config_files(location, files)
 
-		# Assume that all preconditions are completion (env) propositions
-		self.preconditions, new_env_props, new_sys_props = precond.convert_preconditions_to_fastslow(preconditions)
+		return preconditions
+
+	def handle_new_action_goal(self, action):
+		'''...'''
+
+		# First, deal with preconditions and fast-slow formulas
+		self.handle_new_action(action)
+
+		# Then add action completion to the conditions for a successful outcome ('finished')
+		self.add_action_goal(action)
+
+	def handle_new_action(self, action):
+		'''...'''
+
+		# Find the action's preconditions and add the corresponding formulas
+		self.add_precondition_formulas_for_action(action)
+
+		# Add fast-slow formulas governing action completion
+		action_a, action_c = self.convert_action_to_fs_props(action)
+
+		self.gen_fs_formulas_for_actions([action])
+
+		# Set the initial conditions for this new action
+		self.add_false_initial_conditions(action_a, action_c)
+
+	def add_precondition_formulas_for_action(self, action):
+		'''...'''
+
+		# Get preconditions for this specific action
+		action_preconditions = dict()
+		action_preconditions[action] = self.preconditions[action]
+
+		# Recursively get preconditions for this action's preconditions
+		for pc in action_preconditions[action]:
+			if pc in self.preconditions.keys(): # if the precondition has preconditions of its own
+				self.handle_new_action(pc)
+
+		preconditions_fs, new_env_props, new_sys_props = precond.convert_preconditions_to_fastslow(action_preconditions)
+
 		self.env_props = self.merge_env_propositions(new_env_props)
 		self.sys_props = self.merge_sys_propositions(new_sys_props)
 
-		precondition_formulas = precond.gen_formulas_from_preconditions(self.preconditions, fast_slow = True)
+		precondition_formulas = precond.gen_formulas_from_preconditions(preconditions_fs, fast_slow = True)
 
 		self.add_to_sys_trans(precondition_formulas)
 
 	def add_action_goal(self, action):
 		'''Generate (fast-slow) system liveness requirement from an action.'''
 
-		#TODO: Extend to handle multiple goals (memory part is problematic atm)
-
-		action_a, action_c = self.convert_action_to_props(action)
-
-		self.gen_formulas_for_actions([action])
-
-		# Add action as goal
-		# self.add_to_sys_liveness(action_c)
+		action_a, action_c = self.convert_action_to_fs_props(action)
 
 		# Create a memory proposition for the action
-		memory = GR1Formula()
+		memory = FastSlowFormula()
 
 		mem_prop, mem_formula = memory.gen_goal_memory_formula(action_c)
 
 		success_condition = memory.gen_success_condition([mem_prop], 'finished')
 
 		# Add the new propositions to the specification
-		self.sys_props.extend([mem_prop, 'finished'])
+		self.sys_props.extend([mem_prop, 'finished']) #FIX: This will add 'finished' multiple times
 
 		# Add the memory and success -related formulas to the specification
 		self.add_to_sys_trans(mem_formula)
 		self.add_to_sys_trans(success_condition)
 		self.add_to_sys_liveness('finished')
 
-		# And also set action and memory props to False at the beginning
-		self.add_false_initial_conditions(action_a, action_c)
+		# Set memory props to False at the beginning
 		self.add_false_initial_conditions(mem_prop)
 		self.add_false_initial_conditions('finished')
 
-	def gen_formulas_for_actions(self, actions):
+	def gen_fs_formulas_for_actions(self, actions):
 		
 		action_formula = FastSlowFormula([], actions)
 
@@ -91,7 +120,7 @@ class VigirSpecification(GR1Specification):
 		if pi_c:
 			self.add_to_env_init('! ' + pi_c)
 
-	def convert_action_to_props(self, action):
+	def convert_action_to_fs_props(self, action):
 		
 		fs_formula = FastSlowFormula([], [action])
 
@@ -197,6 +226,7 @@ class ControlModeTransitionSystem(object):
 			self.ts = dict()
 			for mode in modes_of_interest:
 				# Cherry-pick the modes of interest from the dictionary
+				#TODO: Consider replacing for-loop with dict comprehension
 				self.ts[mode] = [m for m in ControlModeTransitionSystem.ts[mode] if m in modes_of_interest]
 
 # =========================================================
@@ -205,19 +235,15 @@ class ControlModeTransitionSystem(object):
 
 def main():
 	
-	cm_spec = ControlModeSpecification('go_to_manipulate', initial_mode = 'stand_prep',
+	cm_spec = ControlModeSpecification('pickup', initial_mode = 'stand_prep',
 											modes_of_interest = ['stand_prep', 'stand', 'manipulate'])
 
-	# Add manipulate as a goal (system liveness requirement)
-	# cm_spec.add_control_mode_goal("manipulate")
+	vigir_spec = VigirSpecification('goal_and_preconditions')
 
-	vigir_spec = VigirSpecification('preconditions')
-
-	print "[PRECONDITIONS]"
+	print "[ALL PRECONDITIONS]"
 	pprint.pprint(vigir_spec.preconditions)
-	pprint.pprint(vigir_spec.sys_trans)
 
-	vigir_spec.add_action_goal('pickup')
+	vigir_spec.handle_new_action_goal('pickup')
 
 	complete_spec = GR1Specification('pickup')
 	individual_specs = [cm_spec, vigir_spec]

@@ -31,7 +31,6 @@ def get_action_preconditions(prop, preconditions):
 
 def gen_formulas_from_preconditions(preconditions, fast_slow):
 	'''Generates LTL formulas of the precondition format from a dictionary of preconditions.'''
-	#TODO: Assume preconditions are completion props and action is an activation prop.
 
 	formula = FastSlowFormula() if fast_slow else GR1Formula()
 

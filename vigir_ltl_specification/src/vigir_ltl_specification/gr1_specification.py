@@ -1,7 +1,11 @@
 #!/usr/bin/env python
-"""Specification written in the GR(1) fragment of Linear Temporal Logic
 
-This module contains one main class, GR1Specification.
+"""
+Specification written in the GR(1) fragment of Linear Temporal Logic
+
+This module contains one class, GR1Specification.
+A GR(1) Specification consists of propositions and formulas.
+
 The class has methods for populating the 6 parts of a GR(1) formula:
   * Environment initial conditions
   * Environment safety assumptions
@@ -19,16 +23,21 @@ import os
 
 class GR1Specification(object):
 	"""
-	The class encodes the GR(1) fragment of LTL formulas, written in the structured slugs format.
+	The class encodes the GR(1) fragment of LTL formulas, 
+	written in the structured slugs format.
 
-	* All methods that generate LTL formulas return a list of formulas (each one a string), not one big string.
-	* There are separate methods for adding those lists to the various LTL subformulas (requirements, liveness, etc.)
-	* There are separate methods for writing those lists of subformulas to a .structuredslugs file.
+	* All methods that generate LTL formulas return a 
+	  list of formulas (each one a string), not one big string.
+	* There are separate methods for adding those lists
+	  to the various LTL subformulas (requirements, liveness, etc.)
+	* There are separate methods for writing those lists
+	  of subformulas to the appropriate section of a .structuredslugs file.
 
 	Arguments:
-	  spec_name	(str)			The name of the specification. The spec file will be named like that.
-	  env_props	(list of str)	Environment propositions
-	  sys_props	(list of str)	System propositions
+	  spec_name	(str)			The name of the specification.
+	  							The spec file will be named like that.
+	  env_props	(list of str)	Environment (input) propositions
+	  sys_props	(list of str)	System (output) propositions
 	
 	"""
 
@@ -208,21 +217,13 @@ class GR1Specification(object):
 		spec_file.write("\n")
 
 
-# =====================================================
-# Custom Exceptions
-# =====================================================
-
-class SpecificationTypeException(Exception):
-    pass
-
 # =========================================================
 # Entry point
 # =========================================================
 
 def main():
 	
-	my_spec = GR1Specification('test_refactoring', ['a'], ['b'])
-	my_spec.write_structured_slugs_file()
+	my_spec = GR1Specification()
 
 if __name__ == "__main__":
 	main()
