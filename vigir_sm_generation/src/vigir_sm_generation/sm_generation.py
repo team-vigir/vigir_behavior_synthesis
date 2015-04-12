@@ -15,7 +15,7 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 vigir_repo = os.environ['VIGIR_ROOT_DIR']
 
 def new_si(state_path, state_class, outcomes, transitions, initial_state="",
-    p_names = [], p_vals = []):
+    p_names, p_vals):
     """ Create a new SI with optional parameters.  """
     si = StateInstantiation()
     si.state_path = state_path
@@ -108,7 +108,19 @@ def get_substate_name(in_var, config):
     """
     return in_var
 
-#def generate_sm(json_file, yaml_file):
+def get_exiting_state(state_name, curr_state_output_vars, sm_outputs):
+    """ Create a concurrent state that transitions out of the SM."""
+    # First, find which output is triggering the exit
+    trigger_outs = set(sm_outputs.keys()).intersection(curr_state_output_vars)
+    assert(len(trigger_outs) > 0, "State does no exist SM")
+    trigger_out = list(sm_out_vars)[0]
+
+    sm_out_var = sm_outputs[trigger_out]
+    si = new_si("/State{0}".format(state_name), "NoOp",
+                sm_out_var, {'done': sm_out_var},
+                [], [])
+    return si
+
 def generate_sm(request):
     """
     This method takes in a JSON file describe an automaton and a YAML file
@@ -168,17 +180,24 @@ def generate_sm(request):
         error_code = BSErrorCodes(BSErrorCodes.NO_SYSTEM_CONFIG)
         return SMGenerateResponse([], error_code)
 
-    # Two short helper functions
+    sm_outputs = config['output']
+
+    # Short helper functions
     def get_in_var_name(i):
         """Get the input variable name at index [i] in [in_vars] dict."""
         return all_in_vars[i]
     def get_out_var_name(i):
         """Get the output variable name at index [i] in [out_vars] dict."""
         return all_out_vars[i]
+    def is_sm_output(outputs):
+        """Return true iff this state's output valuations indicate that this
+        state should transition out of the SM completely."""
+        check = set(outputs)
+        return any(k in check for k in sm_outputs.keys())
 
     # Initialize list of StateInstantiation's with parent SI.
-    SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE, ['finished', 'failed'],
-                              [], initial_state = "/State0")]
+    SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
+           sm_outputs.values(), [], initial_state = "/State0"), [], []]
     for state in automata:
         name = state.name
         out_vals = state.output_valuation
@@ -189,6 +208,10 @@ def generate_sm(request):
         curr_state_output_vars = [get_out_var_name(i)
                                   for i, v in enumerate(out_vals)
                                   if v == 1]
+        if is_sm_output(curr_state_output_vars):
+            SIs.append(get_exiting_state(state.name, curr_state_output_vars,
+                                         sm_outputs))
+            continue
         perform_sms = set()
         class_decl_to_out_map = {} # the map from class declaration to its out_map
         in_var_to_class_decl = {} # what state machine goes with an input variable?
@@ -256,7 +279,7 @@ def generate_sm(request):
                   str(internal_maps)]
         si = new_si("/State{0}".format(name), "ConcurrentState",
                     concurrent_si_outcomes, concurrent_si_transitions,
-                    p_names=p_names, p_vals=p_vals)
+                    p_names, p_vals)
         SIs.append(si)
 
     return SMGenerateResponse(SIs, BSErrorCodes(BSErrorCodes.SUCCESS))

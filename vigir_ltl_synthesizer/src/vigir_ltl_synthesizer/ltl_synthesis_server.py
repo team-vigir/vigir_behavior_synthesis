@@ -104,7 +104,7 @@ def call_slugs_synthesizer(name):
 
     return synthesizable, automaton_file
 
-def automaton_state_from_node_info(name, info, n_in_vars):
+def automaton_state_from_node_info(name, info, n_in_vars, mem_idxs):
     '''
     Generate an AutomatonState from the info of a node (from the json automaton
     synthesized file.
@@ -113,11 +113,16 @@ def automaton_state_from_node_info(name, info, n_in_vars):
     @param info      dictionary As of the writing of this doc, this dictionary
                                 has the rank, state, and transitions.
     @param n_in_vars int        How many input variables there are
+    @param mem_idxs  list       Indices of where an output variable is a memory
+                                proposition (i.e. remove it)
     '''
     state = AutomatonState()
     state.name = str(name) # convert integer to string
 
     state.output_valuation = info['state'][n_in_vars:]
+    # Only keep an output variable if it is not a memory proposition
+    state.output_valuation = [x for i, x in enumerate(state.output_variables)
+                                if i not in mem_idxs]
     state.input_valuation = info['state'][:n_in_vars]
     state.transitions = [str(t) for t in info['trans']] # convert integers to strings
     state.rank  = info['rank']
@@ -135,15 +140,20 @@ def gen_automaton_msg_from_json(json_file, input_vars, output_vars):
 
     with open(json_file) as data_file:
         data = json.load(data_file)
+
+    mem_idxs = [i for i, x in enumerate(output_vars) if "_m" != x[-2:]]
     
     automaton = SynthesizedAutomaton()
-    automaton.output_variables = output_vars
+    # Only keep an output variable if it is not a memory proposition
+    automaton.output_variables = [x for i, x in enumerate(output_vars)
+                                    if i not in mem_idxs]
     automaton.input_variables = input_vars
     n_in_vars = len(input_vars)
-    
+
     states = data['nodes'] # The automaton's states are called nodes in the synthesizer's output
 
-    automaton.automaton = [automaton_state_from_node_info(i, states[i], n_in_vars) for i in states]
+    automaton.automaton = [automaton_state_from_node_info(i, states[i],
+                           n_in_vars, mem_idxs) for i in states]
 
     return automaton
 
