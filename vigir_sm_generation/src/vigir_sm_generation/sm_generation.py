@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+"""
+Some terminology used in this file (hopefully consistently)
+
+SM = State Machine, refers to the final big SM that will be loaded into FlexBE.
+State/substate = a substate of the main SM.
+out = output as defined by SMACH
+"""
 
 import os
 import yaml
@@ -29,93 +36,101 @@ def new_si(state_path, state_class, outcomes, transitions, initial_state,
 
     return si
 
-def get_automaton(name, automata):
-    """
-    Returns the automaton of a given automaton name in the list of automata.
+class SMGenerator():
+    """A class used to help generate state machines."""
+    def __init__(self, config, all_in_vars, all_out_vars, sm_outputs):
+        self.config = config
+        self.all_in_vars = all_in_vars
+        self.all_out_vars = all_out_vars
+        self.sm_outputs = sm_outputs
 
-    @param name The name of the automaton of interest.
-    @param automata List of AutomatonStates.
-    """
-    i = [a.name for a in automata].index(name)
-    return automata[i]
+    def get_automaton(self, name, automata):
+        """
+        Returns the automaton of a given automaton name in the list of automata.
 
-def get_transitions(name, automata):
-    """
-    Deduce the transition needed to go to the next states.
+        @param name The name of the automaton of interest.
+        @param automata List of AutomatonStates.
+        """
+        i = [a.name for a in automata].index(name)
+        return automata[i]
 
-    @param name The name of the state to transitions away from
-    @param automata List of all AutomatonState's.
-    @returns A dictionary, that maps next state to indices of the input
-            variables that need to be true to go to that next state.
+    def get_transitions(self, name, automata):
+        """
+        Deduce the transition needed to go to the next states.
 
-             For example:
-        {
-            'State1': [1, 2], # input var 1 & 2 need to be true
-            'State2': [1, 3, 4],
-            ...
-        }
-    """
-    state = get_automaton(name, automata)
-    next_states = [str(x) for x in state.transitions]
-    next_states = list(set(next_states) - set([name])) # remove self loop
+        @param name The name of the state to transitions away from
+        @param automata List of all AutomatonState's.
+        @returns A dictionary, that maps next state to indices of the input
+                variables that need to be true to go to that next state.
 
-    if len(next_states) == 0:
-        print("State {s} has no transitions out of it!".format(s = name))
-        #TODO: Report an appropriate error code instead of raising and exception
-    if len(next_states) > 1:
-        logging.debug("Multiple next states for {0}".format(name))
+                 For example:
+            {
+                'State1': [1, 2], # input var 1 & 2 need to be true
+                'State2': [1, 3, 4],
+                ...
+            }
+        """
+        state = self.get_automaton(name, automata)
+        next_states = [str(x) for x in state.transitions]
+        next_states = list(set(next_states) - set([name])) # remove self loop
 
-    transitions = {}
-    for next_state in next_states:
-        input_vals = get_automaton(next_state, automata).input_valuation
-        transitions[next_state] = [idx for (idx, v) in
-                                   enumerate(input_vals)
-                                   if v == 1]
-    return transitions
+        if len(next_states) == 0:
+            print("State {s} has no transitions out of it!".format(s = name))
+            #TODO: Report an appropriate error code instead of raising and exception
+        if len(next_states) > 1:
+            logging.debug("Multiple next states for {0}".format(name))
 
-def reformat(nodes, n_in_vars):
-    """
-    Reformat automaton dictionary so that input/output variables are
-    separated.  For example, if before the dictionary for a node was
-    {
-        ...
-        "states" : [a, b, c, d, e, f, g] # a-d are input, e-g are output
-        ...
-    }
-    where a-d corresponds to input variables and e-g corresponds to output
-    variables, now it looks like
-    {
-        ...
-        "in_vars" : [a, b, c, d]
-        "out_vars" : [e, f, g]
-        ...
-    }
-    """
-    for name, dic in nodes.items():
-        in_vars = dic['state'][:n_in_vars]
-        out_vars = dic['state'][n_in_vars:]
-        dic['in_vars'] = in_vars
-        dic['out_vars'] = out_vars
-        dic.pop('state', None)
-    return nodes
+        transitions = {}
+        for next_state in next_states:
+            input_vals = self.get_automaton(next_state, automata).input_valuation
+            transitions[next_state] = [idx for (idx, v) in
+                                       enumerate(input_vals)
+                                       if v == 1]
+        return transitions
 
-def get_substate_name(in_var, config):
-    """
-    Return the readable neam of the substate associated with an input variable.
-    For now, jsut use that input variable as the name.
+    def get_substate_name(self, in_var):
+        """
+        Return the readable neam of the substate associated with an input variable.
+        For now, jsut use that input variable as the name.
 
-    @param in_var Input variable associated with this substate.
-    @param config Configuration dictionary from YAML.
-    """
-    return in_var
+        @param in_var Input variable associated with this substate.
+        @param config Configuration dictionary from YAML.
+        """
+        return in_var
 
-def add_sm_exists(SIs, state_to_sm_output):
-    """Renames anything pointing to an exiting state (e.g. something that has
-    "finished" set to true) to the transitioning term (e.g. "State 5" ->
-    "finished")."""
-    def rename_exit_states(si, state_to_sm_output):
-        return si #TODO
-    return [rename_exit_states(si, state_to_sm_output) for si in SIs]
+    def add_sm_exits(self, SIs, state_to_sm_output):
+        """Renames anything pointing to an exiting state (e.g. something that has
+        "finished" set to true) to the transitioning term (e.g. "State 5" ->
+        "finished")."""
+        def rename_exit_states(si, state_to_sm_output):
+            return si #TODO
+        return [rename_exit_states(si, state_to_sm_output) for si in SIs]
+
+    def get_in_var_name(self, i):
+        """Get the input variable name at index [i] in [in_vars] dict."""
+        return self.all_in_vars[i]
+
+    def get_out_var_name(self, i):
+        """Get the output variable name at index [i] in [out_vars] dict."""
+        return self.all_out_vars[i]
+
+    def is_sm_output(self, outputs):
+        """Return true iff this state's output valuations indicate that this
+        state should transition out of the SM completely."""
+        check = set(outputs)
+        return any(k in check for k in self.sm_outputs)
+
+    def get_sm_output_var(self, outputs):
+        """Returns the output variable of a substate that is the entire SM's
+        output (e.g. "finished")."""
+        in_both = [k for k in self.sm_outputs if k in outputs]
+        if len(in_both) > 1:
+            raise Exception("Substate has more than one output for the"\
+                          + "entire state machine.")
+        if len(in_both) == 0:
+            raise Exception("Substate has no output for the entire state"\
+                          + "machine, but one was expected.")
+        return in_both[0]
 
 def generate_sm(request):
     """
@@ -167,7 +182,6 @@ def generate_sm(request):
     automata = sa.automaton
     system_name = request.system
 
-    config = {}
     if system_name == 'atlas':
         yaml_file = os.path.join(vigir_repo, 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/src/vigir_sm_generation/configs/atlas.yaml')
         with open(yaml_file) as yf:
@@ -176,33 +190,12 @@ def generate_sm(request):
         error_code = BSErrorCodes(BSErrorCodes.NO_SYSTEM_CONFIG)
         return SMGenerateResponse([], error_code)
 
-    sm_outputs = config['output']
-
-    # Short helper functions
-    def get_in_var_name(i):
-        """Get the input variable name at index [i] in [in_vars] dict."""
-        return all_in_vars[i]
-    def get_out_var_name(i):
-        """Get the output variable name at index [i] in [out_vars] dict."""
-        return all_out_vars[i]
-    def is_sm_output(outputs):
-        """Return true iff this state's output valuations indicate that this
-        state should transition out of the SM completely."""
-        check = set(outputs)
-        return any(k in check for k in sm_outputs.keys())
-    def get_sm_output_var(outputs):
-        """Returns the output variable of a substate that is the entire SM's
-        output (e.g. "finished")."""
-        in_both = [k for k in sm_outputs.keys() if k in outputs]
-        if len(in_both) > 1:
-            raise Exception("Substate has more than one output for the entire state machine.")
-        if len(in_both) == 0:
-            raise Exception("Substate has no output for the entire state machine, but one was expected.")
-        return in_both[0]
+    state_out_to_sm_out = config['output']
+    smg = SMGenerator(config, all_in_vars, all_out_vars, state_out_to_sm_out.keys())
 
     # Initialize list of StateInstantiation's with parent SI.
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
-           sm_outputs.values(), [], "/State0", [], [])]
+           state_out_to_sm_out.values(), [], "/State0", [], [])]
     # To exit this SM, we find states that should exit. At the end, we'll make
     # any transition that goes to one of these states go to the real output.
     state_to_sm_output = {}
@@ -210,14 +203,14 @@ def generate_sm(request):
         name = state.name
         out_vals = state.output_valuation
         logging.debug("Data for state {0}".format(name))
-        transitions = get_transitions(name, automata)
+        transitions = smg.get_transitions(name, automata)
 
         # extract what output variables the current state is outputting
-        curr_state_output_vars = [get_out_var_name(i)
+        curr_state_output_vars = [smg.get_out_var_name(i)
                                   for i, v in enumerate(out_vals)
                                   if v == 1]
-        if is_sm_output(curr_state_output_vars):
-            state_to_sm_output[name] = get_sm_output_var(curr_state_output_vars)
+        if smg.is_sm_output(curr_state_output_vars):
+            state_to_sm_output[name] = smg.get_sm_output_var(curr_state_output_vars)
             continue
         perform_sms = set()
         class_decl_to_out_map = {} # the map from class declaration to its out_map
@@ -248,10 +241,10 @@ def generate_sm(request):
         concurrent_si_outcomes = []
         concurrent_si_transitions = []
         for next_state, condition_idxs in transitions.items():
-            conditions = [get_in_var_name(i) for i in condition_idxs]
+            conditions = [smg.get_in_var_name(i) for i in condition_idxs]
             substate_name_to_out = {}
             for in_var in conditions:
-                ss_name = get_substate_name(in_var, config)
+                ss_name = smg.get_substate_name(in_var)
                 if in_var in in_var_to_class_decl: # Completion variable
                     class_decl = in_var_to_class_decl[in_var]
                     substate_name_to_out[ss_name] =\
@@ -289,7 +282,7 @@ def generate_sm(request):
                     None, p_names, p_vals)
         SIs.append(si)
 
-    add_sm_exists(SIs, state_to_sm_output)
+    smg.add_sm_exits(SIs, state_to_sm_output)
 
     return SMGenerateResponse(SIs, BSErrorCodes(BSErrorCodes.SUCCESS))
 
