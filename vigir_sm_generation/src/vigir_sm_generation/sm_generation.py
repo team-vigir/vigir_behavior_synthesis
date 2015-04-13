@@ -5,6 +5,12 @@ Some terminology used in this file (hopefully consistently)
 SM = State Machine, refers to the final big SM that will be loaded into FlexBE.
 State/substate = a substate of the main SM.
 out = output as defined by SMACH
+(fake) output = What a substate thinks the final transition out of the entire SM.
+              However, we have one more level of indirection since we can
+              reconfigure "done" to "finished". In this case, "done" is the
+              fake output. Sometimes just referred to as SM output.
+real output = From above, it would be "finished". Always referred to as real
+              output
 """
 
 import os
@@ -38,15 +44,20 @@ def new_si(state_path, state_class, outcomes, transitions, initial_state,
 
 class SMGenerator():
     """A class used to help generate state machines."""
-    def __init__(self, config, all_in_vars, all_out_vars, sm_outputs):
+    def __init__(self, config, all_in_vars, all_out_vars,
+            sm_fake_out_to_real_out):
         self.config = config
 
         # List of in/out vars of the substates
         self.all_in_vars = all_in_vars
         self.all_out_vars = all_out_vars
 
+        # Map from what a substate thinks is the final transition to what it
+        # actually should be (e.g. "done" -> "finished")
+        self.sm_fake_out_to_real_out = sm_fake_out_to_real_out
+
         # List of outputs of the entire SM
-        self.sm_outputs = sm_outputs
+        self.sm_fake_outputs = sm_fake_out_to_real_out.keys()
 
         # To exit this SM, we find states that should exit. At the end, we'll
         # make any transition that goes to one of these states go to the real
@@ -125,14 +136,14 @@ class SMGenerator():
         """Return true iff this state's output valuations indicate that this
         state should transition out of the SM completely."""
         check = set(outputs)
-        return any(k in check for k in self.sm_outputs)
+        return any(k in check for k in self.sm_fake_outputs)
 
     def update_out_to_sm_out(self, name, outputs):
         """Updates the mapping from the name of a substate that represents
         and exit, to the specific output. E.g. "State5" -> "finished"
         """
         if self.is_sm_output(outputs):
-            in_both = [k for k in self.sm_outputs if k in outputs]
+            in_both = [k for k in self.sm_fake_outputs if k in outputs]
             if len(in_both) > 1:
                 raise Exception("Substate has more than one output for the"\
                               + "entire state machine.")
@@ -146,7 +157,9 @@ class SMGenerator():
         a state may represent a SM exit (e.g. "State 5" -> "failed")
         """
         if name in self.state_name_to_sm_output:
-            return self.state_name_to_sm_output[name]
+            # Could actually be "State 5" -> "done" -> "finished"
+            fake_output = self.state_name_to_sm_output[name]
+            return self.sm_fake_out_to_real_out[fake_output]
         else:
             return name
 
@@ -210,12 +223,13 @@ def generate_sm(request):
 
     # Map from what a substate thinks is the final transition to what it
     # actually should be (e.g. "done" -> "finished")
-    state_out_to_sm_out = config['output']
-    smg = SMGenerator(config, all_in_vars, all_out_vars, state_out_to_sm_out.keys())
+    sm_fake_out_to_real_out = config['output']
+    smg = SMGenerator(config, all_in_vars, all_out_vars,
+                      sm_fake_out_to_real_out)
 
     # Initialize list of StateInstantiation's with parent SI.
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
-           state_out_to_sm_out.values(), [], "/State0", [], [])]
+           sm_fake_out_to_real_out.values(), [], "/State0", [], [])]
     for state in automata:
         curr_state_output_vars = smg.get_state_output_vars(state)
         smg.update_out_to_sm_out(state.name, curr_state_output_vars)
