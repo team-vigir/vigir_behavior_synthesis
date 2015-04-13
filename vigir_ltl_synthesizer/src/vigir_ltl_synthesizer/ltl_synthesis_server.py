@@ -141,7 +141,7 @@ def gen_automaton_msg_from_json(json_file, input_vars, output_vars):
     with open(json_file) as data_file:
         data = json.load(data_file)
 
-    mem_idxs = [i for i, x in enumerate(output_vars) if "_m" != x[-2:]]
+    mem_idxs = [i for i, x in enumerate(output_vars) if "_m" == x[-2:]]
     
     automaton = SynthesizedAutomaton()
     # Only keep an output variable if it is not a memory proposition
