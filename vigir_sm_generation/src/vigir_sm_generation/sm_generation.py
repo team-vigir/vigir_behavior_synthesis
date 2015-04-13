@@ -150,7 +150,8 @@ class SMGenerator():
             if len(in_both) == 0:
                 raise Exception("Substate has no output for the entire state"\
                               + "machine, but one was expected.")
-            self.state_name_to_sm_output[name] = in_both[0]
+            state_name = "State{0}".format(name)
+            self.state_name_to_sm_output[state_name] = in_both[0]
 
     def get_real_name(self, name):
         """Returns the real name of this state. It might be different because
@@ -240,6 +241,9 @@ def generate_sm(request):
         transitions = smg.get_transitions(name, automata)
         curr_state_output_vars = smg.get_state_output_vars(state)
 
+        if smg.is_sm_output(curr_state_output_vars):
+            continue
+
         perform_sms = set()
         class_decl_to_out_map = {} # the map from class declaration to its out_map
         in_var_to_class_decl = {} # what state machine goes with an input variable?
@@ -297,8 +301,8 @@ def generate_sm(request):
             })
 
             # Not really needed, but it's good to be explicit
-            concurrent_si_outcomes.append(next_state_name)
-            concurrent_si_transitions.append(next_state_name)
+            concurrent_si_outcomes.append(smg.get_real_name(next_state_name))
+            concurrent_si_transitions.append(smg.get_real_name(next_state_name))
             logging.debug("{0} -> {1} if: {2}".format(name, next_state,
                                               substate_name_to_out))
 
