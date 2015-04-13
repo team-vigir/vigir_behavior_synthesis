@@ -235,6 +235,10 @@ def generate_sm(request):
         curr_state_output_vars = smg.get_state_output_vars(state)
         smg.update_out_to_sm_out(state.name, curr_state_output_vars)
 
+    perform_sms = set()
+    class_decl_to_out_map = {} # the map from class declaration to its out_map
+    in_var_to_class_decl = {} # what state machine goes with an input variable?
+
     for state in automata:
         name = state.name
         logging.debug("Data for state {0}".format(name))
@@ -244,16 +248,6 @@ def generate_sm(request):
         if smg.is_sm_output(curr_state_output_vars):
             continue
 
-        perform_sms = set()
-        class_decl_to_out_map = {} # the map from class declaration to its out_map
-        in_var_to_class_decl = {} # what state machine goes with an input variable?
-
-        # Internal parameters of the ConcurrentState that we need to build.
-        # See 'states', 'outcomes' and 'outcome_mapping' in the documentation
-        # of ConcurrentState for more detail.
-        internal_state_names = {}
-        internal_outcomes = []
-        internal_maps = []
         for out_var in curr_state_output_vars:
             var_config = config[out_var]
             class_decl = var_config['class_decl']
@@ -269,6 +263,13 @@ def generate_sm(request):
                     break
             if not is_activation:
                 perform_sms.add(class_decl)
+
+        # Internal parameters of the ConcurrentState that we need to build.
+        # See 'states', 'outcomes' and 'outcome_mapping' in the documentation
+        # of ConcurrentState for more detail.
+        internal_state_names = {}
+        internal_outcomes = []
+        internal_maps = []
 
         concurrent_si_outcomes = []
         concurrent_si_transitions = []
