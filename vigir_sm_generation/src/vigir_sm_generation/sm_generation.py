@@ -40,9 +40,18 @@ class SMGenerator():
     """A class used to help generate state machines."""
     def __init__(self, config, all_in_vars, all_out_vars, sm_outputs):
         self.config = config
+
+        # List of in/out vars of the substates
         self.all_in_vars = all_in_vars
         self.all_out_vars = all_out_vars
+
+        # List of outputs of the entire SM
         self.sm_outputs = sm_outputs
+
+        # To exit this SM, we find states that should exit. At the end, we'll
+        # make any transition that goes to one of these states go to the real
+        # output.
+        self.state_name_to_sm_output = {}
 
     def get_automaton(self, name, automata):
         """
@@ -98,14 +107,6 @@ class SMGenerator():
         """
         return in_var
 
-    def add_sm_exits(self, SIs, state_to_sm_output):
-        """Renames anything pointing to an exiting state (e.g. something that has
-        "finished" set to true) to the transitioning term (e.g. "State 5" ->
-        "finished")."""
-        def rename_exit_states(si, state_to_sm_output):
-            return si #TODO
-        return [rename_exit_states(si, state_to_sm_output) for si in SIs]
-
     def get_in_var_name(self, i):
         """Get the input variable name at index [i] in [in_vars] dict."""
         return self.all_in_vars[i]
@@ -114,23 +115,40 @@ class SMGenerator():
         """Get the output variable name at index [i] in [out_vars] dict."""
         return self.all_out_vars[i]
 
+    def get_state_output_vars(self, state):
+        """Extract what output variables a state is outputting."""
+        out_vals = state.output_valuation
+        return [self.get_out_var_name(i) for i, v in enumerate(out_vals)
+                                         if v == 1]
+
     def is_sm_output(self, outputs):
         """Return true iff this state's output valuations indicate that this
         state should transition out of the SM completely."""
         check = set(outputs)
         return any(k in check for k in self.sm_outputs)
 
-    def get_sm_output_var(self, outputs):
-        """Returns the output variable of a substate that is the entire SM's
-        output (e.g. "finished")."""
-        in_both = [k for k in self.sm_outputs if k in outputs]
-        if len(in_both) > 1:
-            raise Exception("Substate has more than one output for the"\
-                          + "entire state machine.")
-        if len(in_both) == 0:
-            raise Exception("Substate has no output for the entire state"\
-                          + "machine, but one was expected.")
-        return in_both[0]
+    def update_out_to_sm_out(self, name, outputs):
+        """Updates the mapping from the name of a substate that represents
+        and exit, to the specific output. E.g. "State5" -> "finished"
+        """
+        if self.is_sm_output(outputs):
+            in_both = [k for k in self.sm_outputs if k in outputs]
+            if len(in_both) > 1:
+                raise Exception("Substate has more than one output for the"\
+                              + "entire state machine.")
+            if len(in_both) == 0:
+                raise Exception("Substate has no output for the entire state"\
+                              + "machine, but one was expected.")
+            self.state_name_to_sm_output[name] = in_both[0]
+
+    def get_real_name(self, name):
+        """Returns the real name of this state. It might be different because
+        a state may represent a SM exit (e.g. "State 5" -> "failed")
+        """
+        if name in self.state_name_to_sm_output:
+            return self.state_name_to_sm_output[name]
+        else:
+            return name
 
 def generate_sm(request):
     """
@@ -190,28 +208,24 @@ def generate_sm(request):
         error_code = BSErrorCodes(BSErrorCodes.NO_SYSTEM_CONFIG)
         return SMGenerateResponse([], error_code)
 
+    # Map from what a substate thinks is the final transition to what it
+    # actually should be (e.g. "done" -> "finished")
     state_out_to_sm_out = config['output']
     smg = SMGenerator(config, all_in_vars, all_out_vars, state_out_to_sm_out.keys())
 
     # Initialize list of StateInstantiation's with parent SI.
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
            state_out_to_sm_out.values(), [], "/State0", [], [])]
-    # To exit this SM, we find states that should exit. At the end, we'll make
-    # any transition that goes to one of these states go to the real output.
-    state_to_sm_output = {}
+    for state in automata:
+        curr_state_output_vars = smg.get_state_output_vars(state)
+        smg.update_out_to_sm_out(state.name, curr_state_output_vars)
+
     for state in automata:
         name = state.name
-        out_vals = state.output_valuation
         logging.debug("Data for state {0}".format(name))
         transitions = smg.get_transitions(name, automata)
+        curr_state_output_vars = smg.get_state_output_vars(state)
 
-        # extract what output variables the current state is outputting
-        curr_state_output_vars = [smg.get_out_var_name(i)
-                                  for i, v in enumerate(out_vals)
-                                  if v == 1]
-        if smg.is_sm_output(curr_state_output_vars):
-            state_to_sm_output[name] = smg.get_sm_output_var(curr_state_output_vars)
-            continue
         perform_sms = set()
         class_decl_to_out_map = {} # the map from class declaration to its out_map
         in_var_to_class_decl = {} # what state machine goes with an input variable?
@@ -262,9 +276,9 @@ def generate_sm(request):
                 internal_state_names[ss_name] = in_var_to_class_decl[in_var]
 
             next_state_name = "State{0}".format(next_state)
-            internal_outcomes.append(next_state_name)
+            internal_outcomes.append(smg.get_real_name(next_state_name))
             internal_maps.append({
-                'outcome': next_state_name,
+                'outcome': smg.get_real_name(next_state_name),
                 'condition': substate_name_to_out
             })
 
@@ -281,8 +295,6 @@ def generate_sm(request):
                     concurrent_si_outcomes, concurrent_si_transitions,
                     None, p_names, p_vals)
         SIs.append(si)
-
-    smg.add_sm_exits(SIs, state_to_sm_output)
 
     return SMGenerateResponse(SIs, BSErrorCodes(BSErrorCodes.SUCCESS))
 
