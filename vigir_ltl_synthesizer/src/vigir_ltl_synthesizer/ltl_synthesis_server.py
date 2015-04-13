@@ -121,7 +121,7 @@ def automaton_state_from_node_info(name, info, n_in_vars, mem_idxs):
 
     state.output_valuation = info['state'][n_in_vars:]
     # Only keep an output variable if it is not a memory proposition
-    state.output_valuation = [x for i, x in enumerate(state.output_variables)
+    state.output_valuation = [x for i, x in enumerate(state.output_valuation)
                                 if i not in mem_idxs]
     state.input_valuation = info['state'][:n_in_vars]
     state.transitions = [str(t) for t in info['trans']] # convert integers to strings
