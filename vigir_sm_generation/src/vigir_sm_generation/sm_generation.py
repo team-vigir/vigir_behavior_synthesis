@@ -14,7 +14,7 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 vigir_repo = os.environ['VIGIR_ROOT_DIR']
 
-def new_si(state_path, state_class, outcomes, transitions, initial_state="",
+def new_si(state_path, state_class, outcomes, transitions, initial_state,
     p_names, p_vals):
     """ Create a new SI with optional parameters.  """
     si = StateInstantiation()
@@ -22,7 +22,8 @@ def new_si(state_path, state_class, outcomes, transitions, initial_state="",
     si.state_class = state_class
     si.outcomes = outcomes
     si.transitions = transitions
-    si.initial_state_name = initial_state
+    if initial_state != None:
+        si.initial_state_name = initial_state
     si.parameter_names = p_names
     si.parameter_values = p_vals
 
@@ -108,18 +109,13 @@ def get_substate_name(in_var, config):
     """
     return in_var
 
-def get_exiting_state(state_name, curr_state_output_vars, sm_outputs):
-    """ Create a concurrent state that transitions out of the SM."""
-    # First, find which output is triggering the exit
-    trigger_outs = set(sm_outputs.keys()).intersection(curr_state_output_vars)
-    assert(len(trigger_outs) > 0, "State does no exist SM")
-    trigger_out = list(sm_out_vars)[0]
-
-    sm_out_var = sm_outputs[trigger_out]
-    si = new_si("/State{0}".format(state_name), "NoOp",
-                sm_out_var, {'done': sm_out_var},
-                [], [])
-    return si
+def add_sm_exists(SIs, state_to_sm_output):
+    """Renames anything pointing to an exiting state (e.g. something that has
+    "finished" set to true) to the transitioning term (e.g. "State 5" ->
+    "finished")."""
+    def rename_exit_states(si, state_to_sm_output):
+        return si #TODO
+    return [rename_exit_states(si, state_to_sm_output) for si in SIs]
 
 def generate_sm(request):
     """
@@ -194,10 +190,22 @@ def generate_sm(request):
         state should transition out of the SM completely."""
         check = set(outputs)
         return any(k in check for k in sm_outputs.keys())
+    def get_sm_output_var(outputs):
+        """Returns the output variable of a substate that is the entire SM's
+        output (e.g. "finished")."""
+        in_both = [k for k in sm_outputs.keys() if k in outputs]
+        if len(in_both) > 1:
+            raise Exception("Substate has more than one output for the entire state machine.")
+        if len(in_both) == 0:
+            raise Exception("Substate has no output for the entire state machine, but one was expected.")
+        return in_both[0]
 
     # Initialize list of StateInstantiation's with parent SI.
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
-           sm_outputs.values(), [], initial_state = "/State0"), [], []]
+           sm_outputs.values(), [], "/State0", [], [])]
+    # To exit this SM, we find states that should exit. At the end, we'll make
+    # any transition that goes to one of these states go to the real output.
+    state_to_sm_output = {}
     for state in automata:
         name = state.name
         out_vals = state.output_valuation
@@ -209,8 +217,7 @@ def generate_sm(request):
                                   for i, v in enumerate(out_vals)
                                   if v == 1]
         if is_sm_output(curr_state_output_vars):
-            SIs.append(get_exiting_state(state.name, curr_state_output_vars,
-                                         sm_outputs))
+            state_to_sm_output[name] = get_sm_output_var(curr_state_output_vars)
             continue
         perform_sms = set()
         class_decl_to_out_map = {} # the map from class declaration to its out_map
@@ -279,8 +286,10 @@ def generate_sm(request):
                   str(internal_maps)]
         si = new_si("/State{0}".format(name), "ConcurrentState",
                     concurrent_si_outcomes, concurrent_si_transitions,
-                    p_names, p_vals)
+                    None, p_names, p_vals)
         SIs.append(si)
+
+    add_sm_exists(SIs, state_to_sm_output)
 
     return SMGenerateResponse(SIs, BSErrorCodes(BSErrorCodes.SUCCESS))
 
