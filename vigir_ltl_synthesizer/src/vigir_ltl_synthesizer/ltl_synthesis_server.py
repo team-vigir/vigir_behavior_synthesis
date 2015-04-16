@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os, sys, subprocess
+from distutils.spawn import find_executable
 
 import json
 
@@ -93,13 +94,14 @@ def call_slugs_synthesizer(name):
     #FIX: Do we need the '--sysInitRoboticsSemantics' option?
     slugs_cmd = ['slugs', "--jsonOutput", name + ".slugsin", name + ".json"]
 
-    #TODO: Check for synthesizability based on slugs output in terminal
-    # For example, RESULT: Specification is realizable.
-    synthesizable = True
-
+    # TODO: try/catch block around slugs command
     synthesis_process = subprocess.Popen(slugs_cmd, stdout=subprocess.PIPE, preexec_fn=os.setsid)
     os.waitpid(synthesis_process.pid, 0)
 
+    # TODO: Check for synthesizability based on slugs output in terminal
+    # For example, RESULT: Specification is realizable.
+    synthesizable = True
+    
     automaton_file = name + ".json"
 
     return synthesizable, automaton_file
@@ -243,10 +245,21 @@ def ltl_synthesis_server():
     ''''Server'''
     
     rospy.init_node('vigir_ltl_synthesizer')
+
+    # Check whether the synthesizer (slugs executable) is installed 
+    slugs_exec_path = find_executable('slugs')
+
+    if not slugs_exec_path:
+        rospy.logwarn('The synthesizer (SLUGS) is NOT installed.')
+        rospy.logwarn('Please use the install_slugs.sh script.')
+        rospy.logwarn('The LTL Synthesis service will not be available.')
+    else:
+        rospy.loginfo('The synthesizer (SLUGS) is installed in: %s' % slugs_exec_path)
     
-    s = rospy.Service('ltl_synthesis', LTLSynthesis, handle_ltl_synthesis)
+        s = rospy.Service('ltl_synthesis', LTLSynthesis, handle_ltl_synthesis)
+        
+        rospy.loginfo("Ready to receive LTL Synthesis requests.")
     
-    rospy.loginfo("Ready to receive LTL Synthesis requests.")
     rospy.spin()
 
 if __name__ == "__main__":
