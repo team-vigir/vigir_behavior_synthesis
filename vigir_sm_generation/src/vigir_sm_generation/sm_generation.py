@@ -33,7 +33,7 @@ def new_si(state_path, state_class, outcomes, transitions, initial_state,
     si = StateInstantiation()
     si.state_path = state_path
     si.state_class = state_class
-    si.outcomes = outcomes
+    si.outcomes = list(set(outcomes))
     si.transitions = transitions
     if initial_state != None:
         si.initial_state_name = initial_state
@@ -230,7 +230,7 @@ def generate_sm(request):
 
     # Initialize list of StateInstantiation's with parent SI.
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
-           sm_fake_out_to_real_out.values(), [], "/State0", [], [])]
+           sm_fake_out_to_real_out.values(), [], "State0", [], [])]
     for state in automata:
         curr_state_output_vars = smg.get_state_output_vars(state)
         smg.update_out_to_sm_out(state.name, curr_state_output_vars)
