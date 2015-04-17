@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import os, sys, subprocess
+import os, sys
+import commands
 from distutils.spawn import find_executable
 
 import json
@@ -58,12 +59,12 @@ def handle_ltl_synthesis(request):
 
 def handle_slugs_output(synthesizable, automaton_file, input_vars, output_vars):
     '''...'''
-
+    # TODO: The output is handled elsewhere. Make this be about the Automaton msg only (get name.json here instead)
     if synthesizable:
         # Parse JSON into SynthesizedAutomaton msg
         automaton = gen_automaton_msg_from_json(automaton_file, input_vars, output_vars)
         error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
-        rospy.loginfo('Successfully synthesized an automaton from the LTL specification.')
+        rospy.loginfo('Successfully created Automaton msg from the synthesized automaton.')
     
     elif not synthesizable:  
         automaton = SynthesizedAutomaton() # Return empty automaton
@@ -71,6 +72,47 @@ def handle_slugs_output(synthesizable, automaton_file, input_vars, output_vars):
         rospy.logwarn('The LTL specification was unsynthesizable!')
 
     return automaton, error_code
+
+def call_slugs_synthesizer(name):
+    '''
+    Calls SLUGS in order to synthesize automaton from .slugsin input.
+
+    Handles potential failures, such as the specification being unrealizable.
+    '''
+
+    options = ["--jsonOutput"]  # Do we need the '--sysInitRoboticsSemantics' option?
+    slugs_cmd = ['slugs'] + options + [name + ".slugsin", name + ".json"] # list for use with the subprocess module
+    slugs_cmd = ' '.join(slugs_cmd) # convert to string for use with the commands module
+
+    # synthesis_process = subprocess.Popen(slugs_cmd, stdout=subprocess.PIPE)
+    (status, slugs_output) = commands.getstatusoutput(slugs_cmd)
+
+    if status == 0:
+        # The command ran successfully. Analyze output.
+        synthesizable = determine_synthesizability(slugs_output)   
+        automaton_file = name + ".json"
+    else:
+        # The command did not even run.
+        rospy.logerr("""SLUGS command failed with status: %s
+                     \nHave you installed slugs? Output: %s"""
+                     % (status, slugs_output))
+        automaton_file = ''
+        synthesizable = False
+
+    return synthesizable, automaton_file
+
+def determine_synthesizability(slugs_output):
+    '''...'''
+    
+    synthesizable = False
+
+    if 'realizable' in slugs_output:
+        synthesizable = True
+        rospy.loginfo('Successfully synthesized an automaton from the LTL specification.')
+    else:
+        rospy.logwarn('The LTL specification was unsynthesizable.\nSLUGS output: %s' % slugs_output)
+
+    return synthesizable
 
 def convert_structured_slugs_to_slugsin(name):
     '''Call function from StructuredSlugsParser to get slugsin file.'''
@@ -86,25 +128,6 @@ def convert_structured_slugs_to_slugsin(name):
         sys.stdout = sys.__stdout__
 
     return slugsin_file
-
-def call_slugs_synthesizer(name):
-    '''...'''
-
-    # Synthesize automaton from .slugsin input
-    #FIX: Do we need the '--sysInitRoboticsSemantics' option?
-    slugs_cmd = ['slugs', "--jsonOutput", name + ".slugsin", name + ".json"]
-
-    # TODO: try/catch block around slugs command
-    synthesis_process = subprocess.Popen(slugs_cmd, stdout=subprocess.PIPE, preexec_fn=os.setsid)
-    os.waitpid(synthesis_process.pid, 0)
-
-    # TODO: Check for synthesizability based on slugs output in terminal
-    # For example, RESULT: Specification is realizable.
-    synthesizable = True
-    
-    automaton_file = name + ".json"
-
-    return synthesizable, automaton_file
 
 def automaton_state_from_node_info(name, info, n_in_vars, mem_idxs):
     '''
