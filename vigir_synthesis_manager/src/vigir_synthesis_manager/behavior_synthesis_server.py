@@ -121,7 +121,7 @@ class BehaviorSynthesisActionServer(object):
             self.set_and_publish_feedback("The LTL Specification is unsynthesizable")
             success = False
 
-        return response.automaton, response.error_code, success
+        return response.automaton, response.error_code.value, success
 
     def handle_sm_generation_request(self, synthesized_automata, system):
         '''
