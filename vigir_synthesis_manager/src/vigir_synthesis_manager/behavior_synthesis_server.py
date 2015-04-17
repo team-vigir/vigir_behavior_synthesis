@@ -70,7 +70,7 @@ class BehaviorSynthesisActionServer(object):
         if success:
             self._result.error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
             self._result.states = sm
-            rospy.loginfo('%s: Succeeded' % self._action_name)
+            rospy.loginfo('\033[92m%s: Succeeded\033[0m' % self._action_name)
             self._as.set_succeeded(self._result)
         else:
             self._result.error_code = BSErrorCodes(error_code_value)

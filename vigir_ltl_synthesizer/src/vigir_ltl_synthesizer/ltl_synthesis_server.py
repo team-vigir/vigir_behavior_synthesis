@@ -64,7 +64,7 @@ def handle_slugs_output(synthesizable, automaton_file, input_vars, output_vars):
         # Parse JSON into SynthesizedAutomaton msg
         automaton = gen_automaton_msg_from_json(automaton_file, input_vars, output_vars)
         error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
-        rospy.loginfo('Successfully created Automaton msg from the synthesized automaton.')
+        rospy.loginfo('\033[92mSuccessfully created Automaton msg from the synthesized automaton.\033[0m')
     
     elif not synthesizable:  
         automaton = SynthesizedAutomaton() # Return empty automaton
@@ -108,7 +108,7 @@ def determine_synthesizability(slugs_output):
 
     if 'realizable' in slugs_output:
         synthesizable = True
-        rospy.loginfo('Successfully synthesized an automaton from the LTL specification.')
+        rospy.loginfo('\033[92mSuccessfully synthesized an automaton from the LTL specification.\033[0m')
     else:
         rospy.logwarn('The LTL specification was unsynthesizable.\nSLUGS output: %s' % slugs_output)
 
@@ -212,7 +212,7 @@ def write_structured_slugs_from_msg(ltl_spec, name):
         _write_sys_liveness(ltl_spec, spec_file)
         _write_env_liveness(ltl_spec, spec_file)
 
-    rospy.loginfo("\nCreated specification file %s in %s \n" % (structured_slugs_file, this_folder_path))
+    rospy.loginfo("\n\033[92mSuccessfully created specification file\033[0m %s in %s \n" % (structured_slugs_file, this_folder_path))
 
     return structured_slugs_file, this_folder_path
 
