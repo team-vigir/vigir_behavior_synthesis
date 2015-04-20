@@ -22,6 +22,7 @@ def behavior_synthesis_client(system, goals, initial_conditions):
     action_goal.request.system = system
     action_goal.request.goals = goals
     action_goal.request.initial_conditions = initial_conditions
+    action_goal.request.name = 'client_request'
     
     # Fill ot any options (all False by default).
     action_goal.synthesis_options = SynthesisOptions()
