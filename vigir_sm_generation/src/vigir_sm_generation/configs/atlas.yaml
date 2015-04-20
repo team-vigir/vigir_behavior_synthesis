@@ -5,9 +5,15 @@ output:
     finished: finished
 
 pickup_a:
+    class_decl: ExecuteTrajectoryMsgState(ExecuteTrajectoryMsgState.CONTROLLER_LEFT_ARM)
+    output_mapping:
+        pickup_c: done
+        failed : failed
+    autonomy: LOW
+grasp_a:
     class_decl: GraspObjectSM()
     output_mapping:
-        pickup_c: changed
+        grasp_c: finished
         failed : failed
     autonomy: LOW
 manipulate_a:
