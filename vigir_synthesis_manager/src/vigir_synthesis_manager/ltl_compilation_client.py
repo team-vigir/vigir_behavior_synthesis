@@ -15,12 +15,7 @@ def ltl_compilation_client(system, goals, initial_conditions, custom_ltl = None)
         response = ltl_compilation_srv(system, goals, initial_conditions)
         
         #DEBUG
-        print response.ltl_specification.sys_init
-        print response.ltl_specification.env_init
-        print response.ltl_specification.sys_trans
-        print response.ltl_specification.env_trans
-        print response.ltl_specification.sys_liveness
-        print response.ltl_specification.env_liveness
+        # print response.ltl_specification
         print 'LTL Compilation error code: ', response.error_code
         
         return response
