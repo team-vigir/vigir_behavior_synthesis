@@ -22,13 +22,18 @@ def handle_ltl_synthesis(request):
     input_vars = ltl_spec.env_props
 
     if request.spec_name:
-        spec_name = request.spec_name # Optional name (just a convenience)
+        if request.spec_name[0] == '/':  # FlexBE requests start with a /, the SM's path
+            path_name = request.spec_name[1:] # Strip the first slash to make it a relative path
+        else:
+            path_name = request.spec_name
+        spec_name = os.path.split(path_name)[-1] # Extract the name from the path
     else:
-        # Make something up
-        spec_name = 'nfrewhgdn' #TODO: Generate name based on system goals
+        #TODO: If no name is provided, generate one based on system goals
+        spec_name = 'default_spec_name'
+        path_name = spec_name
 
     # Parse LTL specification msg and write .structuredslugs file
-    structured_slugs_file, folder_path = write_structured_slugs_from_msg(ltl_spec, spec_name)
+    structured_slugs_file, folder_path = write_structured_slugs_from_msg(ltl_spec, path_name)
     
     # First, step inside the specification's directory
     initial_dir = os.getcwd()
@@ -119,13 +124,12 @@ def convert_structured_slugs_to_slugsin(name):
     
     slugsin_file = name + ".slugsin"
 
-    with open(slugsin_file, "w") as f:
-
-        #TODO: update performConversion so we don't have to do stdout redirection
-        #TODO:         -//-        so that it doesn't output formulas in terminal
-        sys.stdout = f
+    #TODO: update performConversion so we don't have to do stdout redirection
+    with open(slugsin_file, "w") as sys.stdout:
+        
         slugs_compiler.performConversion(name + ".structuredslugs", thoroughly = True)
-        sys.stdout = sys.__stdout__
+    
+    sys.stdout = sys.__stdout__
 
     return slugsin_file
 

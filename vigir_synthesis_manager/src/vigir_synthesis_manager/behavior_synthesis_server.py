@@ -59,7 +59,7 @@ class BehaviorSynthesisActionServer(object):
         if success:
             # Request LTL Synthesis from the corresponding server
             # and also update and publish the appropriate feedback
-            automaton, error_code_value, success = self.handle_ltl_synthesis_request(ltl_spec)
+            automaton, error_code_value, success = self.handle_ltl_synthesis_request(ltl_spec, synthesis_goal.name)
 
         if success:
             # Request State Machine Generation from the corresponding server
@@ -104,7 +104,7 @@ class BehaviorSynthesisActionServer(object):
 
         return response.ltl_specification, response.error_code.value, success
 
-    def handle_ltl_synthesis_request(self, ltl_spec):
+    def handle_ltl_synthesis_request(self, ltl_spec, path_name):
         '''
         Makes a LTL Synthesis request 
         to the corresponding service and handles the response.
@@ -112,7 +112,7 @@ class BehaviorSynthesisActionServer(object):
         ltl_spec:   LTLSpecification    A complete LTL specification.
         '''
 
-        response = ltl_synthesis_client.ltl_synthesis_client(ltl_spec)
+        response = ltl_synthesis_client.ltl_synthesis_client(ltl_spec, path_name)
 
         if response.synthesizable:
             self.set_and_publish_feedback("The LTL Specification is synthesizable")
