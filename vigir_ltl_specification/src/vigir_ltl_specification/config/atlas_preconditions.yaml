@@ -1,12 +1,11 @@
----
 # Action Pre-conditions
 pickup:
     - grasp
     - manipulate
 grasp:
-    - pregrasp
+    # - pregrasp
     - manipulate
-pregrasp:
-    - manipulate
+# pregrasp:
+#     - manipulate
 #footstep_plan:
 #    - stand
