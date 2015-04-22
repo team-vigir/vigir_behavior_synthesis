@@ -27,13 +27,29 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 vigir_repo = os.environ['VIGIR_ROOT_DIR']
 
+def remove_duplicates(lst):
+    """Remove duplicates of a list."""
+    return list(set(lst))
+
+def remove_duplicate_pairs(lst1, lst2):
+    """Remove duplicates in two lists. Visually, put the two lists on top of
+    each other and a pair is two elements in a vertical line."""
+    if len(lst1) == 0:
+        return [], []
+    pairs = zip(lst1, lst2)
+    pairs = list(set(pairs))
+    new_lists = zip(*pairs)
+    return list(new_lists[0]), list(new_lists[1])
+
 def new_si(state_path, state_class, outcomes, transitions, initial_state,
     p_names, p_vals):
     """ Create a new SI with optional parameters.  """
     si = StateInstantiation()
     si.state_path = state_path
     si.state_class = state_class
-    si.outcomes = list(set(outcomes))
+    if len(transitions) > 0: # it's not the top level SM
+        outcomes, transitions = remove_duplicate_pairs(outcomes, transitions)
+    si.outcomes = outcomes
     si.transitions = transitions
     if initial_state != None:
         si.initial_state_name = initial_state
@@ -41,6 +57,13 @@ def new_si(state_path, state_class, outcomes, transitions, initial_state,
     si.parameter_values = p_vals
 
     return si
+
+def modify_names(automata):
+    """Make the state names human readable."""
+    for state in automata:
+        state.name = "State{0}".format(state.name)
+        state.transitions = ["State{0}".format(n) for n in state.transitions]
+    return automata
 
 class SMGenerator():
     """A class used to help generate state machines."""
@@ -96,16 +119,18 @@ class SMGenerator():
 
         if len(next_states) == 0:
             print("State {s} has no transitions out of it!".format(s = name))
-            #TODO: Report an appropriate error code instead of raising and exception
         if len(next_states) > 1:
             logging.debug("Multiple next states for {0}".format(name))
 
         transitions = {}
         for next_state in next_states:
-            input_vals = self.get_automaton(next_state, automata).input_valuation
-            transitions[next_state] = [idx for (idx, v) in
-                                       enumerate(input_vals)
-                                       if v == 1]
+            if not self.is_fake_state(next_state):
+                input_vals = self.get_automaton(next_state, automata).input_valuation
+                transitions[next_state] = [idx for (idx, v) in
+                                           enumerate(input_vals)
+                                           if v == 1]
+            else:
+                transitions[next_state] = []
         return transitions
 
     def get_substate_name(self, in_var):
@@ -150,19 +175,22 @@ class SMGenerator():
             if len(in_both) == 0:
                 raise Exception("Substate has no output for the entire state"\
                               + "machine, but one was expected.")
-            state_name = "State{0}".format(name)
-            self.state_name_to_sm_output[state_name] = in_both[0]
+            self.state_name_to_sm_output[name] = in_both[0]
 
     def get_real_name(self, name):
         """Returns the real name of this state. It might be different because
         a state may represent a SM exit (e.g. "State 5" -> "failed")
         """
-        if name in self.state_name_to_sm_output:
+        if self.is_fake_state(name):
             # Could actually be "State 5" -> "done" -> "finished"
             fake_output = self.state_name_to_sm_output[name]
             return self.sm_fake_out_to_real_out[fake_output]
         else:
             return name
+
+    def is_fake_state(self, name):
+        """Returns true iff a state is a placeholder for an output."""
+        return name in self.state_name_to_sm_output
 
 def generate_sm(request):
     """
@@ -231,6 +259,8 @@ def generate_sm(request):
     # Initialize list of StateInstantiation's with parent SI.
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
            sm_fake_out_to_real_out.values(), [], "State0", [], [])]
+
+    automata = modify_names(automata)
     for state in automata:
         curr_state_output_vars = smg.get_state_output_vars(state)
         smg.update_out_to_sm_out(state.name, curr_state_output_vars)
@@ -294,23 +324,24 @@ def generate_sm(request):
 
                 internal_state_names[ss_name] = in_var_to_class_decl[in_var]
 
-            next_state_name = "State{0}".format(next_state)
-            internal_outcomes.append(smg.get_real_name(next_state_name))
+            internal_outcomes.append(smg.get_real_name(next_state))
             internal_maps.append({
-                'outcome': smg.get_real_name(next_state_name),
+                'outcome': smg.get_real_name(next_state),
                 'condition': substate_name_to_out
             })
 
             # Not really needed, but it's good to be explicit
-            concurrent_si_outcomes.append(smg.get_real_name(next_state_name))
-            concurrent_si_transitions.append(smg.get_real_name(next_state_name))
+            concurrent_si_outcomes.append(smg.get_real_name(next_state))
+            concurrent_si_transitions.append(smg.get_real_name(next_state))
             logging.debug("{0} -> {1} if: {2}".format(name, next_state,
                                               substate_name_to_out))
+
+        internal_outcomes = remove_duplicates(internal_outcomes)
 
         p_names = ["states", "outcomes", "outcome_mapping"]
         p_vals = [str(internal_state_names), str(internal_outcomes),
                   str(internal_maps)]
-        si = new_si("/State{0}".format(name), "ConcurrentState",
+        si = new_si(name, "ConcurrentState",
                     concurrent_si_outcomes, concurrent_si_transitions,
                     None, p_names, p_vals)
         SIs.append(si)
