@@ -48,8 +48,8 @@ class GR1Specification(object):
 		self.sys_props = sys_props
 
 		# Initialize the six GR(1) subformulas
-		self.sys_init = list()
-		self.env_init = list()
+		self.sys_init  = list()
+		self.env_init  = list()
 		self.sys_trans = list()
 		self.env_trans = list()
 		self.sys_liveness = list()
@@ -97,7 +97,7 @@ class GR1Specification(object):
 	def load_gr1_formula(self, gr1_formula):
 		"""Load an object of type GR1Formula into the GR(1) specification."""
 		
-		#TODO: Ensure we don't duplicate propositions, e.g., using sets
+		#TODO: Ensure we don't duplicate propositions
 		pass
 
 	# =====================================================
@@ -123,11 +123,14 @@ class GR1Specification(object):
 		self.add_to_list('env_liveness', formulas)
 
 	def add_to_list(self, desired_list, thing_to_add):
-		"""Generic method for appending to or extending a list attribute (e.g. self.sys_liveness)"""
+		"""
+		Generic method for appending to, or extending,
+		a list attribute of the object (e.g. self.sys_liveness)
+		"""
 
-		if type(thing_to_add) == str:
+		if type(thing_to_add) is str:
 			getattr(self, desired_list).append(thing_to_add)
-		elif type(thing_to_add) == list:
+		elif type(thing_to_add) is list:
 			getattr(self, desired_list).extend(thing_to_add)
 		elif thing_to_add is None:
 			print("Warning: Nothing was added to %s!" % desired_list)
@@ -139,7 +142,7 @@ class GR1Specification(object):
 	# =====================================================
 
 	def write_structured_slugs_file(self, folder_path):
-		"""Create, or open, a structuredslugs file and write the 8 sections."""	
+		"""Open a structuredslugs file and write the 8 sections."""	
 		
 		filename = self.spec_name + ".structuredslugs"
 
@@ -148,6 +151,7 @@ class GR1Specification(object):
 		if not os.path.exists(folder_path):
 			os.makedirs(folder_path)
 
+		# Get /home/path_to_file/file.structuredslugs
 		full_file_path = os.path.join(folder_path, filename)
 		
 		with open(full_file_path, 'w') as spec_file:
@@ -225,5 +229,9 @@ def main():
 	
 	my_spec = GR1Specification()
 
+	print 'Environment props:\t', my_spec.env_props
+	print 'System props:\t', my_spec.sys_props
+
 if __name__ == "__main__":
 	main()
+	
