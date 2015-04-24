@@ -67,8 +67,7 @@ def modify_names(automata):
 
 class SMGenerator():
     """A class used to help generate state machines."""
-    def __init__(self, config, all_in_vars, all_out_vars,
-            sm_fake_out_to_real_out):
+    def __init__(self, config, all_in_vars, all_out_vars, automata):
         self.config = config
 
         # List of in/out vars of the substates
@@ -77,15 +76,43 @@ class SMGenerator():
 
         # Map from what a substate thinks is the final transition to what it
         # actually should be (e.g. "done" -> "finished")
-        self.sm_fake_out_to_real_out = sm_fake_out_to_real_out
+        self.sm_fake_out_to_real_out = config['output']
 
         # List of outputs of the entire SM
-        self.sm_fake_outputs = sm_fake_out_to_real_out.keys()
+        self.sm_fake_outputs = self.sm_fake_out_to_real_out.keys()
 
         # To exit this SM, we find states that should exit. At the end, we'll
         # make any transition that goes to one of these states go to the real
         # output.
         self.state_name_to_sm_output = {}
+
+        self.automata = automata
+
+        for state in self.automata:
+            curr_state_output_vars = self.get_state_output_vars(state)
+            self.update_out_to_sm_out(state.name, curr_state_output_vars)
+
+        # the map from class declaration to its out_map
+        self.class_decl_to_out_map = {}
+        # what state machine goes with an input variable?
+        self.in_var_to_class_decl = {}
+
+    def update_out_to_sm_out(self, name, outputs):
+        """Updates the mapping from the name of a substate that represents
+        and exit, to the specific output. E.g. "State5" -> "finished"
+        """
+        if self.is_sm_output(outputs):
+            in_both = [k for k in self.sm_fake_outputs if k in outputs]
+            if len(in_both) > 1:
+                raise Exception("Substate has more than one output for the"\
+                              + "entire state machine.")
+            if len(in_both) == 0:
+                raise Exception("Substate has no output for the entire state"\
+                              + "machine, but one was expected.")
+            self.state_name_to_sm_output[name] = in_both[0]
+
+    def get_sm_real_outputs(self):
+        return self.sm_fake_out_to_real_out.values()
 
     def get_automaton(self, name, automata):
         """
@@ -124,13 +151,13 @@ class SMGenerator():
 
         transitions = {}
         for next_state in next_states:
-            if not self.is_fake_state(next_state):
-                input_vals = self.get_automaton(next_state, automata).input_valuation
-                transitions[next_state] = [idx for (idx, v) in
-                                           enumerate(input_vals)
-                                           if v == 1]
-            else:
-                transitions[next_state] = []
+            #if not self.is_fake_state(next_state):
+            input_vals = self.get_automaton(next_state, automata).input_valuation
+            transitions[next_state] = [idx for (idx, v) in
+                                       enumerate(input_vals)
+                                       if v == 1]
+            #else:
+            #    transitions[next_state] = []
         return transitions
 
     def get_substate_name(self, in_var):
@@ -163,20 +190,6 @@ class SMGenerator():
         check = set(outputs)
         return any(k in check for k in self.sm_fake_outputs)
 
-    def update_out_to_sm_out(self, name, outputs):
-        """Updates the mapping from the name of a substate that represents
-        and exit, to the specific output. E.g. "State5" -> "finished"
-        """
-        if self.is_sm_output(outputs):
-            in_both = [k for k in self.sm_fake_outputs if k in outputs]
-            if len(in_both) > 1:
-                raise Exception("Substate has more than one output for the"\
-                              + "entire state machine.")
-            if len(in_both) == 0:
-                raise Exception("Substate has no output for the entire state"\
-                              + "machine, but one was expected.")
-            self.state_name_to_sm_output[name] = in_both[0]
-
     def get_real_name(self, name):
         """Returns the real name of this state. It might be different because
         a state may represent a SM exit (e.g. "State 5" -> "failed")
@@ -191,6 +204,9 @@ class SMGenerator():
     def is_fake_state(self, name):
         """Returns true iff a state is a placeholder for an output."""
         return name in self.state_name_to_sm_output
+
+    def is_completion_var(self, in_var):
+        return in_var in self.in_var_to_class_decl
 
 def generate_sm(request):
     """
@@ -239,9 +255,9 @@ def generate_sm(request):
     sa = request.automaton # SynthesizedAutomaton
     all_out_vars = sa.output_variables
     all_in_vars = sa.input_variables
-    automata = sa.automaton
-    system_name = request.system
+    automata = modify_names(sa.automaton)
 
+    system_name = request.system
     if system_name == 'atlas':
         yaml_file = os.path.join(vigir_repo, 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/src/vigir_sm_generation/configs/atlas.yaml')
         with open(yaml_file) as yf:
@@ -250,29 +266,16 @@ def generate_sm(request):
         error_code = BSErrorCodes(BSErrorCodes.NO_SYSTEM_CONFIG)
         return SMGenerateResponse([], error_code)
 
-    # Map from what a substate thinks is the final transition to what it
-    # actually should be (e.g. "done" -> "finished")
-    sm_fake_out_to_real_out = config['output']
-    smg = SMGenerator(config, all_in_vars, all_out_vars,
-                      sm_fake_out_to_real_out)
+    smg = SMGenerator(config, all_in_vars, all_out_vars, automata)
 
     # Initialize list of StateInstantiation's with parent SI.
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
-           sm_fake_out_to_real_out.values(), [], "State0", [], [])]
-
-    automata = modify_names(automata)
-    for state in automata:
-        curr_state_output_vars = smg.get_state_output_vars(state)
-        smg.update_out_to_sm_out(state.name, curr_state_output_vars)
+           smg.get_sm_real_outputs(), [], "State0", [], [])]
 
     perform_sms = set()
-    class_decl_to_out_map = {} # the map from class declaration to its out_map
-    in_var_to_class_decl = {} # what state machine goes with an input variable?
-
     for state in automata:
         name = state.name
         logging.debug("Data for state {0}".format(name))
-        transitions = smg.get_transitions(name, automata)
         curr_state_output_vars = smg.get_state_output_vars(state)
 
         if smg.is_sm_output(curr_state_output_vars):
@@ -282,14 +285,14 @@ def generate_sm(request):
             var_config = config[out_var]
             class_decl = var_config['class_decl']
             out_map = var_config['output_mapping']
-            class_decl_to_out_map[class_decl] = out_map
+            smg.class_decl_to_out_map[class_decl] = out_map
 
             # Decide if this is an activation output or not.
             is_activation = False
             for in_var, state_outcome in out_map.items():
                 if in_var in all_in_vars: # This is an Activation variable
                     is_activation = True
-                    in_var_to_class_decl[in_var] = class_decl
+                    smg.in_var_to_class_decl[in_var] = class_decl
                     break
             if not is_activation:
                 perform_sms.add(class_decl)
@@ -303,26 +306,27 @@ def generate_sm(request):
 
         concurrent_si_outcomes = []
         concurrent_si_transitions = []
+        transitions = smg.get_transitions(name, automata)
         for next_state, condition_idxs in transitions.items():
             conditions = [smg.get_in_var_name(i) for i in condition_idxs]
             substate_name_to_out = {}
             for in_var in conditions:
                 ss_name = smg.get_substate_name(in_var)
-                if in_var in in_var_to_class_decl: # Completion variable
-                    class_decl = in_var_to_class_decl[in_var]
+                if smg.is_completion_var(in_var):
+                    class_decl = smg.in_var_to_class_decl[in_var]
                     substate_name_to_out[ss_name] =\
-                        class_decl_to_out_map[class_decl][in_var]
+                        smg.class_decl_to_out_map[class_decl][in_var]
                 else: # Sensor variable
                     var_config = config[in_var]
                     class_decl = var_config['class_decl']
                     out_map = var_config['output_mapping']
-                    class_decl_to_out_map[class_decl] = out_map
-                    in_var_to_class_decl[in_var] = class_decl
+                    smg.class_decl_to_out_map[class_decl] = out_map
+                    smg.in_var_to_class_decl[in_var] = class_decl
 
                     substate_name_to_out[ss_name] =\
-                        class_decl_to_out_map[class_decl][in_var]
+                        smg.class_decl_to_out_map[class_decl][in_var]
 
-                internal_state_names[ss_name] = in_var_to_class_decl[in_var]
+                internal_state_names[ss_name] = smg.in_var_to_class_decl[in_var]
 
             internal_outcomes.append(smg.get_real_name(next_state))
             internal_maps.append({
