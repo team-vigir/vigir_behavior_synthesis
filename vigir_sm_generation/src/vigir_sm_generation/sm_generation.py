@@ -121,35 +121,60 @@ class SMGenerator():
         # List of outputs of the entire SM
         self.sm_fake_outputs = self.sm_fake_out_to_real_out.keys()
 
-        # the map from class declaration to its out_map
-        self.class_decl_to_out_map = {}
-        # what state machine goes with an input variable?
-        self.in_var_to_class_decl = {}
-
         # To exit this SM, we find states that should exit. At the end, we'll
         # make any transition that goes to one of these states go to the real
         # output.
-        self.state_name_to_sm_output = {}
+        self.state_name_to_sm_output = self.get_state_name_to_sm_output()
 
+        # Must be called last
+        self.populate_data_structures()
+
+    def populate_data_structures(self):
+        """Populate various dictionaries to future functions. Should be called
+        last by the initializer."""
+        # the map from class declaration to its out_map
+        self.class_decl_to_out_map = {}
+        # what class declaration goes with an input variable?
+        self.in_var_to_class_decl = {}
+        self.perform_out_var_to_class_decl = {}
         for state in self.automata:
+            name = state.name
+
+            if self.is_fake_state(name):
+                continue
+
             curr_state_output_vars = self.get_state_output_vars(state)
-            self.update_out_to_sm_out(state.name, curr_state_output_vars)
+            for out_var in curr_state_output_vars:
+                var_config = self.config[out_var]
+                class_decl = var_config['class_decl']
+                out_map = var_config['output_mapping']
+                self.class_decl_to_out_map[class_decl] = out_map
+                for in_var, state_outcome in out_map.items():
+                    if in_var in self.all_in_vars: # is an Activation variable
+                        self.in_var_to_class_decl[in_var] = class_decl
+                        is_activation = True
+                        break
+                if not is_activation:
+                    self.perform_out_var_to_class_decl[out_var] = class_decl
 
-        self.completion_in_vars = []
-
-    def update_out_to_sm_out(self, name, outputs):
-        """Updates the mapping from the name of a substate that represents
+    def get_state_name_to_sm_output(self):
+        """Create the mapping from the name of a substate that represents
         and exit, to the specific output. E.g. "State5" -> "finished"
         """
-        if self.is_sm_output(outputs):
-            in_both = [k for k in self.sm_fake_outputs if k in outputs]
-            if len(in_both) > 1:
-                raise Exception("Substate has more than one output for the"\
-                              + "entire state machine.")
-            if len(in_both) == 0:
-                raise Exception("Substate has no output for the entire state"\
-                              + "machine, but one was expected.")
-            self.state_name_to_sm_output[name] = in_both[0]
+        d = {}
+        for state in self.automata:
+            outputs = self.get_state_output_vars(state)
+            if self.is_sm_output(outputs):
+                in_both = [k for k in self.sm_fake_outputs if k in outputs]
+                if len(in_both) > 1:
+                    raise Exception("Substate has more than one output for"\
+                                  + " the entire state machine.")
+                if len(in_both) == 0:
+                    raise Exception("Substate has no output for the entire "\
+                                  + "state machine, but one was expected.")
+                d[state.name] = in_both[0]
+
+        return d
 
     def get_sm_real_outputs(self):
         return self.sm_fake_out_to_real_out.values()
@@ -242,11 +267,24 @@ class SMGenerator():
             return name
 
     def is_fake_state(self, name):
-        """Returns true iff a state is a placeholder for an output."""
+        """Returns if a state is a placeholder for an output."""
         return name in self.state_name_to_sm_output
 
     def is_completion_var(self, in_var):
+        """Returns if an input variable is a completion variable."""
         return in_var in self.in_var_to_class_decl
+
+    def is_activation_var(self, out_var):
+        """Returns if an output variable is an activation variable."""
+        var_config = config[out_var]
+        class_decl = var_config['class_decl']
+        out_map = var_config['output_mapping']
+        return any([in_var in self.all_in_vars
+                    for in_var, _ in out_map.items()])
+
+    def get_out_map(self, decl):
+        """Get the output mapping associated with a class declaration."""
+        return self.class_decl_to_out_map[decl]
 
 def generate_sm(request):
     """
@@ -326,31 +364,6 @@ def generate_sm(request):
     #                None, p_names, p_vals)
     #    SIs.append(si)
 
-    perform_sms = set()
-    for state in automata:
-        name = state.name
-        logging.debug("Data for state {0}".format(name))
-        curr_state_output_vars = smg.get_state_output_vars(state)
-
-        if smg.is_fake_state(name):
-            continue
-
-        for out_var in curr_state_output_vars:
-            var_config = config[out_var]
-            class_decl = var_config['class_decl']
-            out_map = var_config['output_mapping']
-            smg.class_decl_to_out_map[class_decl] = out_map
-
-            # Decide if this is an activation output or not.
-            is_activation = False
-            for in_var, state_outcome in out_map.items():
-                if in_var in all_in_vars: # This is an Activation variable
-                    is_activation = True
-                    smg.in_var_to_class_decl[in_var] = class_decl
-                    break
-            if not is_activation:
-                perform_sms.add(class_decl)
-
     for state in automata:
         name = state.name
         if smg.is_fake_state(name):
@@ -366,7 +379,7 @@ def generate_sm(request):
                 if smg.is_completion_var(in_var):
                     class_decl = smg.in_var_to_class_decl[in_var]
                     substate_name_to_out[ss_name] =\
-                        smg.class_decl_to_out_map[class_decl][in_var]
+                        smg.get_out_map(class_decl)[in_var]
                 else: # Sensor variable
                     var_config = config[in_var]
                     class_decl = var_config['class_decl']
@@ -374,8 +387,7 @@ def generate_sm(request):
                     smg.class_decl_to_out_map[class_decl] = out_map
                     smg.in_var_to_class_decl[in_var] = class_decl
 
-                    substate_name_to_out[ss_name] =\
-                        smg.class_decl_to_out_map[class_decl][in_var]
+                    substate_name_to_out[ss_name] = out_map[in_var]
 
                 decl = smg.in_var_to_class_decl[in_var]
                 csg.add_internal_state(ss_name, decl)
