@@ -65,6 +65,44 @@ def modify_names(automata):
         state.transitions = ["State{0}".format(n) for n in state.transitions]
     return automata
 
+class ConcurrentStateGenerator():
+    def __init__(self, name):
+        self.name = name
+        # Internal parameters of the ConcurrentState that we need to build.
+        # See 'states', 'outcomes' and 'outcome_mapping' in the documentation
+        # of ConcurrentState for more detail.
+        self.internal_states = {}
+        self.internal_outcomes = []
+        self.internal_outcome_maps = []
+
+    def add_internal_state(self, in_var, class_decl):
+        self.internal_states[in_var] = class_decl
+
+    def add_internal_outcome(self, outcome):
+        self.internal_outcomes.append(outcome)
+
+    def add_internal_outcome_maps(self, out_map):
+        self.internal_outcome_maps.append(out_map)
+
+    def gen(self):
+        self.internal_outcomes = remove_duplicates(self.internal_outcomes)
+        p_names = ["states", "outcomes", "outcome_mapping"]
+        p_vals = [str(self.internal_states),
+                  str(self.internal_outcomes),
+                  str(self.internal_outcome_maps)]
+
+        # Not really needed, but it's good to be explicit
+        concurrent_si_outcomes = self.internal_outcomes
+        concurrent_si_transitions = self.internal_outcomes
+        
+        return new_si(self.name,
+                      "ConcurrentState",
+                      concurrent_si_outcomes,
+                      concurrent_si_transitions,
+                      None,
+                      p_names,
+                      p_vals)
+
 class SMGenerator():
     """A class used to help generate state machines."""
     def __init__(self, config, all_in_vars, all_out_vars, automata):
@@ -74,6 +112,8 @@ class SMGenerator():
         self.all_in_vars = all_in_vars
         self.all_out_vars = all_out_vars
 
+        self.automata = automata
+
         # Map from what a substate thinks is the final transition to what it
         # actually should be (e.g. "done" -> "finished")
         self.sm_fake_out_to_real_out = config['output']
@@ -81,21 +121,21 @@ class SMGenerator():
         # List of outputs of the entire SM
         self.sm_fake_outputs = self.sm_fake_out_to_real_out.keys()
 
+        # the map from class declaration to its out_map
+        self.class_decl_to_out_map = {}
+        # what state machine goes with an input variable?
+        self.in_var_to_class_decl = {}
+
         # To exit this SM, we find states that should exit. At the end, we'll
         # make any transition that goes to one of these states go to the real
         # output.
         self.state_name_to_sm_output = {}
 
-        self.automata = automata
-
         for state in self.automata:
             curr_state_output_vars = self.get_state_output_vars(state)
             self.update_out_to_sm_out(state.name, curr_state_output_vars)
 
-        # the map from class declaration to its out_map
-        self.class_decl_to_out_map = {}
-        # what state machine goes with an input variable?
-        self.in_var_to_class_decl = {}
+        self.completion_in_vars = []
 
     def update_out_to_sm_out(self, name, outputs):
         """Updates the mapping from the name of a substate that represents
@@ -272,13 +312,27 @@ def generate_sm(request):
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
            smg.get_sm_real_outputs(), [], "State0", [], [])]
 
+    #for state in automata:
+    #    smg.update_info(state)
+
+    #concurrent_states = [ConcurrentState(state.name) for state in automata]
+    #for state in concurrent_states:
+    #    smg.update_info(state)
+
+    #for state in automata:
+    #    transitions = smg.get_transitions(state)
+    #    si = new_si(name, "ConcurrentState",
+    #                concurrent_si_outcomes, concurrent_si_transitions,
+    #                None, p_names, p_vals)
+    #    SIs.append(si)
+
     perform_sms = set()
     for state in automata:
         name = state.name
         logging.debug("Data for state {0}".format(name))
         curr_state_output_vars = smg.get_state_output_vars(state)
 
-        if smg.is_sm_output(curr_state_output_vars):
+        if smg.is_fake_state(name):
             continue
 
         for out_var in curr_state_output_vars:
@@ -297,15 +351,12 @@ def generate_sm(request):
             if not is_activation:
                 perform_sms.add(class_decl)
 
-        # Internal parameters of the ConcurrentState that we need to build.
-        # See 'states', 'outcomes' and 'outcome_mapping' in the documentation
-        # of ConcurrentState for more detail.
-        internal_state_names = {}
-        internal_outcomes = []
-        internal_maps = []
+    for state in automata:
+        name = state.name
+        if smg.is_fake_state(name):
+            continue
 
-        concurrent_si_outcomes = []
-        concurrent_si_transitions = []
+        csg = ConcurrentStateGenerator(name)
         transitions = smg.get_transitions(name, automata)
         for next_state, condition_idxs in transitions.items():
             conditions = [smg.get_in_var_name(i) for i in condition_idxs]
@@ -326,29 +377,18 @@ def generate_sm(request):
                     substate_name_to_out[ss_name] =\
                         smg.class_decl_to_out_map[class_decl][in_var]
 
-                internal_state_names[ss_name] = smg.in_var_to_class_decl[in_var]
+                decl = smg.in_var_to_class_decl[in_var]
+                csg.add_internal_state(ss_name, decl)
 
-            internal_outcomes.append(smg.get_real_name(next_state))
-            internal_maps.append({
+            csg.add_internal_outcome(smg.get_real_name(next_state))
+            csg.add_internal_outcome_maps({
                 'outcome': smg.get_real_name(next_state),
                 'condition': substate_name_to_out
             })
-
-            # Not really needed, but it's good to be explicit
-            concurrent_si_outcomes.append(smg.get_real_name(next_state))
-            concurrent_si_transitions.append(smg.get_real_name(next_state))
             logging.debug("{0} -> {1} if: {2}".format(name, next_state,
                                               substate_name_to_out))
 
-        internal_outcomes = remove_duplicates(internal_outcomes)
-
-        p_names = ["states", "outcomes", "outcome_mapping"]
-        p_vals = [str(internal_state_names), str(internal_outcomes),
-                  str(internal_maps)]
-        si = new_si(name, "ConcurrentState",
-                    concurrent_si_outcomes, concurrent_si_transitions,
-                    None, p_names, p_vals)
-        SIs.append(si)
+        SIs.append(csg.gen())
 
     return SMGenerateResponse(SIs, BSErrorCodes(BSErrorCodes.SUCCESS))
 
