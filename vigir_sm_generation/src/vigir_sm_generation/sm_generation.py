@@ -43,7 +43,7 @@ def remove_duplicate_pairs(lst1, lst2):
 
 def new_si(state_path, state_class, outcomes, transitions, initial_state,
     p_names, p_vals):
-    """ Create a new SI with optional parameters.  """
+    """ Create a new SI. """
     si = StateInstantiation()
     si.state_path = state_path
     si.state_class = state_class
@@ -95,7 +95,7 @@ class ConcurrentStateGenerator():
         concurrent_si_outcomes = self.internal_outcomes
         concurrent_si_transitions = self.internal_outcomes
         
-        return new_si(self.name,
+        return new_si("/" + self.name,
                       "ConcurrentState",
                       concurrent_si_outcomes,
                       concurrent_si_transitions,
