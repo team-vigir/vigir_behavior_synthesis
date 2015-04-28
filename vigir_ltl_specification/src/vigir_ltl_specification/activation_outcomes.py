@@ -7,47 +7,40 @@ from gr1_formulas import GR1Formula
 The activation-outcomes paradigm generalizes the activation-completion paradigm
 in Vasumathi Raman and Hadas Kress-Gazit (ICRA 2013).
 
-The class ActivationOutcomesFormula is a generalization of FastSlowFormula.
+The base class ActivationOutcomesFormula is a generalization of FastSlowFormula
 
 """
 
 class ActivationOutcomesFormula(GR1Formula):
-
 	"""
-
 	Arguments:
 	  env_props (list of str)	Environment propositions (strings)
 	  sys_props (list of str)	System propositions (strings)
 	  ts 		(dict of str)	Transition system, TS (e.g. workspace topology)
 	  							Implicitly contains some propositions in the keys
-	  outcomes  (list of str)	The possible outcomes of an action proposition
+	  outcomes  (list of str)	The possible outcomes of activating actions.
 	  							Example: ['completed', 'failed', 'preempted']
 	  							Defaults to the singleton ['completed']
 	  							Ideally, the first character of outcomes will
 	  							be unique, such as in the example above (c,f,p)
 
 	Attributes:
-	  activation (list of str)		Activation propositions (subset of system)
-	  outcomes 	 (dict of str:list)	The propositions corresponding to each
-	  								possible outcome
-
-	Raises:
-	  ValueError:	When a proposition is neither activation nor an outcome
-
+	  activation (list of str)	Activation propositions (subset of system)
+	  outcomes 	 (list of str)	The possible outcomes of an action
+	  outcome_props (dict of str:list)	The propositions corresponding
+	  									to each possible activation outcome
 	"""
 
-	def __init__(self, env_props = [], sys_props = [], outcomes = ['completed']):
-		super(ActivationOutcomesFormula, self).__init__(env_props, sys_props, ts = {})
+	def __init__(self, sys_props = [], outcomes = ['completed']):
+		super(ActivationOutcomesFormula, self).__init__(env_props = [], sys_props = sys_props, ts = {})
 
 		self.activation = list()
 		self.outcomes 	= outcomes
-		self.outcome_props = dict({outcome: list() for outcome in outcomes})
+		
+		self.outcome_props = dict({pi: list() for pi in sys_props})
 
 		# Populate the lists of activation and outcome propositions
-		# from the provided lists of environment and system propositions.
-		self._gen_activation_outcome_propositions() #FIX: Do I want this to happen here?
-
-		self.formulas = list()
+		self._gen_activation_outcome_propositions()
 
 	def _gen_activation_outcome_propositions(self):
 		"""
@@ -61,16 +54,45 @@ class ActivationOutcomesFormula(GR1Formula):
 				self.activation.append(_get_act_prop(sys_prop))
 				# Also add the corresponding outcome propositions
 				for outcome in self.outcomes:
-					self.outcome_props[outcome].append(_get_out_prop(sys_prop, outcome))
+					self.outcome_props[sys_prop].append(_get_out_prop(sys_prop, outcome))
+
+
+class OutcomeMutexFormula(ActivationOutcomesFormula):
+	"""The outcomes of an action are mutually exclusive."""
+	def __init__(self, sys_props, outcomes):
+		super(OutcomeMutexFormula, self).__init__(sys_props = sys_props, outcomes = outcomes)
+
+		self.formulas = self._gen_outcome_mutex_formulas()
+		self.type = 'env_trans'
+
+	def _gen_outcome_mutex_formulas(self):
+		"""Generate the formulas establishing mutual exclusion."""
+		
+		mutex_formulas = list()
+
+		for pi in self.sys_props:
+
+			# Use the mutex formula method of the GR1Formula class
+			pi_outs = self.outcome_props[pi]
+			formula = self.gen_mutex_formulas(pi_outs, future = True)
+			mutex_formulas.extend(formula)
+
+		return mutex_formulas
+		
 
 class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
-	"""docstring for ClassName"""
-	def __init__(self, actions, outcomes):
-		super(ActionOutcomeConstraintsFormula, self).__init__(env_props = [], sys_props = actions, outcomes = outcomes)
-		
-		self.formulas = self.gen_action_outcomes_formulas()
+	"""Safety formulas that constrain the outcomes of actions."""
 
-	def gen_action_outcomes_formulas(self):
+	def __init__(self, actions, outcomes):
+		super(ActionOutcomeConstraintsFormula, self).__init__(sys_props = actions, outcomes = outcomes)
+		
+		self.formulas = self._gen_action_outcomes_formulas()
+		self.type = 'env_trans'
+
+	def _gen_action_outcomes_formulas(self):
+		"""Equivalent of Equations (3) and (4)"""
+
+		#TODO: Eq. (3) treats completion outcome in a special way. Rethink.
 
 		eq3_formulas = list()
 		eq4_formulas = list()
@@ -102,29 +124,6 @@ class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
 
 		return eq3_formulas + eq4_formulas
 
-	def gen_deactivation_formula(self):
-		"""Eq. (4)"""
-		
-		actions = self.sys_props
-
-		formulas = list()
-
-		for pi in actions:
-
-			pi_c = _get_com_prop(pi)
-			pi_a = _get_act_prop(pi)
-			pi_outcomes = [_get_out_prop(pi, out) for out in self.outcomes]
-
-			# Generate Eq. (3)
-			left_hand_side = LTL.conj([pi_c, pi_a])
-
-			rhs_props = [LTL.next(pi_out) for pi_out in pi_outcomes]
-			right_hand_side = LTL.disj(rhs_props)
-			
-			formula = LTL.implication(left_hand_side, right_hand_side)
-			formulas.append(formula)
-
-		return formulas
 
 # =========================================================
 # Module-level helper functions
@@ -134,6 +133,7 @@ def _get_act_prop(prop):
 	return prop + "_a" # 'a' stands for activation
 
 def _get_com_prop(prop):
+	#FIX: Completion shouldn't require special treatment
 	return prop + "_c" # 'c' stands for completion
 
 def _get_out_prop(prop, outcome):
@@ -149,15 +149,24 @@ def _is_activation(prop):
 
 def main():
 	
-	formula = ActivationOutcomesFormula(env_props = [], sys_props = ['dance'],
-										outcomes = ['completed', 'failed'])
+	formulas  = list()
+	env_props = list()
+	sys_props = ['dance', 'sleep']
+	outcomes  = ['completed', 'failed', 'preempted']
 
-	formula = ActionOutcomeConstraintsFormula(actions = ['dance'],
-									outcomes = ['completed', 'failed'])
+	formulas.append(ActivationOutcomesFormula(sys_props, outcomes)) # empty
 
-	print 'Activation:\t', formula.activation
-	print 'Outcomes:\t', formula.outcomes
-	print 'Formula:\t', formula.formulas
+	formulas.append(ActionOutcomeConstraintsFormula(sys_props, outcomes))
+
+	formulas.append(OutcomeMutexFormula(sys_props, outcomes))
+
+	print 'Activation:\t', formulas[-1].activation
+	print 'Outcomes:\t', formulas[-1].outcome_props
+
+	for formula in formulas:
+		print '---'
+		print 'Formula:\t', formula.formulas
+		print 'Type:\t', formula.type
 
 if __name__ == "__main__":
 	main()
