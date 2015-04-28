@@ -22,13 +22,18 @@ class GR1Formula(object):
 	  env_props (list of str)	Environment propositions (strings)
 	  sys_props (list of str)	System propositions (strings)
 	  ts 		(dict of str)	Transition system, TS (e.g. workspace topology)
-	  							Implicitly contains some propositions in the keys.
+	  							Implicitly contains propositions in the keys.
 
 	Attributes:
-	  formula 	(list of str)	#TODO ...
+	  formula 	(list of str)	Formulas whose conjunction makes up a type
+	  							of GR(1) subformulas (e.g. fairness conditions)
+	  type		(str)			GR(1) subformula type (sys_init, env_init,
+	  							sys_trans, env_trans, sys_liveness,
+	  							env_liveness)
 
 	Raises:
-	  ValueError:				When a proposition is neither a system or an environment proposition
+	  ValueError:				When a proposition is neither a system nor
+	  							an environment proposition
 
 	"""
 	
@@ -40,9 +45,9 @@ class GR1Formula(object):
 
 		self._add_props_from_ts()
 
-		# TODO: The formula(s) should be stored in the object,
-		# not just returned by the formula generation methods.
-		self.formula = []
+		self.formulas = list()
+		self.type = str()
+
 	
 	# =====================================================
 	# System and environment initial conditions
