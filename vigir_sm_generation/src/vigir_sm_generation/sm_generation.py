@@ -105,7 +105,7 @@ class ConcurrentStateGenerator():
                       p_names,
                       p_vals)
 
-class SMGenerator():
+class SMGenHelper():
     """A class used to help generate state machines."""
     def __init__(self, config, all_in_vars, all_out_vars, automata):
         self.config = config
@@ -383,44 +383,44 @@ def generate_sm(request):
         error_code = BSErrorCodes(BSErrorCodes.NO_SYSTEM_CONFIG)
         return SMGenerateResponse([], error_code)
 
-    smg = SMGenerator(config, all_in_vars, all_out_vars, automata)
+    helper = SMGenHelper(config, all_in_vars, all_out_vars, automata)
 
     # Initialize list of StateInstantiation's with parent SI.
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
-           smg.get_sm_real_outputs(), [], "State0", [], [])]
+           helper.get_sm_real_outputs(), [], "State0", [], [])]
 
     for state in automata:
         name = state.name
-        if smg.is_fake_state(name):
+        if helper.is_fake_state(name):
             continue
 
         csg = ConcurrentStateGenerator(name)
 
         # Add an internal state for each output.
-        curr_state_output_vars = smg.get_state_output_vars(state)
+        curr_state_output_vars = helper.get_state_output_vars(state)
         for out_var in curr_state_output_vars:
-            decl = smg.get_class_decl(out_var)
+            decl = helper.get_class_decl(out_var)
             csg.add_internal_state(out_var, decl)
 
-        transitions = smg.get_transitions(state, automata)
+        transitions = helper.get_transitions(state, automata)
         for next_state, conditions in transitions.items():
             substate_name_to_out = {} # i.e. condition mapping
             for in_var in conditions:
-                ss_name = smg.get_substate_name(in_var)
+                ss_name = helper.get_substate_name(in_var)
                 # go from input variable -> class declaration -> out map
                 # to get what this input variable (e.g. 'stand_c') maps to in
                 # the class declared (e.g. 'changed').
-                decl = smg.get_class_decl(in_var)
-                out_map = smg.get_out_map(decl)
+                decl = helper.get_class_decl(in_var)
+                out_map = helper.get_out_map(decl)
                 substate_name_to_out[ss_name] = out_map[in_var]
                 # need to add internal state for sensor input variables
-                if not smg.is_response_var(in_var):
-                    decl = smg.in_var_to_class_decl[in_var]
+                if not helper.is_response_var(in_var):
+                    decl = helper.in_var_to_class_decl[in_var]
                     csg.add_internal_state(ss_name, decl)
 
-            csg.add_internal_outcome(smg.get_real_name(next_state))
+            csg.add_internal_outcome(helper.get_real_name(next_state))
             csg.add_internal_outcome_maps({
-                'outcome': smg.get_real_name(next_state),
+                'outcome': helper.get_real_name(next_state),
                 'condition': substate_name_to_out
             })
             logging.debug("{0} -> {1} if: {2}".format(name, next_state,
