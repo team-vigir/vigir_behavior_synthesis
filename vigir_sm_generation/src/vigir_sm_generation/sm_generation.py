@@ -75,17 +75,19 @@ class ConcurrentStateGenerator():
         self.internal_outcomes = []
         self.internal_outcome_maps = []
 
-    def add_internal_state(self, in_var, class_decl):
-        self.internal_states[in_var] = class_decl
+    def add_internal_state(self, label, class_decl):
+        if label not in self.internal_states:
+            self.internal_states[label] = class_decl
 
     def add_internal_outcome(self, outcome):
-        self.internal_outcomes.append(outcome)
+        if outcome not in self.internal_outcomes:
+            self.internal_outcomes.append(outcome)
 
     def add_internal_outcome_maps(self, out_map):
-        self.internal_outcome_maps.append(out_map)
+        if out_map not in self.internal_outcome_maps:
+            self.internal_outcome_maps.append(out_map)
 
     def gen(self):
-        self.internal_outcomes = remove_duplicates(self.internal_outcomes)
         p_names = ["states", "outcomes", "outcome_mapping"]
         p_vals = [str(self.internal_states),
                   str(self.internal_outcomes),
@@ -132,11 +134,12 @@ class SMGenerator():
     def populate_data_structures(self):
         """Populate various dictionaries to future functions. Should be called
         last by the initializer."""
-        # the map from class declaration to its out_map
-        self.class_decl_to_out_map = {}
         # what class declaration goes with an input variable?
         self.in_var_to_class_decl = {}
-        self.perform_out_var_to_class_decl = {}
+        # to map response variables back to their activation variable
+        self.in_var_to_out_var = {}
+        # the map from class declaration to its out_map
+        self.class_decl_to_out_map = {}
         for state in self.automata:
             name = state.name
 
@@ -150,12 +153,18 @@ class SMGenerator():
                 out_map = var_config['output_mapping']
                 self.class_decl_to_out_map[class_decl] = out_map
                 for in_var, state_outcome in out_map.items():
-                    if in_var in self.all_in_vars: # is an Activation variable
+                    if in_var in self.all_in_vars: # is a response variable
                         self.in_var_to_class_decl[in_var] = class_decl
-                        is_activation = True
+                        self.in_var_to_out_var[in_var] = out_var
                         break
-                if not is_activation:
-                    self.perform_out_var_to_class_decl[out_var] = class_decl
+
+        # Make one more pass to handle sensor variables
+        for in_var in self.all_in_vars:
+            if not self.is_response_var(in_var): # it's a sensor variable
+                var_config = self.config[in_var]
+                class_decl = var_config['class_decl']
+                out_map = var_config['output_mapping']
+                self.class_decl_to_out_map[class_decl] = out_map
 
     def get_state_name_to_sm_output(self):
         """Create the mapping from the name of a substate that represents
@@ -189,50 +198,60 @@ class SMGenerator():
         i = [a.name for a in automata].index(name)
         return automata[i]
 
-    def get_transitions(self, name, automata):
+    def get_transitions(self, state, automata):
         """
         Deduce the transition needed to go to the next states.
 
-        @param name The name of the state to transitions away from
+        @param state The state to transitions away from
         @param automata List of all AutomatonState's.
-        @returns A dictionary, that maps next state to indices of the input
-                variables that need to be true to go to that next state.
+        @returns A dictionary, that maps next state to the input variable
+                that need to be true to go to that next state.
 
                  For example:
             {
-                'State1': [1, 2], # input var 1 & 2 need to be true
-                'State2': [1, 3, 4],
+                'State1': ['stand_prep_c'], # input var 1 & 2 need to be true
+                'State2': ['stand_prep_c', 'stand_c'],
                 ...
             }
         """
-        state = self.get_automaton(name, automata)
         next_states = [str(x) for x in state.transitions]
-        next_states = list(set(next_states) - set([name])) # remove self loop
+        next_states = list(set(next_states) - set([state.name])) # remove self loop
 
         if len(next_states) == 0:
-            print("State {s} has no transitions out of it!".format(s = name))
+            print("{0} has no transitions out of it!".format(state.name))
         if len(next_states) > 1:
-            logging.debug("Multiple next states for {0}".format(name))
+            logging.debug("Multiple next states for {0}".format(state.name))
 
         transitions = {}
         for next_state in next_states:
-            #if not self.is_fake_state(next_state):
             input_vals = self.get_automaton(next_state, automata).input_valuation
-            transitions[next_state] = [idx for (idx, v) in
-                                       enumerate(input_vals)
-                                       if v == 1]
-            #else:
-            #    transitions[next_state] = []
+            conditions = []
+            for idx, val in enumerate(input_vals):
+                if val == 1: # only look at active inputs
+                    in_var = self.get_in_var_name(idx)
+                    if self.is_response_var(in_var):
+                        # only consider this response variable if the source
+                        # state activated this response variable.
+                        if self.does_state_activate(state, in_var):
+                            conditions.append(in_var)
+                    else:
+                        conditions.append(in_var)
+            if len(conditions) > 0:
+                transitions[next_state] = conditions
         return transitions
 
     def get_substate_name(self, in_var):
         """
-        Return the readable neam of the substate associated with an input variable.
-        For now, jsut use that input variable as the name.
+        Return the readable name of the substate associated with an input
+        variable.
+
+        If the input variable is associated with an activation variable,
+        use the activation variable. Otherwise, just use the input variable.
 
         @param in_var Input variable associated with this substate.
-        @param config Configuration dictionary from YAML.
         """
+        if self.is_response_var(in_var):
+            return self.in_var_to_out_var[in_var]
         return in_var
 
     def get_in_var_name(self, i):
@@ -270,8 +289,10 @@ class SMGenerator():
         """Returns if a state is a placeholder for an output."""
         return name in self.state_name_to_sm_output
 
-    def is_completion_var(self, in_var):
-        """Returns if an input variable is a completion variable."""
+    def is_response_var(self, in_var):
+        """Returns if an input variable is a response variable.
+        A response variable is the counter part to an activation variable
+        (e.g. completion, failure, etc.). """
         return in_var in self.in_var_to_class_decl
 
     def is_activation_var(self, out_var):
@@ -285,6 +306,24 @@ class SMGenerator():
     def get_out_map(self, decl):
         """Get the output mapping associated with a class declaration."""
         return self.class_decl_to_out_map[decl]
+
+    def get_class_decl(self, var):
+        """Get the class declaration associated with a variable."""
+        if var in self.config:
+            return self.config[var]['class_decl']
+        elif var in self.in_var_to_class_decl:
+            return self.in_var_to_class_decl[var]
+
+    def does_state_activate(self, state, in_var):
+        """Returns if [state] activate something that has [in_var] as a
+        potential response."""
+        # If in_var is not in this directionary, then it's not even a response
+        # variable.
+        if in_var not in self.in_var_to_out_var:
+            return False
+        out_var = self.in_var_to_out_var[in_var]
+        state_out_vars = self.get_state_output_vars(state)
+        return out_var in state_out_vars
 
 def generate_sm(request):
     """
@@ -350,47 +389,34 @@ def generate_sm(request):
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
            smg.get_sm_real_outputs(), [], "State0", [], [])]
 
-    #for state in automata:
-    #    smg.update_info(state)
-
-    #concurrent_states = [ConcurrentState(state.name) for state in automata]
-    #for state in concurrent_states:
-    #    smg.update_info(state)
-
-    #for state in automata:
-    #    transitions = smg.get_transitions(state)
-    #    si = new_si(name, "ConcurrentState",
-    #                concurrent_si_outcomes, concurrent_si_transitions,
-    #                None, p_names, p_vals)
-    #    SIs.append(si)
-
     for state in automata:
         name = state.name
         if smg.is_fake_state(name):
             continue
 
         csg = ConcurrentStateGenerator(name)
-        transitions = smg.get_transitions(name, automata)
-        for next_state, condition_idxs in transitions.items():
-            conditions = [smg.get_in_var_name(i) for i in condition_idxs]
-            substate_name_to_out = {}
+
+        # Add an internal state for each output.
+        curr_state_output_vars = smg.get_state_output_vars(state)
+        for out_var in curr_state_output_vars:
+            decl = smg.get_class_decl(out_var)
+            csg.add_internal_state(out_var, decl)
+
+        transitions = smg.get_transitions(state, automata)
+        for next_state, conditions in transitions.items():
+            substate_name_to_out = {} # i.e. condition mapping
             for in_var in conditions:
                 ss_name = smg.get_substate_name(in_var)
-                if smg.is_completion_var(in_var):
-                    class_decl = smg.in_var_to_class_decl[in_var]
-                    substate_name_to_out[ss_name] =\
-                        smg.get_out_map(class_decl)[in_var]
-                else: # Sensor variable
-                    var_config = config[in_var]
-                    class_decl = var_config['class_decl']
-                    out_map = var_config['output_mapping']
-                    smg.class_decl_to_out_map[class_decl] = out_map
-                    smg.in_var_to_class_decl[in_var] = class_decl
-
-                    substate_name_to_out[ss_name] = out_map[in_var]
-
-                decl = smg.in_var_to_class_decl[in_var]
-                csg.add_internal_state(ss_name, decl)
+                # go from input variable -> class declaration -> out map
+                # to get what this input variable (e.g. 'stand_c') maps to in
+                # the class declared (e.g. 'changed').
+                decl = smg.get_class_decl(in_var)
+                out_map = smg.get_out_map(decl)
+                substate_name_to_out[ss_name] = out_map[in_var]
+                # need to add internal state for sensor input variables
+                if not smg.is_response_var(in_var):
+                    decl = smg.in_var_to_class_decl[in_var]
+                    csg.add_internal_state(ss_name, decl)
 
             csg.add_internal_outcome(smg.get_real_name(next_state))
             csg.add_internal_outcome_maps({
