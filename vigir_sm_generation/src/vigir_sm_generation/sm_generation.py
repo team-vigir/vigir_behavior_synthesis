@@ -140,23 +140,18 @@ class SMGenHelper():
         self.in_var_to_out_var = {}
         # the map from class declaration to its out_map
         self.class_decl_to_out_map = {}
-        for state in self.automata:
-            name = state.name
 
-            if self.is_fake_state(name):
+        for out_var, var_config in self.config.items():
+            if 'class_decl' not in var_config:
                 continue
-
-            curr_state_output_vars = self.get_state_output_vars(state)
-            for out_var in curr_state_output_vars:
-                var_config = self.config[out_var]
-                class_decl = var_config['class_decl']
-                out_map = var_config['output_mapping']
-                self.class_decl_to_out_map[class_decl] = out_map
-                for in_var, state_outcome in out_map.items():
-                    if in_var in self.all_in_vars: # is a response variable
-                        self.in_var_to_class_decl[in_var] = class_decl
-                        self.in_var_to_out_var[in_var] = out_var
-                        break
+            class_decl = var_config['class_decl']
+            out_map = var_config['output_mapping']
+            self.class_decl_to_out_map[class_decl] = out_map
+            for in_var, state_outcome in out_map.items():
+                # check if this is a response variable
+                if in_var in self.all_in_vars and out_var in self.all_out_vars:
+                    self.in_var_to_class_decl[in_var] = class_decl
+                    self.in_var_to_out_var[in_var] = out_var
 
         # Make one more pass to handle sensor variables
         for in_var in self.all_in_vars:
@@ -415,7 +410,6 @@ def generate_sm(request):
                 substate_name_to_out[ss_name] = out_map[in_var]
                 # need to add internal state for sensor input variables
                 if not helper.is_response_var(in_var):
-                    decl = helper.in_var_to_class_decl[in_var]
                     csg.add_internal_state(ss_name, decl)
 
             csg.add_internal_outcome(helper.get_real_name(next_state))
