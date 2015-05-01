@@ -38,13 +38,15 @@ class GR1Formula(object):
 	"""
 	
 	def __init__(self, env_props = [], sys_props = [], ts = {}):
-		
+		#FIX: TS should be an argument of a subclass, not base class
 		self.sys_props = sys_props
 		self.env_props = env_props
 		self.ts = ts
 
 		self._add_props_from_ts()
 
+		# The formulas and their subfomrula type is set for
+		# classes (subformulas) that inherit from GR1Formula
 		self.formulas = list()
 		self.type = str()
 
