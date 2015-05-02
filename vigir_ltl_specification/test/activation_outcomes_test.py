@@ -30,19 +30,19 @@ class FormulaGenerationTests(unittest.TestCase):
 		formula = ActivationOutcomesFormula(self.sys_props, self.outcomes)
 
 		# Test whether the obvious things are working as expected
-		self.assertEqual(set(self.outcomes), set(formula.outcomes))
-		self.assertEqual(set(self.sys_props), set(formula.sys_props))
-		self.assertEqual(set(), set(formula.env_props))
-		self.assertEqual(set(), set(formula.formulas))
+		self.assertItemsEqual(self.outcomes, formula.outcomes)
+		self.assertItemsEqual(self.sys_props, formula.sys_props)
+		self.assertEqual(list(), formula.env_props)
+		self.assertEqual(list(), formula.formulas)
 
 		# Test whether the activation propositions are generated correctly
-		expected_act_props = ['dance_a', 'sleep_a']
-		self.assertEqual(set(expected_act_props), set(formula.activation))
+		expected_act_props = ['sleep_a', 'dance_a']
+		self.assertItemsEqual(expected_act_props, formula.activation)
 
 		# Test whether the outcome propositions are generated correctly
 		expected_out_props = {'dance': ['dance_c', 'dance_f', 'dance_p'],
 							  'sleep': ['sleep_c', 'sleep_f', 'sleep_p']}
-		self.assertEqual(expected_out_props, formula.outcome_props)
+		self.assertItemsEqual(expected_out_props, formula.outcome_props)
 
 	def test_formulas_raise_exceptions(self):
 		"""Test whether the formula constructors raise Exceptions"""
