@@ -31,11 +31,14 @@ class ActivationOutcomesFormula(GR1Formula):
 	  									to each possible activation outcome
 	"""
 
-	def __init__(self, sys_props = [], outcomes = ['completed']):
-		super(ActivationOutcomesFormula, self).__init__(env_props = [], sys_props = sys_props, ts = {})
+	def __init__(self, sys_props, outcomes = ['completed']):
+		super(ActivationOutcomesFormula, self).__init__(env_props = [], sys_props = sys_props)
 
 		self.activation = list()
 		self.outcomes 	= outcomes
+
+		# Check that the arguments (now attributes) are of the correct type, etc.
+		self._check_input_arguments()
 		
 		self.outcome_props = dict({pi: list() for pi in sys_props})
 
@@ -56,6 +59,14 @@ class ActivationOutcomesFormula(GR1Formula):
 				for outcome in self.outcomes:
 					self.outcome_props[sys_prop].append(_get_out_prop(sys_prop, outcome))
 
+	def _check_input_arguments(self):
+		"""..."""
+
+		if any([type(p) != str for p in self.sys_props]):
+			raise TypeError('Invalid type of system propositions: {}'.format(map(type, self.sys_props)))
+
+		if any([type(o) != str for o in self.outcomes]):
+			raise TypeError('Invalid type of outcomes: {}'.format(map(type, self.outcomes)))
 
 class OutcomeMutexFormula(ActivationOutcomesFormula):
 	"""The outcomes of an action are mutually exclusive."""
@@ -150,7 +161,6 @@ def _is_activation(prop):
 def main():
 	
 	formulas  = list()
-	env_props = list()
 	sys_props = ['dance', 'sleep']
 	outcomes  = ['completed', 'failed', 'preempted']
 
