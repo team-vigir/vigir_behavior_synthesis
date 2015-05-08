@@ -66,6 +66,17 @@ def modify_names(automata):
     return automata
 
 class ConcurrentStateGenerator():
+    """
+    This class is used to generate a StateInstantiation instance for a
+    ConcurrentState.
+
+    Usage:
+    > csg = ConcurrentState('foo')
+    > csg.add_internal_state(...)
+    > csg.add_internal_outcome(...)
+    > csg.add_internal_outcome_maps(...)
+    > si = csg.gen()
+    """
     def __init__(self, name):
         self.name = name
         # Internal parameters of the ConcurrentState that we need to build.
@@ -75,19 +86,50 @@ class ConcurrentStateGenerator():
         self.internal_outcomes = []
         self.internal_outcome_maps = []
 
+    def clean_variable(self, name):
+        """Given a input or output variable, remove the _* ending."""
+        return name[:-2]
+
     def add_internal_state(self, label, class_decl):
-        if label not in self.internal_states:
-            self.internal_states[label] = class_decl
+        """
+        Add an internal state to this concurrent state.
+
+        Internal states are the classes that run in parallel.
+
+        label: the name by which this internal state is referred to.
+        class_decl: the class declaration for code generation. e.g. 'Foo()'
+        """
+        clean_label = self.clean_variable(label)
+        if clean_label not in self.internal_states:
+            self.internal_states[clean_label] = class_decl
 
     def add_internal_outcome(self, outcome):
+        """
+        Add an internal outcome of the concurrent machine. Note that this can
+        be remapped with the 'outcomes' and 'transitions' parameter.
+
+        outcome: a string
+        """
         if outcome not in self.internal_outcomes:
             self.internal_outcomes.append(outcome)
 
+    def clean_out_map(self, out_map):
+        clean_out_map = {}
+        clean_out_map['outcome'] = out_map['outcome']
+
+        clean_conditions = dict((self.clean_variable(k), v)
+                                for k, v in out_map['condition'].items())
+        clean_out_map['condition'] = clean_conditions
+
+        return clean_out_map
+
     def add_internal_outcome_maps(self, out_map):
-        if out_map not in self.internal_outcome_maps:
-            self.internal_outcome_maps.append(out_map)
+        clean_out_map = self.clean_out_map(out_map)
+        if clean_out_map not in self.internal_outcome_maps:
+            self.internal_outcome_maps.append(clean_out_map)
 
     def gen(self):
+        """Generate the state instantiation for this concurrent state."""
         p_names = ["states", "outcomes", "outcome_mapping"]
         p_vals = [str(self.internal_states),
                   str(self.internal_outcomes),
@@ -106,7 +148,11 @@ class ConcurrentStateGenerator():
                       p_vals)
 
 class SMGenHelper():
-    """A class used to help generate state machines."""
+    """
+    A class used to help generate state machines. This class basically
+    creates a bunch of helper methods for navigating the configurations as
+    well as the given automata.
+    """
     def __init__(self, config, all_in_vars, all_out_vars, automata):
         self.config = config
 
