@@ -89,30 +89,19 @@ class TestSmGeneration(unittest.TestCase):
     #        "Unhandled case: System configuration not found after looking "+\
     #        "up in system.yaml.")
 
-    ### Test that SIs are valid ###
+    ### Test that SIs contents have valid types ###
     def test_si_types(self):
         """ Test that each SI outputted are the correct type. """
         for si in self.SIs:
             self.assertTrue(isinstance(si, StateInstantiation))
-
-    def test_root_exists(self):
-        """ Test that exactly one SI has the root path. """
-        root_SIs = [si for si in self.SIs if si.state_path == "/"]
-        self.assertEqual(len(root_SIs), 1,
-            "There must be one root. Found {0} roots".format(len(root_SIs)))
 
     def test_param_name_and_value_len(self):
         """ Test that each SI's param name and value are the same length. """
         for si in self.SIs:
             self.assertEqual(len(si.parameter_names), len(si.parameter_values))
 
-    def test_transitions_and_output_len(self):
-        """ Test that each SI's param name and value are the same length. """
-        for si in self.SIs:
-            self.assertTrue(len(si.transitions) <= len(si.outcomes))
-
-    def test_state_param(self):
-        """ Test that the state parameter (if set) has valid values. """
+    def test_state_param_type(self):
+        """ Test that the state parameter (if set) has valid types. """
         for si in self.SIs:
             if 'state' not in si.parameter_names:
                 continue
@@ -132,8 +121,8 @@ class TestSmGeneration(unittest.TestCase):
                 self.assertTrue(type(v) is str,
                     "State dictionary value is not a string.")
 
-    def test_outcome_param(self):
-        """ Test that the outcome parameter (if set) has valid values. """
+    def test_outcome_param_type(self):
+        """ Test that the outcome parameter (if set) has valid types. """
         for si in self.SIs:
             if 'outcome' not in si.parameter_names:
                 continue
@@ -147,15 +136,9 @@ class TestSmGeneration(unittest.TestCase):
             self.assertTrue(type(outcomes) is list,
                 "'outcomes' value is not a dictionary.")
 
-            # Check that these outcomes are a subset of the possible outcomes
-            extra_outcomes = set(outcomes) - set(si.outcomes)
-            self.assertEqual(len(extra_outcomes), 0,
-                "The following substate outcomes are not outcomes of the "+\
-                "entire state machine: {0}".format(extra_outcomes))
-
-    def test_outcome_mapping_param(self):
+    def test_outcome_mapping_param_type(self):
         """
-        Test that the outcome_mapping parameter (if set) has valid values.
+        Test that the outcome_mapping parameter (if set) has valid types.
         """
         for si in self.SIs:
             if 'outcome_mapping' not in si.parameter_names:
@@ -199,6 +182,36 @@ class TestSmGeneration(unittest.TestCase):
                         "outcome_mapping['condition'] key is not a string.")
                     self.assertTrue(type(v) is str,
                         "outcome_mapping['condition'] value is not a string.")
+
+    ### Test that SIs contents are logically consistent. ###
+    def test_root_exists(self):
+        """ Test that exactly one SI has the root path. """
+        root_SIs = [si for si in self.SIs if si.state_path == "/"]
+        self.assertEqual(len(root_SIs), 1,
+            "There must be one root. Found {0} roots".format(len(root_SIs)))
+
+    def test_transitions_and_output_len(self):
+        """ Test that each SI's param name and value are the same length. """
+        for si in self.SIs:
+            self.assertTrue(len(si.transitions) <= len(si.outcomes))
+
+    def test_outcome_param_logic(self):
+        """
+        Test that the outcome parameter (if set) are logically consistent.
+        """
+        for si in self.SIs:
+            if 'outcome' not in si.parameter_names:
+                continue
+            idx = si.parameter_names.index('outcome')
+            val_str = si.parameter_values[idx]
+            # Converts string -> list
+            outcomes = ast.literal_eval(val_str)
+
+            # Check that these outcomes are a subset of the possible outcomes
+            extra_outcomes = set(outcomes) - set(si.outcomes)
+            self.assertEqual(len(extra_outcomes), 0,
+                "The following substate outcomes are not outcomes of the "+\
+                "entire state machine: {0}".format(extra_outcomes))
 
 if __name__ == '__main__':
     unittest.main()
