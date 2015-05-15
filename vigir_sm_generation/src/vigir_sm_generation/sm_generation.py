@@ -76,6 +76,9 @@ class ConcurrentStateGenerator():
     > csg.add_internal_outcome(...)
     > csg.add_internal_outcome_maps(...)
     > si = csg.gen()
+
+    If this generator realizes that there's only one internal state, it
+    only generates that state instead of wrapping it around a concurrent state.
     """
     def __init__(self, name):
         self.name = name
@@ -128,10 +131,42 @@ class ConcurrentStateGenerator():
         if clean_out_map not in self.internal_outcome_maps:
             self.internal_outcome_maps.append(clean_out_map)
 
+    def gen_single(self):
+        """
+        Generate the state instantiation for a single state. This should only
+        be called in the degenerate case when there's only one internal state,
+        so it doesn't make sense to use a concurrent state.
+        """
+        label, decl = self.internal_states.items()[0]
+        outcomes = []
+        transitions = []
+        for out_map in self.internal_outcome_maps:
+            transitions.append(out_map['outcome'])
+            outcomes.append(out_map['condition'][label])
+
+        return new_si("/" + self.name,
+                       decl['name'],
+                       outcomes,
+                       transitions,
+                       None,
+                       decl['param_names'],
+                       decl['param_values'])
+
+    def gen_states(self):
+        """Turn return states parameters for the ConcurrentState."""
+        states = {}
+        for label, class_decl in self.internal_states.items():
+            states[label] = SMGenHelper.class_decl_to_string(class_decl)
+        return states
+
     def gen(self):
         """Generate the state instantiation for this concurrent state."""
+        if len(self.internal_states) == 1:
+            return self.gen_single()
+
         p_names = ["states", "outcomes", "outcome_mapping"]
-        p_vals = [str(self.internal_states),
+        states = self.gen_states()
+        p_vals = [str(states),
                   str(self.internal_outcomes),
                   str(self.internal_outcome_maps)]
 
@@ -177,6 +212,16 @@ class SMGenHelper():
         # Must be called last
         self.populate_data_structures()
 
+    @staticmethod
+    def class_decl_to_string(class_decl):
+        """Convert the class_decl map to one string by combining the
+        declaration with the parameters passed."""
+        decl = class_decl['name']
+        decl += "("
+        decl += ",".join(class_decl['param_values'])
+        decl += ")"
+        return decl
+
     def populate_data_structures(self):
         """Populate various dictionaries to future functions. Should be called
         last by the initializer."""
@@ -188,11 +233,14 @@ class SMGenHelper():
         self.class_decl_to_out_map = {}
 
         for out_var, var_config in self.config.items():
+            # If class_decl isn't in var_config, it's not configuration for a
+            # state
             if 'class_decl' not in var_config:
                 continue
             class_decl = var_config['class_decl']
             out_map = var_config['output_mapping']
-            self.class_decl_to_out_map[class_decl] = out_map
+            class_decl_str = SMGenHelper.class_decl_to_string(class_decl)
+            self.class_decl_to_out_map[class_decl_str] = out_map
             for in_var, state_outcome in out_map.items():
                 # check if this is a response variable
                 if in_var in self.all_in_vars and out_var in self.all_out_vars:
@@ -205,7 +253,8 @@ class SMGenHelper():
                 var_config = self.config[in_var]
                 class_decl = var_config['class_decl']
                 out_map = var_config['output_mapping']
-                self.class_decl_to_out_map[class_decl] = out_map
+                class_decl_str = SMGenHelper.class_decl_to_string(class_decl)
+                self.class_decl_to_out_map[class_decl_str] = out_map
 
     def get_state_name_to_sm_output(self):
         """Create the mapping from the name of a substate that represents
@@ -344,9 +393,10 @@ class SMGenHelper():
         return any([in_var in self.all_in_vars
                     for in_var, _ in out_map.items()])
 
-    def get_out_map(self, decl):
+    def get_out_map(self, class_decl):
         """Get the output mapping associated with a class declaration."""
-        return self.class_decl_to_out_map[decl]
+        class_decl_str = SMGenHelper.class_decl_to_string(class_decl)
+        return self.class_decl_to_out_map[class_decl_str]
 
     def get_class_decl(self, var):
         """Get the class declaration associated with a variable."""
@@ -410,16 +460,28 @@ def generate_sm(request):
     @param request An instance of SMGenerateRequest
     @return A SMGenerateResponse with generated StateInstantiation.
     """
+    yaml_file = os.path.join(vigir_repo, 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/src/vigir_sm_generation/configs/systems.yaml')
+    try:
+        with open(yaml_file) as yf:
+            systems = yaml.load(yf)
+    except IOError:
+        error_code = BSErrorCodes(BSErrorCodes.NO_SYSTEMS_FILE)
+        return SMGenerateResponse([], error_code)
+        
     sa = request.automaton # SynthesizedAutomaton
     all_out_vars = sa.output_variables
     all_in_vars = sa.input_variables
     automata = modify_names(sa.automaton)
 
     system_name = request.system
-    if system_name == 'atlas':
-        yaml_file = os.path.join(vigir_repo, 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/src/vigir_sm_generation/configs/atlas.yaml')
-        with open(yaml_file) as yf:
-            config = yaml.load(yf)
+    if system_name in systems:
+        yaml_file = os.path.join(vigir_repo, systems[system_name])
+        try:
+            with open(yaml_file) as yf:
+                config = yaml.load(yf)
+        except IOError:
+            error_code = BSErrorCodes(BSErrorCodes.SYSTEM_CONFIG_NOT_FOUND)
+            return SMGenerateResponse([], error_code)
     else:
         error_code = BSErrorCodes(BSErrorCodes.NO_SYSTEM_CONFIG)
         return SMGenerateResponse([], error_code)
