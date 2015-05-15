@@ -100,19 +100,21 @@ class TestSmGeneration(unittest.TestCase):
         for si in self.SIs:
             self.assertEqual(len(si.parameter_names), len(si.parameter_values))
 
-    def test_state_param_type(self):
-        """ Test that the state parameter (if set) has valid types. """
+    def test_states_param_type(self):
+        """ Test that the states parameter (if set) has valid types. """
         for si in self.SIs:
-            if 'state' not in si.parameter_names:
+            if si.state_class != "ConcurrentState":
                 continue
-            self.assertEqual(1, si.parameter_names.count('state'),
-                "Only one parameter can be called 'state'.")
-            idx = si.parameter_names.index('state')
+            if 'states' not in si.parameter_names:
+                continue
+            self.assertEqual(1, si.parameter_names.count('states'),
+                "Only one parameter can be called 'states'.")
+            idx = si.parameter_names.index('states')
 
             val_str = si.parameter_values[idx]
             # Converts string -> dict.
             states = ast.literal_eval(val_str)
-            self.assertTrue(type(val) is dict,
+            self.assertTrue(type(states) is dict,
                 "'states' value is not a dictionary.")
 
             for k, v in states.items():
@@ -121,14 +123,16 @@ class TestSmGeneration(unittest.TestCase):
                 self.assertTrue(type(v) is str,
                     "State dictionary value is not a string.")
 
-    def test_outcome_param_type(self):
+    def test_outcomes_param_type(self):
         """ Test that the outcome parameter (if set) has valid types. """
         for si in self.SIs:
-            if 'outcome' not in si.parameter_names:
+            if si.state_class != "ConcurrentState":
                 continue
-            self.assertEqual(1, si.parameter_names.count('outcome'),
-                "Only one parameter can be called 'outcome'.")
-            idx = si.parameter_names.index('outcome')
+            if 'outcomes' not in si.parameter_names:
+                continue
+            self.assertEqual(1, si.parameter_names.count('outcomes'),
+                "Only one parameter can be called 'outcomes'.")
+            idx = si.parameter_names.index('outcomes')
 
             val_str = si.parameter_values[idx]
             # Converts string -> list
@@ -141,6 +145,8 @@ class TestSmGeneration(unittest.TestCase):
         Test that the outcome_mapping parameter (if set) has valid types.
         """
         for si in self.SIs:
+            if si.state_class != "ConcurrentState":
+                continue
             if 'outcome_mapping' not in si.parameter_names:
                 continue
             self.assertEqual(1, si.parameter_names.count('outcome_mapping'),
@@ -200,6 +206,8 @@ class TestSmGeneration(unittest.TestCase):
         Test that the outcome parameter (if set) are logically consistent.
         """
         for si in self.SIs:
+            if si.state_class != "ConcurrentState":
+                continue
             if 'outcome' not in si.parameter_names:
                 continue
             idx = si.parameter_names.index('outcome')
