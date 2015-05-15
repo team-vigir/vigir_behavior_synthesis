@@ -28,6 +28,7 @@ from sm_gen_util import (
     class_decl_to_string,
     clean_variable
 )
+from sm_gen_error import SMGenError
 
 vigir_repo = os.environ['VIGIR_ROOT_DIR']
 
@@ -55,17 +56,17 @@ def modify_names(all_out_vars, automata):
 
     return automata
 
-def generate_sm_wrapper(request):
+def generate_sm(request):
     """
-    A wrapper around generate_sm. This catches any exception and
+    A wrapper around generate_sm_handle. This catches any exception and
     converts it to an appropriate BSErrorCodes.
     """
     try:
-        return generate_sm(request)
-    except SmgError as e:
-        return SMGenerateResponse([], e.args[0])
+        return generate_sm_handle(request)
+    except SMGenError as e:
+        return SMGenerateResponse([], BSErrorCodes(e.error_code))
 
-def generate_sm(request):
+def generate_sm_handle(request):
     """
     This method takes in a JSON file describe an automaton and a YAML file
     describing how the automaton names corresponds to real state machine names
@@ -114,8 +115,7 @@ def generate_sm(request):
         with open(yaml_file) as yf:
             systems = yaml.load(yf)
     except IOError:
-        error_code = BSErrorCodes(BSErrorCodes.NO_SYSTEMS_FILE)
-        return SMGenerateResponse([], error_code)
+        raise SMGenError(BSErrorCodes(error_code))
         
     sa = request.automaton # SynthesizedAutomaton
     all_out_vars = sa.output_variables
@@ -124,17 +124,14 @@ def generate_sm(request):
 
     # Load the config file
     system_name = request.system
-    if system_name in systems:
-        yaml_file = os.path.join(vigir_repo, systems[system_name])
-        try:
-            with open(yaml_file) as yf:
-                config = yaml.load(yf)
-        except IOError:
-            error_code = BSErrorCodes(BSErrorCodes.SYSTEM_CONFIG_NOT_FOUND)
-            return SMGenerateResponse([], error_code)
-    else:
-        error_code = BSErrorCodes(BSErrorCodes.NO_SYSTEM_CONFIG)
-        return SMGenerateResponse([], error_code)
+    if system_name not in systems:
+        raise SMGenError(BSErrorCodes.NO_SYSTEM_CONFIG)
+    yaml_file = os.path.join(vigir_repo, systems[system_name])
+    try:
+        with open(yaml_file) as yf:
+            config = yaml.load(yf)
+    except IOError:
+        raise SMGenError(BSErrorCodes.SYSTEM_CONFIG_NOT_FOUND)
 
     helper = SMGenHelper(config, all_in_vars, all_out_vars, automata)
 

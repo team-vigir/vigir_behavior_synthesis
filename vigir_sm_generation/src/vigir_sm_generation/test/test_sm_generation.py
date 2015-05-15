@@ -52,7 +52,9 @@ class TestSmGeneration(unittest.TestCase):
     """
     def setUp(self):
         fpath = 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/'+\
-                'src/vigir_sm_generation/test/test_sm_gen_request.yaml'
+                'src/vigir_sm_generation/test/test_sm_gen_request_multiple_output.yaml'
+        #fpath = 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/'+\
+        #        'src/vigir_sm_generation/test/test_sm_gen_request.yaml'
         (self.out_vars, self.in_vars, self.automata) =\
             load_synthesized_automaton(fpath)
         automaton = SynthesizedAutomaton(self.out_vars,
@@ -64,30 +66,33 @@ class TestSmGeneration(unittest.TestCase):
         self.SIs = response.state_definition
         self.error_code = response.error_code
 
-    ### Test Error Codes ###
-    #def test_success(self):
-    #    """ Test that a generation succeeds.  """
-    #    self.assertEqual(self.error_code, BSErrorCodes.SUCCESS,
-    #        "Unhandled case: No system.yaml.")
+    ## Test Error Codes ###
+    def test_success(self):
+        """ Test that a generation succeeds.  """
+        self.assertEqual(self.error_code, BSErrorCodes(BSErrorCodes.SUCCESS),
+            "Generation did not succeed as expected. Error code: {0}"\
+                .format(self.error_code))
 
-    #def test_no_config_file(self):
-    #    self.request.system = "non-existing system"
-    #    response = generate_sm(self.request)
-    #    SIs = response.state_definition
-    #    error_code = response.error_code
-    #    
-    #    self.assertEqual(error_code, BSErrorCodes.NO_SYSTEM_CONFIG,
-    #        "Unhandled case: No system configuration in system.yaml.")
+    def test_no_config_file(self):
+        self.request.system = "non-existing system"
+        response = generate_sm(self.request)
+        SIs = response.state_definition
+        error_code = response.error_code
 
-    #def test_config_file_not_found(self):
-    #    self.request.system = "test_nonexistent"
-    #    response = generate_sm(self.request)
-    #    SIs = response.state_definition
-    #    error_code = response.error_code
-    #    
-    #    self.assertEqual(error_code, BSErrorCodes.SYSTEM_CONFIG_NOT_FOUND,
-    #        "Unhandled case: System configuration not found after looking "+\
-    #        "up in system.yaml.")
+        self.assertEqual(error_code,
+            BSErrorCodes(BSErrorCodes.NO_SYSTEM_CONFIG),
+            "Unhandled case: No system configuration in system.yaml.")
+
+    def test_config_file_not_found(self):
+        self.request.system = "test_nonexistent"
+        response = generate_sm(self.request)
+        SIs = response.state_definition
+        error_code = response.error_code
+
+        self.assertEqual(error_code,
+            BSErrorCodes(BSErrorCodes.SYSTEM_CONFIG_NOT_FOUND),
+            "Unhandled case: System configuration not found after looking "+\
+            "up in system.yaml.")
 
     ### Test that SIs contents have valid types ###
     def test_si_types(self):

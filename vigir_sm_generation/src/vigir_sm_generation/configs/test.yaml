@@ -3,6 +3,7 @@ name: atlas
 # map from output proposition (of a state) to output for entire SM
 output:
     finished: finished
+    failed: failed
 
 pickup_a:
     class_decl:
