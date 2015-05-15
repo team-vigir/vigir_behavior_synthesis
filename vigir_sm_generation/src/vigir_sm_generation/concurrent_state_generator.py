@@ -1,6 +1,7 @@
 from sm_gen_util import (
     new_si,
-    class_decl_to_string
+    class_decl_to_string,
+    clean_variable
 )
 class ConcurrentStateGenerator():
     """
@@ -26,10 +27,6 @@ class ConcurrentStateGenerator():
         self.internal_outcomes = []
         self.internal_outcome_maps = []
 
-    def clean_variable(self, name):
-        """Given a input or output variable, remove the _* ending."""
-        return name[:-2]
-
     def add_internal_state(self, label, class_decl):
         """
         Add an internal state to this concurrent state.
@@ -39,7 +36,7 @@ class ConcurrentStateGenerator():
         label: the name by which this internal state is referred to.
         class_decl: the class declaration for code generation. e.g. 'Foo()'
         """
-        clean_label = self.clean_variable(label)
+        clean_label = clean_variable(label)
         if clean_label not in self.internal_states:
             self.internal_states[clean_label] = class_decl
 
@@ -57,7 +54,7 @@ class ConcurrentStateGenerator():
         clean_out_map = {}
         clean_out_map['outcome'] = out_map['outcome']
 
-        clean_conditions = dict((self.clean_variable(k), v)
+        clean_conditions = dict((clean_variable(k), v)
                                 for k, v in out_map['condition'].items())
         clean_out_map['condition'] = clean_conditions
 

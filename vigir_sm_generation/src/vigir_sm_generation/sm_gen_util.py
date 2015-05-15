@@ -40,3 +40,9 @@ def class_decl_to_string(class_decl):
     decl += ")"
     return decl
 
+def clean_variable(var):
+    """ Remove the _* suffix if it it present. """
+    if var[-2] == "_":
+        return var[:-2]
+    return var
+

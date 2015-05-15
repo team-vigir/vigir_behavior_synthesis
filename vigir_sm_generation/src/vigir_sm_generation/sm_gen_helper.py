@@ -63,6 +63,14 @@ class SMGenHelper():
                 class_decl_str = class_decl_to_string(class_decl)
                 self.class_decl_to_out_map[class_decl_str] = out_map
 
+    def get_init_state_name(self):
+        """ Return the name of the initial state.
+        For now, naively choose the the state corresponding to a name of 0. """
+        for state in self.automata:
+            if state.name[0] == "0":
+                return state.name
+        raise SMGenError(BSErrorCodes.NO_INITIAL_STATE)
+
     def get_state_name_to_sm_output(self):
         """Create the mapping from the name of a substate that represents
         and exit, to the specific output. E.g. "State5" -> "finished"

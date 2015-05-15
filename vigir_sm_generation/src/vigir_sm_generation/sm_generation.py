@@ -22,17 +22,37 @@ from vigir_synthesis_msgs.srv import SMGenerate, SMGenerateResponse
 from vigir_synthesis_msgs.msg import BSErrorCodes
 from vigir_be_msgs.msg import StateInstantiation
 from concurrent_state_generator import ConcurrentStateGenerator
-from sm_gen_util import new_si, class_decl_to_string
 from sm_gen_helper import SMGenHelper
+from sm_gen_util import (
+    new_si,
+    class_decl_to_string,
+    clean_variable
+)
 
 vigir_repo = os.environ['VIGIR_ROOT_DIR']
 
+def modify_names(all_out_vars, automata):
+    """
+    Make the state names human readable.
 
-def modify_names(automata):
-    """Make the state names human readable."""
+    We append "_X" to the state name for each output variable X that is true.
+    """
     for state in automata:
-        state.name = "State{0}".format(state.name)
-        state.transitions = ["State{0}".format(n) for n in state.transitions]
+        state.name = str(state.name) # sometime they're ints
+
+    old_name_to_new_name = {}
+    for state in automata:
+        new_name = state.name
+        for i, val in enumerate(state.output_valuation):
+            if val:
+                new_name += "_" + clean_variable(all_out_vars[i])
+        old_name_to_new_name[state.name] = new_name
+
+    for state in automata:
+        state.name = old_name_to_new_name[state.name]
+        state.transitions = [old_name_to_new_name[n]
+                             for n in state.transitions]
+
     return automata
 
 def generate_sm_wrapper(request):
@@ -100,8 +120,9 @@ def generate_sm(request):
     sa = request.automaton # SynthesizedAutomaton
     all_out_vars = sa.output_variables
     all_in_vars = sa.input_variables
-    automata = modify_names(sa.automaton)
+    automata = modify_names(all_out_vars, sa.automaton)
 
+    # Load the config file
     system_name = request.system
     if system_name in systems:
         yaml_file = os.path.join(vigir_repo, systems[system_name])
@@ -118,8 +139,9 @@ def generate_sm(request):
     helper = SMGenHelper(config, all_in_vars, all_out_vars, automata)
 
     # Initialize list of StateInstantiation's with parent SI.
+    init_name = helper.get_init_state_name()
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
-           helper.get_sm_real_outputs(), [], "State0", [], [])]
+           helper.get_sm_real_outputs(), [], init_name, [], [])]
 
     for state in automata:
         name = state.name
