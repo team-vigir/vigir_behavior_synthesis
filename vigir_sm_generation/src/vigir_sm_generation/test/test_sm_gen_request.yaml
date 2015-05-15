@@ -1,0 +1,111 @@
+output_variables: ['pickup_a', 'manipulate_a', 'stand_a', 'finished', 'stand_prep_a', 'grasp_a']
+input_variables: ['stand_prep_c', 'stand_c', 'pickup_c', 'grasp_c', 'manipulate_c']
+automaton: 
+  - 
+    name: 11
+    output_valuation: [False, False, False, True, True, False]
+    input_valuation: [False, True, False, True, False]
+    transitions: ['10', '11', '14', '15']
+    rank: 0
+  - 
+    name: 10
+    output_valuation: [False, False, False, True, True, False]
+    input_valuation: [False, True, False, False, False]
+    transitions: ['10', '14']
+    rank: 0
+  - 
+    name: 13
+    output_valuation: [False, False, False, True, True, False]
+    input_valuation: [False, True, True, True, False]
+    transitions: ['10', '11', '12', '13', '14', '15', '16', '17']
+    rank: 0
+  - 
+    name: 12
+    output_valuation: [False, False, False, True, True, False]
+    input_valuation: [False, True, True, False, False]
+    transitions: ['10', '12', '14', '16']
+    rank: 0
+  - 
+    name: 15
+    output_valuation: [False, False, False, True, True, False]
+    input_valuation: [True, False, False, True, False]
+    transitions: ['14', '15']
+    rank: 0
+  - 
+    name: 14
+    output_valuation: [False, False, False, True, True, False]
+    input_valuation: [True, False, False, False, False]
+    transitions: ['14']
+    rank: 0
+  - 
+    name: 17
+    output_valuation: [False, False, False, True, True, False]
+    input_valuation: [True, False, True, True, False]
+    transitions: ['14', '15', '16', '17']
+    rank: 0
+  - 
+    name: 16
+    output_valuation: [False, False, False, True, True, False]
+    input_valuation: [True, False, True, False, False]
+    transitions: ['14', '16']
+    rank: 0
+  - 
+    name: 1
+    output_valuation: [False, False, True, False, False, False]
+    input_valuation: [True, False, False, False, False]
+    transitions: ['2', '1']
+    rank: 0
+  - 
+    name: 0
+    output_valuation: [False, False, False, False, True, False]
+    input_valuation: [True, False, False, False, False]
+    transitions: ['1']
+    rank: 0
+  - 
+    name: 3
+    output_valuation: [False, True, False, False, False, True]
+    input_valuation: [False, False, False, False, True]
+    transitions: ['3', '4']
+    rank: 0
+  - 
+    name: 2
+    output_valuation: [False, True, False, False, False, False]
+    input_valuation: [False, True, False, False, False]
+    transitions: ['3', '2']
+    rank: 0
+  - 
+    name: 5
+    output_valuation: [False, False, True, False, False, False]
+    input_valuation: [False, False, True, True, True]
+    transitions: ['6', '7', '8', '9', '10', '11', '12', '13']
+    rank: 0
+  - 
+    name: 4
+    output_valuation: [True, True, False, False, False, True]
+    input_valuation: [False, False, False, True, True]
+    transitions: ['4', '5']
+    rank: 0
+  - 
+    name: 7
+    output_valuation: [False, False, True, True, False, False]
+    input_valuation: [False, False, False, True, True]
+    transitions: ['6', '7', '10', '11']
+    rank: 0
+  - 
+    name: 6
+    output_valuation: [False, False, True, True, False, False]
+    input_valuation: [False, False, False, False, True]
+    transitions: ['6', '10']
+    rank: 0
+  - 
+    name: 9
+    output_valuation: [False, False, True, True, False, False]
+    input_valuation: [False, False, True, True, True]
+    transitions: ['6', '7', '8', '9', '10', '11', '12', '13']
+    rank: 0
+  - 
+    name: 8
+    output_valuation: [False, False, True, True, False, False]
+    input_valuation: [False, False, True, False, True]
+    transitions: ['6', '8', '10', '12']
+    rank: 0
