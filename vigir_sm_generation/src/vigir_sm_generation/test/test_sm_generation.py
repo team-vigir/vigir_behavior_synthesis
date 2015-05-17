@@ -69,7 +69,7 @@ class TestSmGeneration(unittest.TestCase):
     ## Test Error Codes ###
     def test_success(self):
         """ Test that a generation succeeds.  """
-        self.assertEqual(self.error_code, BSErrorCodes(BSErrorCodes.SUCCESS),
+        self.assertEqual(self.error_code.value, BSErrorCodes.SUCCESS,
             "Generation did not succeed as expected. Error code: {0}"\
                 .format(self.error_code))
 
@@ -79,8 +79,7 @@ class TestSmGeneration(unittest.TestCase):
         SIs = response.state_definition
         error_code = response.error_code
 
-        self.assertEqual(error_code,
-            BSErrorCodes(BSErrorCodes.NO_SYSTEM_CONFIG),
+        self.assertEqual(error_code.value, BSErrorCodes.NO_SYSTEM_CONFIG,
             "Unhandled case: No system configuration in system.yaml.")
 
     def test_config_file_not_found(self):
@@ -89,8 +88,8 @@ class TestSmGeneration(unittest.TestCase):
         SIs = response.state_definition
         error_code = response.error_code
 
-        self.assertEqual(error_code,
-            BSErrorCodes(BSErrorCodes.SYSTEM_CONFIG_NOT_FOUND),
+        self.assertEqual(error_code.value,
+            BSErrorCodes.SYSTEM_CONFIG_NOT_FOUND,
             "Unhandled case: System configuration not found after looking "+\
             "up in system.yaml.")
 
