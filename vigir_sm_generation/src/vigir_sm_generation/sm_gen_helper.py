@@ -66,10 +66,22 @@ class SMGenHelper():
     def get_init_state_name(self):
         """ Return the name of the initial state.
         For now, naively choose the the state corresponding to a name of 0. """
+        transitioned_to = set()
         for state in self.automata:
-            if state.name[0] == "0":
-                return state.name
-        raise SMGenError(BSErrorCodes.NO_INITIAL_STATE)
+            transitioned_to = transitioned_to.union(state.transitions)
+
+        not_transitioned_to = []
+        for state in self.automata:
+            if state.name not in transitioned_to:
+                not_transitioned_to.append(state.name)
+
+        if len(not_transitioned_to) == 0:
+            raise SMGenError(BSErrorCodes.NO_INITIAL_STATE)
+
+        if len(not_transitioned_to) > 1:
+            raise SMGenError(BSErrorCodes.MULTIPLE_INITIAL_STATE)
+
+        return not_transitioned_to[0]
 
     def get_state_name_to_sm_output(self):
         """Create the mapping from the name of a substate that represents

@@ -28,3 +28,4 @@ int32 NO_SYSTEMS_FILE = -31         # There's not system.yaml file
 int32 NO_SYSTEM_CONFIG = -32        # This system is not in system.yaml
 int32 SYSTEM_CONFIG_NOT_FOUND = -33 # This system is in system.yaml but not found
 int32 NO_INITIAL_STATE = -34        # Unable to deduce the initial state
+int32 MULTIPLE_INITIAL_STATE = -35  # Multiple initial states deduced
