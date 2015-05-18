@@ -168,9 +168,13 @@ def generate_sm_handle(request):
                 if not helper.is_response_var(in_var):
                     csg.add_internal_state(ss_name, decl)
 
-            csg.add_internal_outcome(helper.get_real_name(next_state))
+            csg.add_internal_outcome_and_transition(
+                helper.get_outcome_name(next_state, substate_name_to_out),
+                helper.get_real_name(next_state)
+            )
             csg.add_internal_outcome_maps({
-                'outcome': helper.get_real_name(next_state),
+                'outcome': helper.get_outcome_name(next_state,
+                    substate_name_to_out),
                 'condition': substate_name_to_out
             })
             rospy.logdebug("{0} -> {1} if: {2}".format(name, next_state,

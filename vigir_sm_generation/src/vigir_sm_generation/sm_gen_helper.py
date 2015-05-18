@@ -1,4 +1,4 @@
-from sm_gen_util import class_decl_to_string
+from sm_gen_util import class_decl_to_string, clean_variable
 import rospy
 
 class SMGenHelper():
@@ -179,16 +179,37 @@ class SMGenHelper():
         check = set(outputs)
         return any(k in check for k in self.sm_fake_outputs)
 
-    def get_real_name(self, name):
-        """Returns the real name of this state. It might be different because
-        a state may represent a SM exit (e.g. "State 5" -> "failed")
+    def get_outcome_name(self, state_name, condition):
+        """Returns a name needed to transition to the next_state.
+
+        state_name: The name of the state in the automaton (e.g. "0")
+        condition: A map from proposition to value needed for this outcome
+                   to happen.
+        If it's a fake state name representing a final outcome, just return
+        that outcome.
+        Otherwise, combine the conditions in a meaningful way.
         """
-        if self.is_fake_state(name):
+        if self.is_fake_state(state_name):
             # Could actually be "State 5" -> "done" -> "finished"
-            fake_output = self.state_name_to_sm_output[name]
+            fake_output = self.state_name_to_sm_output[state_name]
             return self.sm_fake_out_to_real_out[fake_output]
         else:
-            return name
+            # Output format is "key1_value1__key2_value2__key3_value3__..."
+            outcome_str = "__".join(["{0}_{1}".format(clean_variable(k), v)
+                                     for (k, v) in condition.items()])
+            return outcome_str
+
+    def get_real_name(self, state_name):
+        """Returns the real name of a state. The only time a name isn't real
+        is when this is a fake state, at which point this returns the
+        corresponding output.
+        """
+        if self.is_fake_state(state_name):
+            # Could actually be "State 5" -> "done" -> "finished"
+            fake_output = self.state_name_to_sm_output[state_name]
+            return self.sm_fake_out_to_real_out[fake_output]
+        else:
+            return state_name
 
     def is_fake_state(self, name):
         """Returns if a state is a placeholder for an output."""

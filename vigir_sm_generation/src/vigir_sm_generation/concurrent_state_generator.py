@@ -25,6 +25,7 @@ class ConcurrentStateGenerator():
         # of ConcurrentState for more detail.
         self.internal_states = {}
         self.internal_outcomes = []
+        self.internal_transitions = []
         self.internal_outcome_maps = []
 
     def add_internal_state(self, label, class_decl):
@@ -40,15 +41,17 @@ class ConcurrentStateGenerator():
         if clean_label not in self.internal_states:
             self.internal_states[clean_label] = class_decl
 
-    def add_internal_outcome(self, outcome):
+    def add_internal_outcome_and_transition(self, outcome, transition):
         """
-        Add an internal outcome of the concurrent machine. Note that this can
-        be remapped with the 'outcomes' and 'transitions' parameter.
+        Add an internal outcome and its correspond transition of the concurrent
+        machine.
 
         outcome: a string
+        transition: a string
         """
         if outcome not in self.internal_outcomes:
             self.internal_outcomes.append(outcome)
+            self.internal_transitions.append(transition)
 
     def clean_out_map(self, out_map):
         clean_out_map = {}
@@ -77,6 +80,8 @@ class ConcurrentStateGenerator():
         for out_map in self.internal_outcome_maps:
             transitions.append(out_map['outcome'])
             outcomes.append(out_map['condition'][label])
+        outcomes = self.internal_outcomes
+        transitions = self.internal_transitions
 
         return new_si("/" + self.name,
                        decl['name'],
@@ -106,7 +111,7 @@ class ConcurrentStateGenerator():
 
         # Not really needed, but it's good to be explicit
         concurrent_si_outcomes = self.internal_outcomes
-        concurrent_si_transitions = self.internal_outcomes
+        concurrent_si_transitions = self.internal_transitions
         
         return new_si("/" + self.name,
                       "ConcurrentState",
