@@ -14,7 +14,7 @@ pickup_a:
     output_mapping:
         pickup_c: done
         failed : failed
-    autonomy: LOW
+    autonomy: 0
 grasp_a:
     class_decl:
         name: GraspObjectSM
@@ -23,7 +23,7 @@ grasp_a:
     output_mapping:
         grasp_c: finished
         failed : failed
-    autonomy: LOW
+    autonomy: 0
 manipulate_a:
     class_decl:
         name: ChangeControlModeActionState
@@ -34,7 +34,7 @@ manipulate_a:
     output_mapping:
         manipulate_c: changed
         failed : failed
-    autonomy: LOW
+    autonomy: 0
 stand_prep_a:
     class_decl:
         name: ChangeControlModeActionState
@@ -45,7 +45,7 @@ stand_prep_a:
     output_mapping:
         stand_prep_c: changed
         failed : failed
-    autonomy: LOW
+    autonomy: 0
 stand_a:
     class_decl:
         name: ChangeControlModeActionState
@@ -56,7 +56,7 @@ stand_a:
     output_mapping:
         stand_c: changed
         failed : failed
-    autonomy: LOW
+    autonomy: 0
 step_a:
     class_decl:
         name: ChangeControlModeActionState
@@ -67,7 +67,7 @@ step_a:
     output_mapping:
         step_c: changed
         failed : failed
-    autonomy: LOW
+    autonomy: 0
 walk_a:
     class_decl:
         name: ChangeControlModeActionState
@@ -78,7 +78,7 @@ walk_a:
     output_mapping:
         walk_c: changed
         failed : failed
-    autonomy: LOW
+    autonomy: 0
 obj_detected:
     class_decl:
         name: SensorReading
@@ -86,4 +86,4 @@ obj_detected:
         param_values: []
     output_mapping:
         obj_detected: found
-    autonomy: LOW
+    autonomy: 0

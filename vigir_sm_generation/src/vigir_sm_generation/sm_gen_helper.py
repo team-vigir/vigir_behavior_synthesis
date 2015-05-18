@@ -223,6 +223,10 @@ class SMGenHelper():
         else:
             return state_name
 
+    def get_autonomy_list(self, conditions):
+        return [self.config[out_var]["autonomy"]
+                for out_var, _ in conditions.items()]
+
     def is_fake_state(self, name):
         """Returns if a state is a placeholder for an output."""
         return name in self.state_name_to_sm_output

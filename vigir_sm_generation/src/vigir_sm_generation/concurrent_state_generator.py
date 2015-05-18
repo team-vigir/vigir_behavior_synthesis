@@ -27,6 +27,7 @@ class ConcurrentStateGenerator():
         self.internal_outcomes = []
         self.internal_transitions = []
         self.internal_outcome_maps = []
+        self.outcome_to_autonomy_list = {}
 
     def add_internal_state(self, label, class_decl):
         """
@@ -41,17 +42,25 @@ class ConcurrentStateGenerator():
         if clean_label not in self.internal_states:
             self.internal_states[clean_label] = class_decl
 
-    def add_internal_outcome_and_transition(self, outcome, transition):
+    def add_internal_outcome_and_transition(self, outcome, transition,
+            autonomy_list):
         """
         Add an internal outcome and its correspond transition of the concurrent
         machine.
 
         outcome: a string
         transition: a string
+        autonomy_list: a list of autonomies (integers)
         """
         if outcome not in self.internal_outcomes:
             self.internal_outcomes.append(outcome)
             self.internal_transitions.append(transition)
+
+            # Add autonomy
+            if outcome in self.outcome_to_autonomy_list:
+                self.outcome_to_autonomy_list[outcome] += autonomy_list
+            else:
+                self.outcome_to_autonomy_list[outcome] = autonomy_list
 
     def clean_out_map(self, out_map):
         clean_out_map = {}
@@ -82,6 +91,8 @@ class ConcurrentStateGenerator():
             outcomes.append(out_map['condition'][label])
         outcomes = self.internal_outcomes
         transitions = self.internal_transitions
+        autonomy = [max(self.outcome_to_autonomy_list[o])
+                    for o in self.internal_outcomes]
 
         return new_si("/" + self.name,
                        decl['name'],
@@ -89,7 +100,8 @@ class ConcurrentStateGenerator():
                        transitions,
                        None,
                        decl['param_names'],
-                       decl['param_values'])
+                       decl['param_values'],
+                       autonomy)
 
     def gen_states(self):
         """Turn return states parameters for the ConcurrentState."""
@@ -112,6 +124,8 @@ class ConcurrentStateGenerator():
         # Not really needed, but it's good to be explicit
         concurrent_si_outcomes = self.internal_outcomes
         concurrent_si_transitions = self.internal_transitions
+        autonomy = [max(self.outcome_to_autonomy_list[o])
+                    for o in self.internal_outcomes]
         
         return new_si("/" + self.name,
                       "ConcurrentState",
@@ -119,4 +133,5 @@ class ConcurrentStateGenerator():
                       concurrent_si_transitions,
                       None,
                       p_names,
-                      p_vals)
+                      p_vals,
+                      autonomy)

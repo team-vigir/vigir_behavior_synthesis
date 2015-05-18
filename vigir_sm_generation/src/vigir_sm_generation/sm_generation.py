@@ -138,7 +138,7 @@ def generate_sm_handle(request):
     # Initialize list of StateInstantiation's with parent SI.
     init_name = helper.get_init_state_name()
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
-           helper.get_sm_real_outputs(), [], init_name, [], [])]
+           helper.get_sm_real_outputs(), [], init_name, [], [], [])]
 
     for state in automata:
         name = state.name
@@ -170,7 +170,8 @@ def generate_sm_handle(request):
 
             csg.add_internal_outcome_and_transition(
                 helper.get_outcome_name(next_state, substate_name_to_out),
-                helper.get_real_name(next_state)
+                helper.get_real_name(next_state),
+                helper.get_autonomy_list(substate_name_to_out)
             )
             csg.add_internal_outcome_maps({
                 'outcome': helper.get_outcome_name(next_state,

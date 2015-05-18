@@ -15,7 +15,7 @@ def remove_duplicate_pairs(lst1, lst2):
     return list(new_lists[0]), list(new_lists[1])
 
 def new_si(state_path, state_class, outcomes, transitions, initial_state,
-    p_names, p_vals):
+    p_names, p_vals, autonomy):
     """ Create a new SI. """
     si = StateInstantiation()
     si.state_path = state_path
@@ -28,6 +28,7 @@ def new_si(state_path, state_class, outcomes, transitions, initial_state,
         si.initial_state_name = initial_state
     si.parameter_names = p_names
     si.parameter_values = p_vals
+    si.autonomy = autonomy
 
     return si
 
