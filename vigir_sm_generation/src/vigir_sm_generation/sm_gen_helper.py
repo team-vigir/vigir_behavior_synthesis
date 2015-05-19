@@ -39,29 +39,32 @@ class SMGenHelper():
         # the map from class declaration to its out_map
         self.class_decl_to_out_map = {}
 
-        for out_var, var_config in self.config.items():
-            # If class_decl isn't in var_config, it's not configuration for a
-            # state
-            if 'class_decl' not in var_config:
-                continue
-            class_decl = var_config['class_decl']
-            out_map = var_config['output_mapping']
-            class_decl_str = class_decl_to_string(class_decl)
-            self.class_decl_to_out_map[class_decl_str] = out_map
-            for in_var, state_outcome in out_map.items():
-                # check if this is a response variable
-                if in_var in self.all_in_vars and out_var in self.all_out_vars:
-                    self.in_var_to_class_decl[in_var] = class_decl
-                    self.in_var_to_out_var[in_var] = out_var
-
-        # Make one more pass to handle sensor variables
-        for in_var in self.all_in_vars:
-            if not self.is_response_var(in_var): # it's a sensor variable
-                var_config = self.config[in_var]
+        try:
+            for out_var, var_config in self.config.items():
+                # If class_decl isn't in var_config, it's not configuration for a
+                # state
+                if 'class_decl' not in var_config:
+                    continue
                 class_decl = var_config['class_decl']
                 out_map = var_config['output_mapping']
                 class_decl_str = class_decl_to_string(class_decl)
                 self.class_decl_to_out_map[class_decl_str] = out_map
+                for in_var, state_outcome in out_map.items():
+                    # check if this is a response variable
+                    if in_var in self.all_in_vars and out_var in self.all_out_vars:
+                        self.in_var_to_class_decl[in_var] = class_decl
+                        self.in_var_to_out_var[in_var] = out_var
+
+            # Make one more pass to handle sensor variables
+            for in_var in self.all_in_vars:
+                if not self.is_response_var(in_var): # it's a sensor variable
+                    var_config = self.config[in_var]
+                    class_decl = var_config['class_decl']
+                    out_map = var_config['output_mapping']
+                    class_decl_str = class_decl_to_string(class_decl)
+                    self.class_decl_to_out_map[class_decl_str] = out_map
+        except KeyError:
+            raise SMGenError(BSErrorCodes.CONFIG_FILE_INVALID)
 
     def get_init_state_name(self):
         """ Return the name of the initial state.
@@ -93,11 +96,9 @@ class SMGenHelper():
             if self.is_sm_output(outputs):
                 in_both = [k for k in self.sm_fake_outputs if k in outputs]
                 if len(in_both) > 1:
-                    raise Exception("Substate has more than one output for"\
-                                  + " the entire state machine.")
+                    raise SMGenError(BSErrorCodes.AUTOMATON_INVALID)
                 if len(in_both) == 0:
-                    raise Exception("Substate has no output for the entire "\
-                                  + "state machine, but one was expected.")
+                    raise SMGenError(BSErrorCodes.AUTOMATON_INVALID)
                 d[state.name] = in_both[0]
 
         return d
@@ -105,22 +106,25 @@ class SMGenHelper():
     def get_sm_real_outputs(self):
         return self.sm_fake_out_to_real_out.values()
 
-    def get_automaton(self, name, automata):
+    def get_automaton(self, name):
         """
-        Returns the automaton of a given automaton name in the list of automata.
+        Returns the automaton of a given automaton name. Returns None if
+        there's no automaton with that name.
 
         @param name The name of the automaton of interest.
-        @param automata List of AutomatonStates.
         """
-        i = [a.name for a in automata].index(name)
-        return automata[i]
+        names = [a.name for a in self.automata]
+        if name not in names:
+            return None
 
-    def get_transitions(self, state, automata):
+        i = names.index(name)
+        return self.automata[i]
+
+    def get_transitions(self, state):
         """
         Deduce the transition needed to go to the next states.
 
         @param state The state to transitions away from
-        @param automata List of all AutomatonState's.
         @returns A dictionary, that maps next state to the input variable
                 that need to be true to go to that next state.
 
@@ -135,13 +139,14 @@ class SMGenHelper():
         next_states = list(set(next_states) - set([state.name])) # remove self loop
 
         if len(next_states) == 0:
-            print("{0} has no transitions out of it!".format(state.name))
-        if len(next_states) > 1:
-            rospy.logdebug("Multiple next states for {0}".format(state.name))
+            raise SMGenError(BSErrorCodes.AUTOMATON_INVALID)
 
         transitions = {}
-        for next_state in next_states:
-            input_vals = self.get_automaton(next_state, automata).input_valuation
+        for next_state_name in next_states:
+            next_state = self.get_automaton(next_state_name)
+            if next_state == None:
+                raise SMGenError(BSErrorCodes.AUTOMATON_NEXT_STATE_INVALID)
+            input_vals = next_state.input_valuation
             conditions = []
             for idx, val in enumerate(input_vals):
                 if val == 1: # only look at active inputs
@@ -154,7 +159,7 @@ class SMGenHelper():
                     else:
                         conditions.append(in_var)
             if len(conditions) > 0:
-                transitions[next_state] = conditions
+                transitions[next_state_name] = conditions
         return transitions
 
     def get_substate_name(self, in_var):
@@ -173,10 +178,14 @@ class SMGenHelper():
 
     def get_in_var_name(self, i):
         """Get the input variable name at index [i] in [in_vars] dict."""
+        if i >= len(self.all_in_vars):
+            raise SMGenError(BSErrorCodes.AUTOMATON_INPUT_VALUATION_INVALID)
         return self.all_in_vars[i]
 
     def get_out_var_name(self, i):
         """Get the output variable name at index [i] in [out_vars] dict."""
+        if i >= len(self.all_out_vars):
+            raise SMGenError(BSErrorCodes.AUTOMATON_OUTPUT_VALUATION_INVALID)
         return self.all_out_vars[i]
 
     def get_state_output_vars(self, state):
@@ -226,6 +235,11 @@ class SMGenHelper():
     def get_autonomy_list(self, conditions):
         return [self.config[out_var]["autonomy"]
                 for out_var, _ in conditions.items()]
+        try:
+            return [self.config[out_var]["autonomy"]
+                    for out_var, _ in conditions.items()]
+        except KeyError, IndexError:
+            raise SMGenError(BSErrorCodes.CONFIG_AUTONOMY_INVALID)
 
     def is_fake_state(self, name):
         """Returns if a state is a placeholder for an output."""
@@ -242,6 +256,8 @@ class SMGenHelper():
         var_config = config[out_var]
         class_decl = var_config['class_decl']
         out_map = var_config['output_mapping']
+        if 'class_decl' not in var_config or 'output_mapping' not in out_map:
+            raise SMGenError(BSErrorCodes.CONFIG_VARIABLE_CONFIG_INVALID)
         return any([in_var in self.all_in_vars
                     for in_var, _ in out_map.items()])
 
@@ -253,7 +269,10 @@ class SMGenHelper():
     def get_class_decl(self, var):
         """Get the class declaration associated with a variable."""
         if var in self.config:
-            return self.config[var]['class_decl']
+            var_config = self.config[var]
+            if 'class_decl' not in var_config:
+                raise SMGenError(BSErrorCodes.CONFIG_VARIABLE_CONFIG_INVALID)
+            return var_config['class_decl']
         elif var in self.in_var_to_class_decl:
             return self.in_var_to_class_decl[var]
 

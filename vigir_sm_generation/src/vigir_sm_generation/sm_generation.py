@@ -65,6 +65,9 @@ def generate_sm(request):
         return generate_sm_handle(request)
     except SMGenError as e:
         return SMGenerateResponse([], BSErrorCodes(e.error_code))
+    except:
+        return SMGenerateResponse([],
+            BSErrorCodes(BSErrorCodes.SM_GENERATION_FAILED))
 
 def generate_sm_handle(request):
     """
@@ -153,7 +156,7 @@ def generate_sm_handle(request):
             decl = helper.get_class_decl(out_var)
             csg.add_internal_state(out_var, decl)
 
-        transitions = helper.get_transitions(state, automata)
+        transitions = helper.get_transitions(state)
         for next_state, conditions in transitions.items():
             substate_name_to_out = {} # i.e. condition mapping
             for in_var in conditions:
