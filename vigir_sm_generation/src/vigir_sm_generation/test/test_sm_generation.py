@@ -80,7 +80,8 @@ class TestSmGeneration(unittest.TestCase):
         error_code = response.error_code
 
         self.assertEqual(error_code.value, BSErrorCodes.NO_SYSTEM_CONFIG,
-            "Unhandled case: No system configuration in system.yaml.")
+            "Unhandled case: No system configuration in system.yaml."+\
+            "Error code: {0}".format(error_code.value))
 
     def test_config_file_not_found(self):
         self.request.system = "test_nonexistent"
@@ -91,7 +92,7 @@ class TestSmGeneration(unittest.TestCase):
         self.assertEqual(error_code.value,
             BSErrorCodes.SYSTEM_CONFIG_NOT_FOUND,
             "Unhandled case: System configuration not found after looking "+\
-            "up in system.yaml.")
+            "up in system.yaml. Error code: {0}".format(error_code.value))
 
     ### Test that SIs contents have valid types ###
     def test_si_types(self):
