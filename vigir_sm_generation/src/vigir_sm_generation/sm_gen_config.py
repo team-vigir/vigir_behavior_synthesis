@@ -1,11 +1,11 @@
 from sm_gen_util import class_decl_to_string, clean_variable
 import rospy
 
-class SMGenHelper():
+class SMGenConfig():
     """
-    A class used to help generate state machines. This class basically
-    creates a bunch of helper methods for navigating the configurations as
-    well as the given automata.
+    A class that represents the configurations needed to generate state
+    machines. This class basically creates a bunch of helper methods for
+    navigating the configurations as well as the given automata.
     """
     def __init__(self, config, all_in_vars, all_out_vars, automata):
         self.config = config

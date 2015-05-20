@@ -22,7 +22,7 @@ from vigir_synthesis_msgs.srv import SMGenerate, SMGenerateResponse
 from vigir_synthesis_msgs.msg import BSErrorCodes
 from vigir_be_msgs.msg import StateInstantiation
 from concurrent_state_generator import ConcurrentStateGenerator
-from sm_gen_helper import SMGenHelper
+from sm_gen_config import SMGenConfig
 from sm_gen_util import (
     new_si,
     class_decl_to_string,
@@ -142,7 +142,7 @@ def generate_sm_handle(request):
             .format(system_name, yaml_sys_file))
         raise SMGenError(BSErrorCodes.SYSTEM_CONFIG_NOT_FOUND)
 
-    helper = SMGenHelper(config, all_in_vars, all_out_vars, automata)
+    helper = SMGenConfig(config, all_in_vars, all_out_vars, automata)
 
     # Initialize list of StateInstantiation's with parent SI.
     init_name = helper.get_init_state_name()
