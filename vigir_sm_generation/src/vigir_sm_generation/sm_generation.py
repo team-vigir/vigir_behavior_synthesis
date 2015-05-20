@@ -118,6 +118,8 @@ def generate_sm_handle(request):
         with open(yaml_file) as yf:
             systems = yaml.load(yf)
     except IOError:
+        rospy.logerr("System file could not be loaded from {0}."
+            .format(yaml_file))
         raise SMGenError(BSErrorCodes(error_code))
         
     sa = request.automaton # SynthesizedAutomaton
@@ -128,12 +130,16 @@ def generate_sm_handle(request):
     # Load the config file
     system_name = request.system
     if system_name not in systems:
+        rospy.logerr("System {0} is not in the systems file ({1})."\
+            .format(system_name, yaml_file))
         raise SMGenError(BSErrorCodes.NO_SYSTEM_CONFIG)
-    yaml_file = os.path.join(vigir_repo, systems[system_name])
+    yaml_sys_file = os.path.join(vigir_repo, systems[system_name])
     try:
-        with open(yaml_file) as yf:
+        with open(yaml_sys_file) as yf:
             config = yaml.load(yf)
     except IOError:
+        rospy.logerr("System {0} could not be loaded from {1}."\
+            .format(system_name, yaml_sys_file))
         raise SMGenError(BSErrorCodes.SYSTEM_CONFIG_NOT_FOUND)
 
     helper = SMGenHelper(config, all_in_vars, all_out_vars, automata)

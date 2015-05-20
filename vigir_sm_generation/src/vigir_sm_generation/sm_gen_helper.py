@@ -64,6 +64,7 @@ class SMGenHelper():
                     class_decl_str = class_decl_to_string(class_decl)
                     self.class_decl_to_out_map[class_decl_str] = out_map
         except KeyError:
+            rospy.logerr("The configuration file is invalid.")
             raise SMGenError(BSErrorCodes.CONFIG_FILE_INVALID)
 
     def get_init_state_name(self):
@@ -79,16 +80,14 @@ class SMGenHelper():
                 not_transitioned_to.append(state.name)
 
         if len(not_transitioned_to) == 0:
-            raise SMGenError(BSErrorCodes.NO_INITIAL_STATE)
-
-        if len(not_transitioned_to) > 1:
-            raise SMGenError(BSErrorCodes.MULTIPLE_INITIAL_STATE)
+            rospy.logerr("Could not figure out the (real) initial state(s).")
+            raise SMGenError(BSErrorCodes.AUTOMATON_NO_INITIAL_STATE)
 
         return not_transitioned_to[0]
 
     def get_state_name_to_sm_output(self):
         """Create the mapping from the name of a substate that represents
-        and exit, to the specific output. E.g. "State5" -> "finished"
+        an exit, to the specific output. E.g. "State5" -> "finished"
         """
         d = {}
         for state in self.automata:
@@ -96,8 +95,12 @@ class SMGenHelper():
             if self.is_sm_output(outputs):
                 in_both = [k for k in self.sm_fake_outputs if k in outputs]
                 if len(in_both) > 1:
+                    rospy.logerr("This substate represent multiple final"+\
+                        " outputs.")
                     raise SMGenError(BSErrorCodes.AUTOMATON_INVALID)
                 if len(in_both) == 0:
+                    rospy.logerr("This substate represent no final outputs,"+\
+                        " but expected it to.")
                     raise SMGenError(BSErrorCodes.AUTOMATON_INVALID)
                 d[state.name] = in_both[0]
 
@@ -138,13 +141,12 @@ class SMGenHelper():
         next_states = [str(x) for x in state.transitions]
         next_states = list(set(next_states) - set([state.name])) # remove self loop
 
-        if len(next_states) == 0:
-            raise SMGenError(BSErrorCodes.AUTOMATON_INVALID)
-
         transitions = {}
         for next_state_name in next_states:
             next_state = self.get_automaton(next_state_name)
             if next_state == None:
+                rospy.logerr("Problem trying to get the next state: {0}."\
+                    .format(next_state_name))
                 raise SMGenError(BSErrorCodes.AUTOMATON_NEXT_STATE_INVALID)
             input_vals = next_state.input_valuation
             conditions = []
@@ -179,12 +181,14 @@ class SMGenHelper():
     def get_in_var_name(self, i):
         """Get the input variable name at index [i] in [in_vars] dict."""
         if i >= len(self.all_in_vars):
+            rospy.logerr("There are not {0} input variables.".format(i))
             raise SMGenError(BSErrorCodes.AUTOMATON_INPUT_VALUATION_INVALID)
         return self.all_in_vars[i]
 
     def get_out_var_name(self, i):
         """Get the output variable name at index [i] in [out_vars] dict."""
         if i >= len(self.all_out_vars):
+            rospy.logerr("There are not {0} output variables.".format(i))
             raise SMGenError(BSErrorCodes.AUTOMATON_OUTPUT_VALUATION_INVALID)
         return self.all_out_vars[i]
 
@@ -238,7 +242,9 @@ class SMGenHelper():
         try:
             return [self.config[out_var]["autonomy"]
                     for out_var, _ in conditions.items()]
-        except KeyError, IndexError:
+        except KeyError as k:
+            rospy.logerr("{0} is not in config or variable config dictionary"\
+                .format(k.args[0]))
             raise SMGenError(BSErrorCodes.CONFIG_AUTONOMY_INVALID)
 
     def is_fake_state(self, name):
@@ -256,7 +262,8 @@ class SMGenHelper():
         var_config = config[out_var]
         class_decl = var_config['class_decl']
         out_map = var_config['output_mapping']
-        if 'class_decl' not in var_config or 'output_mapping' not in out_map:
+        if 'class_decl' not in var_config or 'output_mapping' not in var_config:
+            rospy.logerr("'class_decl' or 'output_mapping' not in var_config")
             raise SMGenError(BSErrorCodes.CONFIG_VARIABLE_CONFIG_INVALID)
         return any([in_var in self.all_in_vars
                     for in_var, _ in out_map.items()])
@@ -271,6 +278,7 @@ class SMGenHelper():
         if var in self.config:
             var_config = self.config[var]
             if 'class_decl' not in var_config:
+                rospy.logerr("'class_decl' not in var_config")
                 raise SMGenError(BSErrorCodes.CONFIG_VARIABLE_CONFIG_INVALID)
             return var_config['class_decl']
         elif var in self.in_var_to_class_decl:
