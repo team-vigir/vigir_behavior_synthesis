@@ -67,9 +67,11 @@ class SMGenConfig():
             rospy.logerr("The configuration file is invalid.")
             raise SMGenError(BSErrorCodes.CONFIG_FILE_INVALID)
 
-    def get_init_state_name(self):
-        """ Return the name of the initial state.
-        For now, naively choose the the state corresponding to a name of 0. """
+    def get_init_states(self):
+        """
+        Return the initial states.  For now, an state is an initial state if it
+        has nothing transitioning to it.
+        """
         transitioned_to = set()
         for state in self.automata:
             transitioned_to = transitioned_to.union(state.transitions)
@@ -77,13 +79,13 @@ class SMGenConfig():
         not_transitioned_to = []
         for state in self.automata:
             if state.name not in transitioned_to:
-                not_transitioned_to.append(state.name)
+                not_transitioned_to.append(state)
 
         if len(not_transitioned_to) == 0:
             rospy.logerr("Could not figure out the (real) initial state(s).")
             raise SMGenError(BSErrorCodes.AUTOMATON_NO_INITIAL_STATE)
 
-        return not_transitioned_to[0]
+        return not_transitioned_to
 
     def get_state_name_to_sm_output(self):
         """Create the mapping from the name of a substate that represents
@@ -204,10 +206,12 @@ class SMGenConfig():
         check = set(outputs)
         return any(k in check for k in self.sm_fake_outputs)
 
-    def get_outcome_name(self, state_name, condition):
-        """Returns a name needed to transition to the next_state.
+    def get_outcome_name(self, is_concurrent, state_name, condition):
+        """Returns a name needed to transition to the next state.
 
-        state_name: The name of the state in the automaton (e.g. "0")
+        is_concurrent: Boolean, which equals if this state is a concurrent
+                       state.
+        state_name: The name of the next state in the automaton (e.g. "0")
         condition: A map from proposition to value needed for this outcome
                    to happen.
         If it's a fake state name representing a final outcome, just return
@@ -218,11 +222,15 @@ class SMGenConfig():
             # Could actually be "State 5" -> "done" -> "finished"
             fake_output = self.state_name_to_sm_output[state_name]
             return self.sm_fake_out_to_real_out[fake_output]
-        else:
-            # Output format is "key1_value1__key2_value2__key3_value3__..."
-            outcome_str = "__".join(["{0}_{1}".format(clean_variable(k), v)
-                                     for (k, v) in condition.items()])
-            return outcome_str
+
+        if not is_concurrent:
+            (k, v) = condition.items()[0]
+            return v
+
+        # Output format is "key1_value1__key2_value2__key3_value3__..."
+        outcome_str = "__".join(["{0}_{1}".format(clean_variable(k), v)
+                                 for (k, v) in condition.items()])
+        return outcome_str
 
     def get_real_name(self, state_name):
         """Returns the real name of a state. The only time a name isn't real

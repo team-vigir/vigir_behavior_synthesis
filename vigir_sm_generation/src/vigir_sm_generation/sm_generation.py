@@ -30,7 +30,8 @@ from sm_gen_util import (
 )
 from sm_gen_error import SMGenError
 
-vigir_repo = os.environ['VIGIR_ROOT_DIR']
+VIGIR_REPO = os.environ['VIGIR_ROOT_DIR']
+INIT_STATE_NAME = "init_tmp_state"
 
 def modify_names(all_out_vars, automata):
     """
@@ -56,6 +57,24 @@ def modify_names(all_out_vars, automata):
 
     return automata
 
+def get_init_temp_state(init_states):
+    """
+    Return a temporary initial state that goes to every real initial state.
+
+    init_states: a list of initial states to go to
+    """
+    init_state_names = [s.name for s in init_states]
+    return new_si(
+        "/{0}".format(INIT_STATE_NAME),
+        "LogState",
+         ["done" for s in init_state_names], # outcomes and
+         init_state_names, # transitions are the same
+         None,
+         ["text"],
+         ["Initial state"],
+         [0 for s in init_states] # autonomy
+    )
+
 def generate_sm(request):
     """
     A wrapper around generate_sm_handle. This catches any exception and
@@ -64,8 +83,11 @@ def generate_sm(request):
     try:
         return generate_sm_handle(request)
     except SMGenError as e:
+        rospy.logerr("There was an SMGenError: {0}".format(e.error_code))
         return SMGenerateResponse([], BSErrorCodes(e.error_code))
-    except:
+    except Exception as e:
+        rospy.logerr("Something went wrong:\n\t{0}\n\t{1}"\
+            .format(e.__doc__, e.message))
         return SMGenerateResponse([],
             BSErrorCodes(BSErrorCodes.SM_GENERATION_FAILED))
 
@@ -113,7 +135,7 @@ def generate_sm_handle(request):
     @param request An instance of SMGenerateRequest
     @return A SMGenerateResponse with generated StateInstantiation.
     """
-    yaml_file = os.path.join(vigir_repo, 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/src/vigir_sm_generation/configs/systems.yaml')
+    yaml_file = os.path.join(VIGIR_REPO, 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/src/vigir_sm_generation/configs/systems.yaml')
     try:
         with open(yaml_file) as yf:
             systems = yaml.load(yf)
@@ -133,7 +155,7 @@ def generate_sm_handle(request):
         rospy.logerr("System {0} is not in the systems file ({1})."\
             .format(system_name, yaml_file))
         raise SMGenError(BSErrorCodes.NO_SYSTEM_CONFIG)
-    yaml_sys_file = os.path.join(vigir_repo, systems[system_name])
+    yaml_sys_file = os.path.join(VIGIR_REPO, systems[system_name])
     try:
         with open(yaml_sys_file) as yf:
             config = yaml.load(yf)
@@ -145,9 +167,10 @@ def generate_sm_handle(request):
     helper = SMGenConfig(config, all_in_vars, all_out_vars, automata)
 
     # Initialize list of StateInstantiation's with parent SI.
-    init_name = helper.get_init_state_name()
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
-           helper.get_sm_real_outputs(), [], init_name, [], [], [])]
+           helper.get_sm_real_outputs(), [], INIT_STATE_NAME, [], [], [])]
+    init_states = helper.get_init_states()
+    SIs.append(get_init_temp_state(init_states))
 
     for state in automata:
         name = state.name
@@ -177,13 +200,15 @@ def generate_sm_handle(request):
                 if not helper.is_response_var(in_var):
                     csg.add_internal_state(ss_name, decl)
 
+            is_concurrent = csg.is_concurrent()
             csg.add_internal_outcome_and_transition(
-                helper.get_outcome_name(next_state, substate_name_to_out),
+                helper.get_outcome_name(is_concurrent, next_state,
+                    substate_name_to_out),
                 helper.get_real_name(next_state),
                 helper.get_autonomy_list(substate_name_to_out)
             )
             csg.add_internal_outcome_maps({
-                'outcome': helper.get_outcome_name(next_state,
+                'outcome': helper.get_outcome_name(is_concurrent, next_state,
                     substate_name_to_out),
                 'condition': substate_name_to_out
             })

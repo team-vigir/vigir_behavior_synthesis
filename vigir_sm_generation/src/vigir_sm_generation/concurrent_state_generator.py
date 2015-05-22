@@ -112,7 +112,7 @@ class ConcurrentStateGenerator():
 
     def gen(self):
         """Generate the state instantiation for this concurrent state."""
-        if len(self.internal_states) == 1:
+        if not self.is_concurrent():
             return self.gen_single()
 
         p_names = ["states", "outcomes", "outcome_mapping"]
@@ -135,3 +135,7 @@ class ConcurrentStateGenerator():
                       p_names,
                       p_vals,
                       autonomy)
+    def is_concurrent(self):
+        """ Returns if this concurrent state generator will create a
+        concurrent state or just degenerate to a single state. """
+        return len(self.internal_states) > 1
