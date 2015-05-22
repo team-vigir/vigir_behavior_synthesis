@@ -214,15 +214,8 @@ class SMGenConfig():
         state_name: The name of the next state in the automaton (e.g. "0")
         condition: A map from proposition to value needed for this outcome
                    to happen.
-        If it's a fake state name representing a final outcome, just return
-        that outcome.
-        Otherwise, combine the conditions in a meaningful way.
+        If it's a concurrent state, combine the conditions in a meaningful way.
         """
-        if self.is_fake_state(state_name):
-            # Could actually be "State 5" -> "done" -> "finished"
-            fake_output = self.state_name_to_sm_output[state_name]
-            return self.sm_fake_out_to_real_out[fake_output]
-
         if not is_concurrent:
             (k, v) = condition.items()[0]
             return v
