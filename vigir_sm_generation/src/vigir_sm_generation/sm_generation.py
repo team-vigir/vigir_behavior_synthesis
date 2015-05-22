@@ -93,9 +93,8 @@ def generate_sm(request):
 
 def generate_sm_handle(request):
     """
-    This method takes in a JSON file describe an automaton and a YAML file
-    describing how the automaton names corresponds to real state machine names
-    and produced class parameters for FlexBE.
+    This method handles the SMGenerate service. It creates StateInstantiations
+    given a system name and an automaton.
 
     Broadly speaking, there are two types of input variables, and two types
     of output variables.
@@ -106,7 +105,7 @@ def generate_sm_handle(request):
     Output Variables
         - Activation - activate something
         - Perform    - perform something other than activate (e.g. "beep" or
-                       "print")
+                       "print") TODO: implement this
 
     This distinction is important because Completion and Activation variables
     are related. Specifically, only one state machine should be created for a
@@ -123,14 +122,13 @@ def generate_sm_handle(request):
            mean in terms of input variables. (e.g. "changed" from the
            ChangeControlModeActionState means an input variable of "step_c".)
         b. If none of the outputs of the state machine correspond to inputs,
-           then that output is a Perform variable. (e.g.
+           then that output is a Perform variable. (TODO: implement)
     2. For each transition (X -> Y on input A),
         a. Find what SM + outputs corresponds to A.
         b. If no SM's output maps to input A, then A must come from an external
            sensor. In this case, look up the definitions in the YAML file.
-        c. Since A could be multiple conditions (e.g. "found object AND stand
-           up complete"), sort these conditions based on the order of the input
-           variable in the JSON file.
+        c. Otherwise, it's a completion variable. Connect it to the
+           corresponding SM.
 
     @param request An instance of SMGenerateRequest
     @return A SMGenerateResponse with generated StateInstantiation.
@@ -168,7 +166,7 @@ def generate_sm_handle(request):
 
     # Initialize list of StateInstantiation's with parent SI.
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
-           helper.get_sm_real_outputs(), [], INIT_STATE_NAME, [], [], [])]
+           helper.get_sm_real_outputs(), [], INIT_STATE_NAME, [], [], [0])]
     init_states = helper.get_init_states()
     SIs.append(get_init_temp_state(init_states))
 
