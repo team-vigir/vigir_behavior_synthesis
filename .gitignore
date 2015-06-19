@@ -17,3 +17,4 @@ synthesis_byproducts
 *~
 .DS_Store
 *.swp
+.coverage
