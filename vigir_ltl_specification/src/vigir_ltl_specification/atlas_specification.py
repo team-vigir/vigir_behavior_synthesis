@@ -233,7 +233,7 @@ class ControlModeTransitionSystem(object):
 # Entry point
 # =========================================================
 
-def main():
+def main(): #pragma: no cover
 	
 	cm_spec = ControlModeSpecification('pickup', initial_mode = 'stand_prep',
 											modes_of_interest = ['stand_prep', 'stand', 'manipulate'])
@@ -270,5 +270,5 @@ def main():
 
 	complete_spec.write_structured_slugs_file(synthesis_byproducts)
 
-if __name__ == "__main__":
+if __name__ == "__main__": #pragma: no cover
 	main()

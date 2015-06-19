@@ -76,5 +76,5 @@ def ltl_compilation_server():
     rospy.loginfo("Ready to receive LTL Specification Compilation requests.")
     rospy.spin()
 
-if __name__ == "__main__":
+if __name__ == "__main__": #pragma: no cover
     ltl_compilation_server()

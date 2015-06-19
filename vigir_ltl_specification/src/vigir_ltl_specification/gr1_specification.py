@@ -225,13 +225,13 @@ class GR1Specification(object):
 # Entry point
 # =========================================================
 
-def main():
+def main(): #pragma: no cover
 	
 	my_spec = GR1Specification()
 
 	print 'Environment props:\t', my_spec.env_props
 	print 'System props:\t', my_spec.sys_props
 
-if __name__ == "__main__":
+if __name__ == "__main__": #pragma: no cover
 	main()
 	

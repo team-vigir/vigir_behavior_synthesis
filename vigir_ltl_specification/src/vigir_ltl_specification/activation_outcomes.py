@@ -158,7 +158,7 @@ def _is_activation(prop):
 # Entry point
 # =========================================================
 
-def main():
+def main(): #pragma: no cover
 	
 	formulas  = list()
 	sys_props = ['dance', 'sleep']
@@ -178,5 +178,5 @@ def main():
 		print 'Formula:\t', formula.formulas
 		print 'Type:\t', formula.type
 
-if __name__ == "__main__":
+if __name__ == "__main__": #pragma: no cover
 	main()

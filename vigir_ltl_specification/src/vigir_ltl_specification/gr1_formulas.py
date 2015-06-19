@@ -527,10 +527,10 @@ class FastSlowFormula(GR1Formula):
 # Entry point
 # =========================================================
 
-def main():
+def main(): #pragma: no cover
 	
 	my_gr1_formula = GR1Formula()
 	my_fs_formula = FastSlowFormula()
 
-if __name__ == "__main__":
+if __name__ == "__main__": #pragma: no cover
 	main()
