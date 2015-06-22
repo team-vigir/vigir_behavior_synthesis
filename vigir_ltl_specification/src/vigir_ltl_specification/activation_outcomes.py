@@ -117,28 +117,30 @@ class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
 
         for pi in self.sys_props:
 
-            pi_c = _get_com_prop(pi) # <-- special treatment (delete function)
             pi_a = _get_act_prop(pi)
-            pi_outcomes = [_get_out_prop(pi, out) for out in self.outcomes]
+            pi_outcomes = self.outcome_props[pi]
 
             # Generate Eq. (3)
-            left_hand_side = LTL.conj([pi_c, pi_a])
+            lhs_disjunct = LTL.paren(LTL.disj(pi_outcomes))
+            left_hand_side = LTL.conj([lhs_disjunct, pi_a])
 
-            rhs_props = [LTL.next(pi_out) for pi_out in pi_outcomes]
+            rhs_props = map(LTL.next, pi_outcomes)
             right_hand_side = LTL.disj(rhs_props)
             
             formula = LTL.implication(left_hand_side, right_hand_side)
             eq3_formulas.append(formula)
 
             # Generate Eq. (4)
-            not_pi_c = LTL.neg(pi_c)
             not_pi_a = LTL.neg(pi_a)
-            left_hand_side = LTL.conj([not_pi_c, not_pi_a])
-            
-            rhs_props = [LTL.next(LTL.neg(pi_out)) for pi_out in pi_outcomes]
-            right_hand_side = LTL.conj(rhs_props)
-            formula = LTL.implication(left_hand_side, right_hand_side)
-            eq4_formulas.append(formula)
+
+            for pi_out in pi_outcomes:
+                
+                not_pi_out = LTL.neg(pi_out)
+                left_hand_side = LTL.conj([not_pi_out, not_pi_a])
+                right_hand_side = LTL.next(not_pi_out)
+                
+                formula = LTL.implication(left_hand_side, right_hand_side)
+                eq4_formulas.append(formula)
 
         return eq3_formulas + eq4_formulas
 
@@ -156,26 +158,25 @@ class ActionFairnessConditionsFormula(ActivationOutcomesFormula):
         super(ActionFairnessConditionsFormula, self).__init__(sys_props = actions,
                                                               outcomes = outcomes)
         
-        self.formulas = self._gen_action_fairness_formulas(actions)
+        self.formulas = self._gen_action_fairness_formulas()
         self.type = 'env_liveness'
 
-    def _gen_action_fairness_formulas(self, actions):
+    def _gen_action_fairness_formulas(self):
         """Fairness conditions (for actions) from Section V-B (4)"""
 
         #TODO: Be more efficient if props are mutually exclusive
 
         fairness_formulas = list()
 
-        for pi in actions:
+        for pi in self.sys_props:
 
             pi_a = _get_act_prop(pi)
             not_pi_a = LTL.neg(pi_a)
+            pi_outcomes = self.outcome_props[pi]
 
-            pi_outcomes = [_get_out_prop(pi, out) for out in self.outcomes]
-
-            next_pi_outs = [LTL.next(pi_out) for pi_out in pi_outcomes]
+            next_pi_outs = map(LTL.next, pi_outcomes)
             out_disjunct = LTL.paren(LTL.disj(next_pi_outs))
-            next_not_pi_outs = [LTL.next(LTL.neg(pi_out)) for pi_out in pi_outcomes]
+            next_not_pi_outs = map(LTL.next, map(LTL.neg, pi_outcomes))
             out_conjunct = LTL.paren(LTL.conj(next_not_pi_outs))
             
             outcomes_disjunct_1 = LTL.conj([pi_a, out_disjunct])
@@ -245,7 +246,7 @@ def _get_act_prop(prop):
     return prop + "_a" # 'a' stands for activation
 
 def _get_com_prop(prop):
-    #FIX: Completion shouldn't require special treatment
+    #FIX: Delete after removing all cases of "special treatment" of completion
     return prop + "_c" # 'c' stands for completion
 
 def _get_out_prop(prop, outcome):
@@ -265,11 +266,9 @@ def main(): #pragma: no cover
     sys_props = ['dance', 'sleep']
     outcomes  = ['completed', 'failed', 'preempted']
 
-    formulas.append(ActivationOutcomesFormula(sys_props, outcomes)) # empty
+    formulas.append(OutcomeMutexFormula(sys_props, outcomes))
 
     formulas.append(ActionOutcomeConstraintsFormula(sys_props, outcomes))
-
-    formulas.append(OutcomeMutexFormula(sys_props, outcomes))
 
     formulas.append(ActionFairnessConditionsFormula(sys_props, outcomes))
 
@@ -281,8 +280,9 @@ def main(): #pragma: no cover
 
     for formula in formulas:
         print '---'
-        print 'Formula:\t', formula.formulas
-        print 'Type:\t', formula.type
+        print 'Formula Class:\t',   formula.__class__.__name__ # prints class name
+        print 'GR(1) Type:\t',      formula.type
+        print 'Formula:\t',         formula.formulas
 
 if __name__ == "__main__": #pragma: no cover
     main()
