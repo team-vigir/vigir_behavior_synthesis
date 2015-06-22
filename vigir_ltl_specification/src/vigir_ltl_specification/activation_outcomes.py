@@ -31,9 +31,10 @@ class ActivationOutcomesFormula(GR1Formula):
                                         to each possible activation outcome
     """
 
-    def __init__(self, sys_props, outcomes = ['completed']):
-        super(ActivationOutcomesFormula, self).__init__(env_props = [],
-                                                        sys_props = sys_props)
+    def __init__(self, sys_props, outcomes = ['completed'], ts = dict()):
+        super(ActivationOutcomesFormula, self).__init__(env_props = list(),
+                                                        sys_props = sys_props,
+                                                        ts = ts)
 
         self.activation = list()
         self.outcomes   = outcomes
@@ -99,8 +100,9 @@ class OutcomeMutexFormula(ActivationOutcomesFormula):
 class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
     """Safety formulas that constrain the outcomes of actions."""
 
-    def __init__(self, actions, outcomes):
-        super(ActionOutcomeConstraintsFormula, self).__init__(sys_props = actions, outcomes = outcomes)
+    def __init__(self, actions, outcomes = ['completed']):
+        super(ActionOutcomeConstraintsFormula, self).__init__(sys_props = actions,
+                                                              outcomes = outcomes)
         
         self.formulas = self._gen_action_outcomes_formulas()
         self.type = 'env_trans'
@@ -115,7 +117,7 @@ class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
 
         for pi in self.sys_props:
 
-            pi_c = _get_com_prop(pi)
+            pi_c = _get_com_prop(pi) # <-- special treatment (delete function)
             pi_a = _get_act_prop(pi)
             pi_outcomes = [_get_out_prop(pi, out) for out in self.outcomes]
 
@@ -139,6 +141,100 @@ class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
             eq4_formulas.append(formula)
 
         return eq3_formulas + eq4_formulas
+
+class ActionFairnessConditionsFormula(ActivationOutcomesFormula):
+    """
+    Environment liveness formulas that ensure that every action proposition (not
+    topology) eventually returns an outcome (or that the robot changes its mind)
+    
+    Arguments:
+      mutex    (bool)   Whether the action props are mutually exclusive or not
+
+    """
+
+    def __init__(self, actions, outcomes = ['completed'], mutex = False):
+        super(ActionFairnessConditionsFormula, self).__init__(sys_props = actions,
+                                                              outcomes = outcomes)
+        
+        self.formulas = self._gen_action_fairness_formulas(actions)
+        self.type = 'env_liveness'
+
+    def _gen_action_fairness_formulas(self, actions):
+        """Fairness conditions (for actions) from Section V-B (4)"""
+
+        #TODO: Be more efficient if props are mutually exclusive
+
+        fairness_formulas = list()
+
+        for pi in actions:
+
+            pi_a = _get_act_prop(pi)
+            not_pi_a = LTL.neg(pi_a)
+
+            pi_outcomes = [_get_out_prop(pi, out) for out in self.outcomes]
+
+            next_pi_outs = [LTL.next(pi_out) for pi_out in pi_outcomes]
+            out_disjunct = LTL.paren(LTL.disj(next_pi_outs))
+            next_not_pi_outs = [LTL.next(LTL.neg(pi_out)) for pi_out in pi_outcomes]
+            out_conjunct = LTL.paren(LTL.conj(next_not_pi_outs))
+            
+            outcomes_disjunct_1 = LTL.conj([pi_a, out_disjunct])
+            outcomes_disjunct_2 = LTL.conj([not_pi_a, out_conjunct])
+            outcomes_formula = LTL.disj([outcomes_disjunct_1, outcomes_disjunct_2])
+
+            change_disjunt_1 = LTL.paren(LTL.conj([pi_a, LTL.next(not_pi_a)]))
+            change_disjunt_2 = LTL.paren(LTL.conj([not_pi_a, LTL.next(pi_a)]))
+            change_formula = LTL.disj([change_disjunt_1, change_disjunt_2])
+
+            fairness_condition = LTL.disj([outcomes_formula, change_formula])
+
+            fairness_formulas.append(fairness_condition)
+
+        return fairness_formulas
+
+class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
+    """
+    Environment liveness formulas that ensure that every transition on the
+    TS eventually returns an outcome (or that the robot changes its mind).
+    The possible outcomes are all adjacent states in the transition system.
+    """
+
+    #TODO: Rethink topology propositions in the Activation-Outcomes framework
+
+    def __init__(self, ts):
+        super(TopologyFairnessConditionsFormula, self).__init__(sys_props = [],
+                                                                outcomes = [],
+                                                                ts = ts)
+        
+        self.formulas = self._gen_ts_fairness_formulas(ts)
+        self.type = 'env_liveness'
+
+    def _gen_ts_fairness_formulas(self, ts):
+        """Fairness conditions (for regions) from Section V-B (4)"""
+        
+        completion_terms = list()
+        change_terms = list()
+
+        for pi in ts.keys():
+
+            pi_a = _get_act_prop(pi)
+            phi = self._gen_phi_prop(pi_a)
+
+            pi_c = _get_com_prop(pi)
+            next_pi_c = LTL.next(pi_c)
+            not_next_phi = LTL.neg(LTL.next(phi))
+
+            completion_term = LTL.paren(LTL.conj([phi, next_pi_c]))
+            completion_terms.append(completion_term)
+            
+            change_term = LTL.paren(LTL.conj([phi, not_next_phi]))
+            change_terms.append(change_term)
+
+        completion_formula = LTL.disj(completion_terms)
+        change_formula = LTL.disj(change_terms)
+        fairness_formula = LTL.disj([completion_formula, change_formula])
+
+        return fairness_formula
 
 
 # =========================================================
@@ -174,6 +270,11 @@ def main(): #pragma: no cover
     formulas.append(ActionOutcomeConstraintsFormula(sys_props, outcomes))
 
     formulas.append(OutcomeMutexFormula(sys_props, outcomes))
+
+    formulas.append(ActionFairnessConditionsFormula(sys_props, outcomes))
+
+    ts = {'r1' : ['r2'], 'r2': ['r1']}
+    # formulas.append(TopologyFairnessConditionsFormula(ts))
 
     print 'Activation:\t', formulas[-1].activation
     print 'Outcomes:\t', formulas[-1].outcome_props
