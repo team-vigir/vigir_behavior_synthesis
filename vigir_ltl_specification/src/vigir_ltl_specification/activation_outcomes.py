@@ -95,7 +95,40 @@ class OutcomeMutexFormula(ActivationOutcomesFormula):
             mutex_formulas.extend(formula)
 
         return mutex_formulas
-        
+
+class TransitionRelationFormula(ActivationOutcomesFormula):
+    """
+    Generate system requirement formulas that
+    encode the transition system (e.g. workspace topology).
+
+    The transition system TS, is provided in the form of a dictionary.
+    """
+    
+    def __init__(self, ts):
+        super(TransitionRelationFormula, self).__init__(sys_props = [],
+                                                        ts = ts)
+
+        self.formulas = self._gen_trans_relation_formulas()
+        self.type = 'sys_trans'
+
+    def _gen_trans_relation_formulas(self):
+        """Safety requirements from Section V-B (2)"""
+
+        sys_trans_formulas = list()
+        for prop in self.ts.keys():
+            left_hand_side = prop
+            right_hand_side = list()
+            
+            for adj_prop in self.ts[prop]:
+                adj_phi_prop = self._gen_phi_prop(adj_prop)
+                disjunct = LTL.next(adj_phi_prop) if future else adj_phi_prop
+                right_hand_side.append(disjunct)
+
+            right_hand_side = LTL.disj(right_hand_side)
+            sys_trans_formulas.append(LTL.implication(left_hand_side,
+                                                      right_hand_side))
+
+        return sys_trans_formulas
 
 class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
     """Safety formulas that constrain the outcomes of actions."""
@@ -143,6 +176,23 @@ class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
                 eq4_formulas.append(formula)
 
         return eq3_formulas + eq4_formulas
+
+class PropositionDeactivationFormula(ActivationOutcomesFormula):
+    """
+    Turn action proposition OFF once an outcome is returned.
+    """
+    
+    def __init__(self, sys_props, outcomes = ['completed']):
+        super(PropositionDeactivationFormula, self).__init__(sys_props = sys_props,
+                                                      outcomes = outcomes)
+
+        self.formulas = self._gen_proposition_deactivation_formulas()
+        self.type = 'sys_trans'
+
+    def _gen_proposition_deactivation_formulas(self):
+        """..."""
+
+        return []
 
 class ActionFairnessConditionsFormula(ActivationOutcomesFormula):
     """
@@ -266,23 +316,27 @@ def main(): #pragma: no cover
     sys_props = ['dance', 'sleep']
     outcomes  = ['completed', 'failed', 'preempted']
 
+    ts = {'r1' : ['r2'], 'r2': ['r1']}
+
     formulas.append(OutcomeMutexFormula(sys_props, outcomes))
 
     formulas.append(ActionOutcomeConstraintsFormula(sys_props, outcomes))
 
+    formulas.append(PropositionDeactivationFormula(sys_props, outcomes))
+
     formulas.append(ActionFairnessConditionsFormula(sys_props, outcomes))
 
-    ts = {'r1' : ['r2'], 'r2': ['r1']}
-    # formulas.append(TopologyFairnessConditionsFormula(ts))
+    formulas.append(TransitionRelationFormula({})) # Pass TS here
 
-    print 'Activation:\t', formulas[-1].activation
-    print 'Outcomes:\t', formulas[-1].outcome_props
+    # formulas.append(TopologyFairnessConditionsFormula(ts))
 
     for formula in formulas:
         print '---'
         print 'Formula Class:\t',   formula.__class__.__name__ # prints class name
         print 'GR(1) Type:\t',      formula.type
-        print 'Formula:\t',         formula.formulas
+        print 'Activation:\t',      formula.activation
+        print 'Outcomes:\t',        formula.outcome_props
+        print 'Formula(s):\t',      formula.formulas
 
 if __name__ == "__main__": #pragma: no cover
     main()
