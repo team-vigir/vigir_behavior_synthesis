@@ -8,14 +8,6 @@ from gr1_formulas import GR1Formula, FastSlowFormula
 Module's docstring #TODO
 """
 
-def recurse_action_preconditions(prop):
-	'''
-	Recursively get the preconditions of the given proposition,
-	as well as the preconditions of those preconditions, etc.
-	'''
-
-	pass
-
 def get_action_preconditions(prop, preconditions):
 	'''Given a proposition, find its preconditions.'''
 
@@ -25,7 +17,7 @@ def get_action_preconditions(prop, preconditions):
 		action_preconditions[prop] = preconditions[prop]
 	else:
 		action_preconditions[prop] = []
-		print('Action {a} does not have any preconditions.'.format(a = prop))
+		print('Action {} does not have any preconditions.'.format(prop))
 
 	return action_preconditions
 

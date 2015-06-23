@@ -3,7 +3,7 @@
 import os
 import pprint
 
-import preconditions as precond
+import preconditions as prec
 from gr1_specification import GR1Specification
 from gr1_formulas import GR1Formula, FastSlowFormula
 
@@ -31,7 +31,7 @@ class VigirSpecification(GR1Specification):
 		
 		location = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/vigir_ltl_specification/src/vigir_ltl_specification/config')
 
-		preconditions = precond.load_preconditions_from_config_files(location, files)
+		preconditions = prec.load_preconditions_from_config_files(location, files)
 
 		return preconditions
 
@@ -68,9 +68,9 @@ class VigirSpecification(GR1Specification):
 		and generates the appropriate safety requirement formulas.
 		"""
 
-		# Get preconditions for this specific action
-		action_preconditions = dict()
-		action_preconditions[action] = self.preconditions[action]
+		# Get preconditions for this specific action (as a dictionary)
+		action_preconditions = prec.get_action_preconditions(action,
+															 self.preconditions)
 
 		# Recursively get preconditions for this action's preconditions
 		for pc in action_preconditions[action]:
@@ -78,12 +78,12 @@ class VigirSpecification(GR1Specification):
 			if pc in self.preconditions.keys():
 				self.handle_new_action(pc)
 
-		preconditions_fs, new_env_props, new_sys_props = precond.convert_preconditions_to_fastslow(action_preconditions)
+		preconditions_fs, new_env_props, new_sys_props = prec.convert_preconditions_to_fastslow(action_preconditions)
 
 		self.env_props = self.merge_env_propositions(new_env_props)
 		self.sys_props = self.merge_sys_propositions(new_sys_props)
 
-		precondition_formulas = precond.gen_formulas_from_preconditions(preconditions_fs, fast_slow = True)
+		precondition_formulas = prec.gen_formulas_from_preconditions(preconditions_fs, fast_slow = True)
 
 		self.add_to_sys_trans(precondition_formulas)
 
@@ -166,14 +166,14 @@ class ControlModeSpecification(GR1Specification):
 		# Then, create formulas out of the control mode transition system
 		self.control_mode_formula = FastSlowFormula(env_props, sys_props, self.control_modes.ts)
 
-		# and add them to the specification as sys_trans formulas
+		# Finally, add them to the specification as sys_trans formulas
 		control_mode_sys_trans = self.control_mode_formula.gen_fs_sys_transitions()
 		self.add_to_sys_trans(control_mode_sys_trans)
 
-		# At this point, replace the original propositions with the activation/completion ones,
-		# since a control mode specification is by definition of the "fast-slow" type
-		self.env_props = self.control_mode_formula.completion
-		self.sys_props = self.control_mode_formula.activation
+		# At this point, replace the original propositions with the 
+		# activation/completion ones, since a control mode specification is
+		# by definition of the "fast-slow" type.
+		self.replace_props_with_fs(self.control_mode_formula)
 
 		# Next, add control mode mutual exclusion formulas to env_trans
 		mutex_formulas = self.control_mode_formula.gen_mutex_formulas(self.env_props, future = True)
@@ -188,7 +188,7 @@ class ControlModeSpecification(GR1Specification):
 		self.add_to_env_liveness(fairness_formula)
 
 	def add_control_mode_initial_conditions(self, mode):
-		"""Generate system and environment initial conditions from a control mode."""
+		"""Generate sys and env initial conditions from a control mode."""
 
 		mode_a, mode_c = self.convert_mode_to_props(mode) 	# activation/completion props ('fast-slow')
 		
@@ -212,10 +212,11 @@ class ControlModeSpecification(GR1Specification):
 		# Return the activation and completion props corresponding to the control mode
 		return fs_formula.activation[0], fs_formula.completion[0]
 
-	def replace_props_with_fs():
-		"""Replace the original propositions with the activation/completion ones"""
+	def replace_props_with_fs(self, fs_formula):
+		"""Replace the original propositions with activation/completion ones."""
 
-		pass
+		self.env_props = fs_formula.completion
+		self.sys_props = fs_formula.activation
 		
 
 class ControlModeTransitionSystem(object):
@@ -225,8 +226,7 @@ class ControlModeTransitionSystem(object):
 		  "stand"		: ["stand_prep", "stand", "manipulate", "step", "walk"],
 		  "manipulate" 	: ["manipulate", "stand"],
 		  "step" 		: ["step", "stand"],
-		  "walk" 		: ["walk", "stand"]
-		 }
+		  "walk" 		: ["walk", "stand"]}
 	
 	def __init__(self, modes_of_interest = []):
 
@@ -237,7 +237,8 @@ class ControlModeTransitionSystem(object):
 			for mode in modes_of_interest:
 				# Cherry-pick the modes of interest from the dictionary
 				#TODO: Consider replacing for-loop with dict comprehension
-				self.ts[mode] = [m for m in ControlModeTransitionSystem.ts[mode] if m in modes_of_interest]
+				mode_transitions = ControlModeTransitionSystem.ts[mode]
+				self.ts[mode] = [m for m in mode_transitions if m in modes_of_interest]
 
 # =========================================================
 # Entry point
