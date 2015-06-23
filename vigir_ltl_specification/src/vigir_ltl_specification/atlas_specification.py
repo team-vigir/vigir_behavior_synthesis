@@ -15,17 +15,19 @@ VIGIR_ROOT_DIR = os.environ['VIGIR_ROOT_DIR']
 
 class VigirSpecification(GR1Specification):
 	"""
-	The class encodes requirements related to Team ViGIR's software as GR(1) formulas, written in the structured slugs format. """
+	The class encodes requirements related to Team ViGIR's software as 
+	GR(1)formulas, written in the structured slugs format.
+	"""
 	
 	def __init__(self, spec_name = '', env_props = [], sys_props = []):
 		super(VigirSpecification, self).__init__(spec_name, env_props, sys_props)
 		
 		config_files = ['atlas_preconditions.yaml', 'vigir_preconditions.yaml']
-		self.preconditions = VigirSpecification.load_vigir_preconditions(config_files)
+		self.preconditions = self._load_vigir_preconditions(config_files)
 
 	@staticmethod
-	def load_vigir_preconditions(files):
-		'''Loads precondtions, converts to fast-slow, adds propositions and formulas to specification.'''
+	def _load_vigir_preconditions(files):
+		"""Loads precondtions, converts to fast-slow, adds propositions and formulas to specification."""
 		
 		location = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/vigir_ltl_specification/src/vigir_ltl_specification/config')
 
@@ -34,30 +36,37 @@ class VigirSpecification(GR1Specification):
 		return preconditions
 
 	def handle_new_action_goal(self, action):
-		'''...'''
+		"""Takes care of the action and then adds it to system liveness."""
 
 		# First, deal with preconditions and fast-slow formulas
 		self.handle_new_action(action)
 
-		# Then add action completion to the conditions for a successful outcome ('finished')
+		# Then add action completion to the conditions for a successful outcome
 		self.add_action_goal(action)
 
 	def handle_new_action(self, action):
-		'''...'''
+		"""
+		Generates all the necessary formulas (initial conditions, 
+		various safety requirements) for the action.
+		"""
 
 		# Find the action's preconditions and add the corresponding formulas
 		self.add_precondition_formulas_for_action(action)
 
-		# Add fast-slow formulas governing action completion
+		# Get activation and completion propositions
 		action_a, action_c = self.convert_action_to_fs_props(action)
-
+		
+		# Add fast-slow formulas governing action completion
 		self.gen_fs_formulas_for_actions([action])
 
 		# Set the initial conditions for this new action
 		self.add_false_initial_conditions(action_a, action_c)
 
 	def add_precondition_formulas_for_action(self, action):
-		'''...'''
+		"""
+		Finds the action's preconditions (and their preconditions, recursively) 
+		and generates the appropriate safety requirement formulas.
+		"""
 
 		# Get preconditions for this specific action
 		action_preconditions = dict()
@@ -65,7 +74,8 @@ class VigirSpecification(GR1Specification):
 
 		# Recursively get preconditions for this action's preconditions
 		for pc in action_preconditions[action]:
-			if pc in self.preconditions.keys(): # if the precondition has preconditions of its own
+			# Check whether this precondition has preconditions of its own
+			if pc in self.preconditions.keys():
 				self.handle_new_action(pc)
 
 		preconditions_fs, new_env_props, new_sys_props = precond.convert_preconditions_to_fastslow(action_preconditions)
@@ -78,7 +88,7 @@ class VigirSpecification(GR1Specification):
 		self.add_to_sys_trans(precondition_formulas)
 
 	def add_action_goal(self, action):
-		'''Generate (fast-slow) system liveness requirement from an action.'''
+		"""Generate (fast-slow) system liveness requirement from an action."""
 
 		action_a, action_c = self.convert_action_to_fs_props(action)
 
@@ -90,7 +100,7 @@ class VigirSpecification(GR1Specification):
 		success_condition = memory.gen_success_condition([mem_prop], 'finished')
 
 		# Add the new propositions to the specification
-		self.sys_props.extend([mem_prop, 'finished']) #FIX: This will add 'finished' multiple times
+		self.merge_sys_propositions([mem_prop, 'finished'])
 
 		# Add the memory and success -related formulas to the specification
 		self.add_to_sys_trans(mem_formula)
@@ -178,7 +188,7 @@ class ControlModeSpecification(GR1Specification):
 		self.add_to_env_liveness(fairness_formula)
 
 	def add_control_mode_initial_conditions(self, mode):
-		'''Generate system and environment initial conditions from a control mode.'''
+		"""Generate system and environment initial conditions from a control mode."""
 
 		mode_a, mode_c = self.convert_mode_to_props(mode) 	# activation/completion props ('fast-slow')
 		
@@ -189,7 +199,7 @@ class ControlModeSpecification(GR1Specification):
 		self.add_to_env_init(env_init)
 
 	def add_control_mode_goal(self, mode):
-		'''Generate (fast-slow) system liveness requirement from a control mode.'''
+		"""Generate (fast-slow) system liveness requirement from a control mode."""
 
 		_ , mode_c = self.convert_mode_to_props(mode)
 
@@ -203,7 +213,7 @@ class ControlModeSpecification(GR1Specification):
 		return fs_formula.activation[0], fs_formula.completion[0]
 
 	def replace_props_with_fs():
-		'''Replace the original propositions with the activation/completion ones'''
+		"""Replace the original propositions with the activation/completion ones"""
 
 		pass
 		
@@ -235,20 +245,21 @@ class ControlModeTransitionSystem(object):
 
 def main(): #pragma: no cover
 	
-	cm_spec = ControlModeSpecification('pickup', initial_mode = 'stand_prep',
-											modes_of_interest = ['stand_prep', 'stand', 'manipulate'])
+	cm_spec = ControlModeSpecification(spec_name = 'modes',
+									   initial_mode = 'stand_prep',
+									   modes_of_interest = ['stand_prep', 'stand', 'manipulate'])
 
-	vigir_spec = VigirSpecification('goal_and_preconditions')
+	vigir_spec = VigirSpecification(spec_name = 'goal_and_preconditions')
 
 	print "[ALL PRECONDITIONS]"
 	pprint.pprint(vigir_spec.preconditions)
 
-	vigir_spec.handle_new_action_goal('pickup')
+	vigir_spec.handle_new_action_goal(action = 'pickup')
 
-	complete_spec = GR1Specification('pickup')
+	complete_spec = GR1Specification(spec_name = 'atlas_specification_main')
 	individual_specs = [cm_spec, vigir_spec]
 
-	complete_spec.merge_gr1_specifications(individual_specs)
+	complete_spec.merge_gr1_specifications(specifications = individual_specs)
 
 	print "[SYS_INIT]"
 	pprint.pprint(complete_spec.sys_init)
@@ -266,7 +277,8 @@ def main(): #pragma: no cover
 	# Write the specification to a file
 
 	# The directory where specs and automata are saved:
-	synthesis_byproducts = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/synthesis_byproducts')
+	synthesis_byproducts = os.path.join(VIGIR_ROOT_DIR,
+										'catkin_ws/src/vigir_behavior_synthesis/synthesis_byproducts')
 
 	complete_spec.write_structured_slugs_file(synthesis_byproducts)
 
