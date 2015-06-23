@@ -184,15 +184,34 @@ class PropositionDeactivationFormula(ActivationOutcomesFormula):
     
     def __init__(self, sys_props, outcomes = ['completed']):
         super(PropositionDeactivationFormula, self).__init__(sys_props = sys_props,
-                                                      outcomes = outcomes)
+                                                             outcomes = outcomes)
 
         self.formulas = self._gen_proposition_deactivation_formulas()
         self.type = 'sys_trans'
 
     def _gen_proposition_deactivation_formulas(self):
-        """..."""
+        """
+        Generate a safety requirement that turns an activation proposition
+        off once a corresponding action outcome has become True.
+        """
 
-        return []
+        deactivation_formulas = list()
+
+        for pi in self.sys_props:
+
+            pi_outs = self.outcome_props[pi]
+            next_pi_outs = map(LTL.next, pi_outs)
+            out_disjunct = LTL.paren(LTL.disj(next_pi_outs))
+
+            pi_a = _get_act_prop(pi)
+            next_not_pi_a = LTL.next(LTL.neg(pi_a))
+
+            left_hand_side = LTL.conj([pi_a, out_disjunct])
+
+            formula = LTL.implication(left_hand_side, next_not_pi_a)
+            deactivation_formulas.append(formula)
+
+        return deactivation_formulas
 
 class ActionFairnessConditionsFormula(ActivationOutcomesFormula):
     """
