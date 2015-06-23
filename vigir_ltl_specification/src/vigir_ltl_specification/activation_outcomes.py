@@ -38,60 +38,89 @@ class ActivationOutcomesFormula(GR1Formula):
     """
 
     def __init__(self, sys_props, outcomes = ['completed'], ts = dict()):
-        super(ActivationOutcomesFormula, self).__init__(env_props = list(),
-                                                        sys_props = sys_props,
+
+        # Check whether the input arguments are of the correct type, etc.
+        self._check_input_arguments(sys_props, outcomes, ts)
+        
+        self.outcomes = outcomes
+
+        # Generate activation (list) and outcome (dict) propositions
+        act_props = self._gen_activation_propositions(sys_props)
+        self.outcome_props = self._gen_outcome_propositions(sys_props)
+        # Get the outcome props (environment) as a list
+        env_props = self._get_env_props_from_outcome_props()
+
+        super(ActivationOutcomesFormula, self).__init__(env_props = env_props,
+                                                        sys_props = act_props,
                                                         ts = ts)
 
-        self.activation = list()
-        self.outcomes   = outcomes
+    @staticmethod
+    def _check_input_arguments(sys_props, outcomes, ts):
+        """Check type of input arguments as well as adherence to conventions."""
 
-        # Check that the arguments (now attributes) are of the correct type, etc.
-        self._check_input_arguments()
-        
-        self.outcome_props = dict({pi: list() for pi in sys_props})
+        # Check types
+        if any([type(pi) != str for pi in sys_props]):
+            raise TypeError('Invalid type of system props (expected str): {}'
+                            .format(map(type, sys_props)))
 
-        # Populate the list of activation and dict of outcome propositions
-        self._gen_activation_outcome_propositions()
+        if not outcomes:
+            raise ValueError('No outcomes where provided! ' +
+                             'At least "completed" (or equivalent) is required.')
 
-    def _gen_activation_outcome_propositions(self):
+        if any([type(out) != str for out in outcomes]):
+            raise TypeError('Invalid type of outcomes (expected str): {}'
+                            .format(map(type, outcomes)))
+
+        # Check convention of outcome names
+        out_first_chars = [out[0] for out in outcomes]
+        if any([True for c in out_first_chars if out_first_chars.count(c) > 1]):
+            raise ValueError('The outcomes do not adhere to the convention ' +
+                             'that their first character is unique: {}'
+                             .format(outcomes))
+
+        #TODO: Check transition system (ts)
+
+    @staticmethod
+    def _gen_activation_propositions(sys_props):
         """
         For each system proposition (action, region ,etc.), create the
         corresponding activation and outcome propositions (e.g. completion).        
         """
 
-        for pi in self.sys_props:
+        act_props = list()
+
+        for pi in sys_props:
             if not _is_activation(pi):
                 # Add activation proposition
                 pi_a = _get_act_prop(pi)
-                self.activation.append(pi_a)
-                # Also add the corresponding outcome propositions
-                for outcome in self.outcomes:
-                    self.outcome_props[pi].append(_get_out_prop(pi, outcome))
+                act_props.append(pi_a)
 
-    def _check_input_arguments(self):
-        """Check type of input arguments as well as adherence to conventions."""
+        return act_props
 
-        # Check types
-        if any([type(pi) != str for pi in self.sys_props]):
-            raise TypeError('Invalid type of system props (expected str): {}'
-                            .format(map(type, self.sys_props)))
+    def _gen_outcome_propositions(self, sys_props):
+        """
+        For each system proposition (action, region ,etc.), create the
+        corresponding activation and outcome propositions (e.g. completion).        
+        """
 
-        if not self.outcomes:
-            raise ValueError('No outcomes where provided! ' +
-                             'At least "completed" (or equivalent) is required.')
+        outcome_props = dict()
 
-        if any([type(out) != str for out in self.outcomes]):
-            raise TypeError('Invalid type of outcomes (expected str): {}'
-                            .format(map(type, self.outcomes)))
+        for pi in sys_props:
+            outcome_props[pi] = list()
+            # Add outcome propositions
+            for outcome in self.outcomes:
+                outcome_props[pi].append(_get_out_prop(pi, outcome))
 
-        # Check convention of outcome names
-        out_first_chars = [out[0] for out in self.outcomes]
-        if any([True for c in out_first_chars if out_first_chars.count(c) > 1]):
-            raise ValueError('The outcomes do not adhere to the convention ' +
-                             'that their first character is unique: {}'
-                             .format(self.outcomes))
+        return outcome_props
 
-        #TODO: Check transition system, ts
+    def _get_env_props_from_outcome_props(self):
+        """..."""
+
+        env_props = reduce(lambda acc, ele: acc + ele,
+                           self.outcome_props.values(), [])
+
+        return env_props
+
 
 class OutcomeMutexFormula(ActivationOutcomesFormula):
     """The outcomes of an action are mutually exclusive."""
@@ -108,7 +137,7 @@ class OutcomeMutexFormula(ActivationOutcomesFormula):
         
         mutex_formulas = list()
 
-        for pi in self.sys_props:
+        for pi in self.outcome_props.keys():
 
             # Use the mutex formula method of the GR1Formula class
             pi_outs = self.outcome_props[pi]
@@ -169,7 +198,7 @@ class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
         eq3_formulas = list()
         eq4_formulas = list()
 
-        for pi in self.sys_props:
+        for pi in self.outcome_props.keys():
 
             pi_a = _get_act_prop(pi)
             pi_outcomes = self.outcome_props[pi]
@@ -218,7 +247,7 @@ class PropositionDeactivationFormula(ActivationOutcomesFormula):
 
         deactivation_formulas = list()
 
-        for pi in self.sys_props:
+        for pi in self.outcome_props.keys():
 
             pi_outs = self.outcome_props[pi]
             next_pi_outs = map(LTL.next, pi_outs)
@@ -258,7 +287,7 @@ class ActionFairnessConditionsFormula(ActivationOutcomesFormula):
 
         fairness_formulas = list()
 
-        for pi in self.sys_props:
+        for pi in self.outcome_props.keys():
 
             pi_a = _get_act_prop(pi)
             not_pi_a = LTL.neg(pi_a)
@@ -337,10 +366,13 @@ def _get_act_prop(prop):
 
 def _get_com_prop(prop):
     #FIX: Delete after removing all cases of "special treatment" of completion
-    return prop + "_c" # 'c' stands for completion
+    return prop + "_c" # 'c' stands for completion or completed
 
 def _get_out_prop(prop, outcome):
-    # Use first character of outcome (string) as the subscript
+    # If an activation proposition was passed, strip the '_a' suffix
+    if _is_activation(prop):
+        prop = prop[:-2]
+    # Use first character of the outcome's name (string) as the subscript
     return prop + "_" + outcome[0]
 
 def _is_activation(prop):
@@ -374,7 +406,8 @@ def main(): #pragma: no cover
         print '---'
         print 'Formula Class:\t',   formula.__class__.__name__ # prints class name
         print 'GR(1) Type:\t',      formula.type
-        print 'Activation:\t',      formula.activation
+        print 'System props:\t',    formula.sys_props
+        print 'Env props:\t',       formula.env_props
         print 'Outcomes:\t',        formula.outcome_props
         print 'Formula(s):\t',      formula.formulas
 
