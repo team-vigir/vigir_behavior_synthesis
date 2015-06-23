@@ -7,28 +7,34 @@ from gr1_formulas import GR1Formula
 The activation-outcomes paradigm generalizes the activation-completion paradigm
 in Vasumathi Raman and Hadas Kress-Gazit (ICRA 2013).
 
-The base class ActivationOutcomesFormula is a generalization of FastSlowFormula
+The base class ActivationOutcomesFormula is a generalization of FastSlowFormula.
 
 """
 
 class ActivationOutcomesFormula(GR1Formula):
     """
+    
     Arguments:
       env_props (list of str)   Environment propositions (strings)
       sys_props (list of str)   System propositions (strings)
-      ts        (dict of str)   Transition system, TS (e.g. workspace topology)
-                                Implicitly contains some props in the keys.
       outcomes  (list of str)   The possible outcomes of activating actions.
                                 Example: ['completed', 'failed', 'preempted']
                                 Defaults to the singleton ['completed']
                                 Ideally, the first character of outcomes will
                                 be unique, such as in the example above (c,f,p)
+      ts        (dict of str)   Transition system, TS (e.g. workspace topology)
+                                Implicitly contains some props in its keys.
 
     Attributes:
       activation (list of str)  Activation propositions (subset of system)
       outcomes   (list of str)  The possible outcomes of an action
       outcome_props (dict of str:list)  The propositions corresponding
                                         to each possible activation outcome
+
+    Raises:
+      TypeError
+      ValueError
+    
     """
 
     def __init__(self, sys_props, outcomes = ['completed'], ts = dict()):
@@ -41,7 +47,6 @@ class ActivationOutcomesFormula(GR1Formula):
 
         # Check that the arguments (now attributes) are of the correct type, etc.
         self._check_input_arguments()
-        #TODO: Check that first character of outcomes is unique
         
         self.outcome_props = dict({pi: list() for pi in sys_props})
 
@@ -54,23 +59,39 @@ class ActivationOutcomesFormula(GR1Formula):
         corresponding activation and outcome propositions (e.g. completion).        
         """
 
-        for sys_prop in self.sys_props:
-            if not _is_activation(sys_prop):
+        for pi in self.sys_props:
+            if not _is_activation(pi):
                 # Add activation proposition
-                self.activation.append(_get_act_prop(sys_prop))
+                pi_a = _get_act_prop(pi)
+                self.activation.append(pi_a)
                 # Also add the corresponding outcome propositions
                 for outcome in self.outcomes:
-                    self.outcome_props[sys_prop].append(_get_out_prop(sys_prop,
-                                                                      outcome))
+                    self.outcome_props[pi].append(_get_out_prop(pi, outcome))
 
     def _check_input_arguments(self):
-        """..."""
+        """Check type of input arguments as well as adherence to conventions."""
 
-        if any([type(p) != str for p in self.sys_props]):
-            raise TypeError('Invalid type of system propositions: {}'.format(map(type, self.sys_props)))
+        # Check types
+        if any([type(pi) != str for pi in self.sys_props]):
+            raise TypeError('Invalid type of system props (expected str): {}'
+                            .format(map(type, self.sys_props)))
 
-        if any([type(o) != str for o in self.outcomes]):
-            raise TypeError('Invalid type of outcomes: {}'.format(map(type, self.outcomes)))
+        if not self.outcomes:
+            raise ValueError('No outcomes where provided! ' +
+                             'At least "completed" (or equivalent) is required.')
+
+        if any([type(out) != str for out in self.outcomes]):
+            raise TypeError('Invalid type of outcomes (expected str): {}'
+                            .format(map(type, self.outcomes)))
+
+        # Check convention of outcome names
+        out_first_chars = [out[0] for out in self.outcomes]
+        if any([True for c in out_first_chars if out_first_chars.count(c) > 1]):
+            raise ValueError('The outcomes do not adhere to the convention ' +
+                             'that their first character is unique: {}'
+                             .format(self.outcomes))
+
+        #TODO: Check transition system, ts
 
 class OutcomeMutexFormula(ActivationOutcomesFormula):
     """The outcomes of an action are mutually exclusive."""

@@ -220,9 +220,12 @@ class GR1Formula(object):
 		self.sys_props = list(set(self.sys_props + props_to_add))
 
 	def _gen_phi_prop(self, prop):
-		"""Generate (non-atomic) proposition of the form \phi_r, i.e., mutex version of \pi_r (where prop = \pi_r)"""
+		"""
+		Generate (non-atomic) proposition of the form \phi_r,
+		i.e., mutex version of \pi_r (where prop = \pi_r)
+		"""
 		
-		props_in_phi = [prop] # Initialize with pi_r
+		props_in_phi = [prop] # Initialize with just pi_r
 
 		other_props = self._get_other_trans_props(prop)
 		for other_prop in other_props:
