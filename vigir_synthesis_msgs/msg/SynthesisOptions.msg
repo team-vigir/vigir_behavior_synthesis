@@ -1,4 +1,4 @@
-# Behavior Synthesis option
+# Behavior Synthesis options (default to False)
 
 # The following three options are mutually exclusive
 

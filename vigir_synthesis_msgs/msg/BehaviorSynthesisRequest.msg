@@ -1,8 +1,9 @@
 # A synthesis request consists of the system (robot)
-# for which to synthesize a behavior for, the desired
+# for which to synthesize a behavior, the desired
 # objective(s), and the system's initial conditions.
 
-# The system for which to synthesize for
+# The system / robot for which to synthesize
+# The value has to be one of the constants below
 string system
 
 # The system's objective(s)
@@ -23,7 +24,8 @@ string name
 
 # System constants
 # Currently only Atlas is supported
-# String constants are defined without quotes ('', "")
 
 string ATLAS = atlas
+string YOUBOT = youbot
+string BAXTER = baxter
 string OTHER = other
