@@ -22,7 +22,7 @@ class VigirSpecification(GR1Specification):
 	def __init__(self, spec_name = '', env_props = [], sys_props = []):
 		super(VigirSpecification, self).__init__(spec_name, env_props, sys_props)
 		
-		config_files = ['atlas_preconditions.yaml', 'vigir_preconditions.yaml']
+		config_files = ['atlas_preconditions.yaml']
 		self.preconditions = self._load_vigir_preconditions(config_files)
 
 	@staticmethod
