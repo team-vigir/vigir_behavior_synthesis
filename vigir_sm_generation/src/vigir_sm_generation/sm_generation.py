@@ -71,7 +71,7 @@ def get_init_temp_state(init_states):
          init_state_names, # transitions are the same
          None,
          ["text"],
-         ["Initial state"],
+         ["'Initial state'"],
          [0 for s in init_states] # autonomy
     )
 
