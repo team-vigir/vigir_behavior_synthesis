@@ -60,7 +60,7 @@ class GR1Specification(object):
 	# =====================================================
 
 	def merge_gr1_specifications(self, specifications):
-		'''Component-wise mergeing of multiple GR(1) specifications.'''
+		'''Component-wise merger of multiple GR(1) specifications.'''
 		
 		for spec in specifications:
 
@@ -86,7 +86,6 @@ class GR1Specification(object):
 		all_props = getattr(self, desired_list)
 		all_props.extend(props)
 
-		# Sets have no duplicates by definition
 		# Return list of props without duplicates
 		return list(set(all_props))
 
@@ -94,11 +93,26 @@ class GR1Specification(object):
 	# Load a GR(1) formula
 	# =====================================================
 
-	def load_gr1_formula(self, gr1_formula):
+	def load_formulas(self, formulas):
+		"""Load multiple GR1Formulas into the GR(1) specification."""
+		
+		for formula in formulas:
+			self.load(formula)
+
+	def load(self, formula):
 		"""Load an object of type GR1Formula into the GR(1) specification."""
 		
-		#TODO: Ensure we don't duplicate propositions
-		pass
+		self.env_props = self.merge_env_propositions(formula.env_props)
+		self.sys_props = self.merge_sys_propositions(formula.sys_props)
+
+		try:
+			self.add_to_list(formula.type, formula.formulas)
+		except Exception as e:
+			print e
+			raise ValueError('The {formula} has type {type}. Loading failed!'
+							 .format(formula = formula.__class__.__name__,
+							 		 type = formula.type))
+
 
 	# =====================================================
 	# "Setter"-type methods for the 6 types of subformulas
@@ -135,7 +149,9 @@ class GR1Specification(object):
 		elif thing_to_add is None:
 			print("Warning: Nothing was added to %s!" % desired_list)
 		else:
-			raise ValueError("Invalid input: %s | Add either a string or a list of strings." % str(thing_to_add))
+			raise ValueError("Invalid input: {} \
+							  Add either a string \or a list of strings."
+							 .format(str(thing_to_add)))
 
 	# =====================================================
 	# Composition of the Structured SLUGS file
