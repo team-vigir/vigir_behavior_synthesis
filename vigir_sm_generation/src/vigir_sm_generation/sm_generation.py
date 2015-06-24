@@ -65,14 +65,14 @@ def get_init_temp_state(init_states):
     """
     init_state_names = [s.name for s in init_states]
     return new_si(
-        "/{0}".format(INIT_STATE_NAME),
-        "LogState",
-         ["done" for s in init_state_names], # outcomes and
-         init_state_names, # transitions are the same
-         None,
-         ["text"],
-         ["'Initial state'"],
-         [0 for s in init_states] # autonomy
+        state_path = "/{0}".format(INIT_STATE_NAME),
+        state_class = "LogState",
+        outcomes = ["done" for s in init_state_names], # outcomes and
+        transitions = init_state_names, # transitions are the same
+        initial_state = None,
+        p_names = ["text"],
+        p_vals = ['"Initial state"'],
+        autonomy = [0 for s in init_states] # autonomy
     )
 
 def generate_sm(request):

@@ -28,7 +28,7 @@ def new_si(state_path, state_class, outcomes, transitions, initial_state,
         si.initial_state_name = initial_state
     si.parameter_names = p_names
     si.parameter_values = p_vals
-    si.autonomy = []
+    si.autonomy = [] # temporary until fix on FlexBE side
 
     return si
 
