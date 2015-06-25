@@ -42,40 +42,33 @@ class ActionSpecification(GR1Specification):
         
         action_formulas = list()
 
+        if action in self.preconditions.keys() and self.preconditions[action]:
+            preconditions_formula = self._gen_preconditions_formula(action,
+                                                                    act_out) 
+            action_formulas.append(preconditions_formula)
+
+        #TODO: Generate all action formulas ...
+
+        self.load_formulas(action_formulas)
+
+    def _gen_preconditions_formula(self, action, act_out = True):
+        """..."""
+
         action_preconditions = self.preconditions[action]
 
         #Recursively get preconditions for this action's preconditions
         for pc in action_preconditions:
             # Check whether this precondition has preconditions of its own
             if pc in self.preconditions.keys():
+                #FIX: Actions that don't have preconditions should also be handled!
                 self.handle_new_action(pc)
 
-        preconditions_formula = self._gen_preconditions_formula(
-                                        action = action,
-                                        preconditions = action_preconditions,
-                                        act_out = act_out)
-        action_formulas.append(preconditions_formula)
-
-        self.load_formulas(action_formulas)
-
-    @staticmethod
-    def _gen_preconditions_formula(action, preconditions, act_out = True):
-        """
-        ...
-
-        Arguments:
-          action            string  ...
-          preconditions     list    ... 
-          act_out           bool    Whether to use activation_outcomes paradigm
-
-        """
-
         if act_out:
-            formula = PreconditionsFormula(action, preconditions)
+            formula = PreconditionsFormula(action, action_preconditions)
         else:
             raise NotImplementedError('Preconditions for the vanilla GR(1) ' +
                                       'paradigm have not been implemented yet!')
-            
+
         return formula
 
 

@@ -29,5 +29,9 @@ action_preconditions:
         - manipulate
     # pregrasp:
     #     - manipulate
-    #footstep_plan:
-    #    - stand
+    footstep_execution:
+        - footstep_plan
+        - stand
+    footstep_plan:
+       - footstep_goal
+    footstep_goal:

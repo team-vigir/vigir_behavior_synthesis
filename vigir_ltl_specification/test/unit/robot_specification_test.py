@@ -34,8 +34,10 @@ class ActionHandlingTests(unittest.TestCase):
         """Gets called before every test case."""
 
         self.spec_name = 'test'
-        self.preconditions = {'a': ['a1', 'a2'],
-                              'b': ['b1']}
+        self.preconditions = {'run': ['step', 'walk'],
+                              'bar': ['foo'],
+                              'fu' : ['bar'],
+                              'foo': None}
 
         self.spec = ActionSpecification(name = self.spec_name,
                                         preconditions = self.preconditions)
@@ -47,28 +49,61 @@ class ActionHandlingTests(unittest.TestCase):
 
     def test_formulas_from_preconditions(self):
         
-        formula = self.spec._gen_preconditions_formula('a',
-                                                       self.preconditions['a'],
-                                                       act_out = True)
+        action = 'bar'
+        formula = self.spec._gen_preconditions_formula(action, act_out = True)
+
+        self.spec.handle_new_action(action)
+
+        expected_formula = '! foo_c -> ! bar_a'
 
         self.assertIsInstance(formula, PreconditionsFormula)
+        self.assertEqual(expected_formula, formula.formulas[0])
 
     def test_not_act_out_raises_exception(self):
 
+        action = self.preconditions.keys()[0]
         self.assertRaises(NotImplementedError,
-                          self.spec._gen_preconditions_formula,
-                          '', [], False)
+                          self.spec._gen_preconditions_formula, action, False)
 
+    def test_action_not_in_preconditions_config(self):
+        
+        action = 'i_am_not_in_the_dict'
+        self.spec.handle_new_action(action)
+        #FIX: This assertion will fail once formulas other than 
+        # preconditions are added to the handle_new_action method
+        self.assertEqual(len(self.spec.sys_trans), 0)
+
+    def test_action_without_preconditions(self):
+        
+        action = 'foo'
+        self.spec.handle_new_action(action)
+        #FIX: This assertion will fail once formulas other than 
+        # preconditions are added to the handle_new_action method
+        self.assertEqual(len(self.spec.sys_trans), 0)
+
+    def test_recursive_preconditions(self):
+
+        action = 'fu'
+        self.spec.handle_new_action(action)
+
+        expected_formula_0 = '! foo_c -> ! bar_a'
+        expected_formula_1 = '! bar_c -> ! fu_a'
+
+        self.assertIn(expected_formula_0, self.spec.sys_trans)
+        self.assertIn(expected_formula_1, self.spec.sys_trans)
+        #FIX: This assertion will fail once formulas other than 
+        # preconditions are added to the handle_new_action method
+        self.assertEqual(len(self.spec.sys_trans), 2)
+        
     def test_handle_new_action(self):
+        
+        action = 'run'
+        self.spec.handle_new_action(action)
 
-        self.spec.handle_new_action('b')
-
-        expected_formula = '! b1 -> ! b'
-
-        self.assertEqual(expected_formula, self.spec.sys_trans[0]) # preconditions
         # self.assertNotEqual(list(), self.spec.env_trans) # activation
         # self.assertNotEqual(list(), self.spec.env_liveness) # fairness
 
+        self.fail('Incomplete test!')
 
 class ConfigurationTests(unittest.TestCase):
     """Test the construction of the RobotConfiguration class."""
