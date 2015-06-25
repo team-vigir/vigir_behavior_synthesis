@@ -19,13 +19,64 @@ class ActionSpecification(GR1Specification):
     docstring for ActionSpecification
 
     Arguments:
-      ts    dict    Dictionary encoding a transition system (TS).
+      ts            dict    Dictionary encoding a transition system (TS).
+      preconditions dict    Dictionary encoding action preconditions.
 
     """
-    def __init__(self, name = ''):
+    def __init__(self, name = '', preconditions = {}):
         super(ActionSpecification, self).__init__(spec_name = name,
                                                   env_props = [],
                                                   sys_props = [])
+
+        self.preconditions = preconditions
+
+    def handle_new_action(self, action, act_out = True):
+        """
+        ...
+
+        Arguments:
+          action    string  ...
+          act_out   bool    Whether to use activation_outcomes paradigm
+
+        """
+        
+        action_formulas = list()
+
+        action_preconditions = self.preconditions[action]
+
+        #Recursively get preconditions for this action's preconditions
+        for pc in action_preconditions:
+            # Check whether this precondition has preconditions of its own
+            if pc in self.preconditions.keys():
+                self.handle_new_action(pc)
+
+        preconditions_formula = self._gen_preconditions_formula(
+                                        action = action,
+                                        preconditions = action_preconditions,
+                                        act_out = act_out)
+        action_formulas.append(preconditions_formula)
+
+        self.load_formulas(action_formulas)
+
+    @staticmethod
+    def _gen_preconditions_formula(action, preconditions, act_out = True):
+        """
+        ...
+
+        Arguments:
+          action            string  ...
+          preconditions     list    ... 
+          act_out           bool    Whether to use activation_outcomes paradigm
+
+        """
+
+        if act_out:
+            formula = PreconditionsFormula(action, preconditions)
+        else:
+            raise NotImplementedError('Preconditions for the vanilla GR(1) ' +
+                                      'paradigm have not been implemented yet!')
+            
+        return formula
 
 
 class RobotConfiguration(object):
