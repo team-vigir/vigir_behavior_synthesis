@@ -357,14 +357,19 @@ class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
         return fairness_formula
 
 
-class PreconditionsFormula(ActivationOutcomesFormula):
+class PreconditionsFormula(GR1Formula):
     """The outcomes of an action are mutually exclusive."""
     
     def __init__(self, action, preconditions):
-        super(PreconditionsFormula, self).__init__(sys_props = [],
-                                                   outcomes = ['completed'])
 
-        self.formulas = [self.gen_precondition_formula(action, preconditions)]
+        action_prop = _get_act_prop(action)
+        pc_props = map(_get_com_prop, preconditions)
+
+        super(PreconditionsFormula, self).__init__(env_props = pc_props,
+                                                   sys_props = [action_prop])
+
+        self.formulas = [self.gen_precondition_formula(action_prop,
+                                                       pc_props)]
         self.type = 'sys_trans'
 
 
@@ -376,7 +381,7 @@ def _get_act_prop(prop):
     return prop + "_a" # 'a' stands for activation
 
 def _get_com_prop(prop):
-    #FIX: Delete after removing all cases of "special treatment" of completion
+    # Still necessary due to preconditions
     return prop + "_c" # 'c' stands for completion or completed
 
 def _get_out_prop(prop, outcome):

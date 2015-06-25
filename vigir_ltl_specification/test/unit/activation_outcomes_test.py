@@ -54,9 +54,10 @@ class FormulaGenerationTests(unittest.TestCase):
 
 	def test_preconditions_formula(self):
 		
-		formula = PreconditionsFormula('a', ['a1', 'a2'])
+		formula = PreconditionsFormula(action = 'run',
+									   preconditions = ['step', 'walk'])
 
-		expected_formula = '! a1 | ! a2 -> ! a'
+		expected_formula = '! step_c | ! walk_c -> ! run_a'
 
 		self.assertEqual(expected_formula, formula.formulas[0])
 
