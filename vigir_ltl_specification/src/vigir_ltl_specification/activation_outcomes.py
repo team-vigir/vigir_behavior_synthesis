@@ -357,6 +357,17 @@ class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
         return fairness_formula
 
 
+class PreconditionsFormula(ActivationOutcomesFormula):
+    """The outcomes of an action are mutually exclusive."""
+    
+    def __init__(self, action, preconditions):
+        super(PreconditionsFormula, self).__init__(sys_props = [],
+                                                   outcomes = ['completed'])
+
+        self.formulas = [self.gen_precondition_formula(action, preconditions)]
+        self.type = 'sys_trans'
+
+
 # =========================================================
 # Module-level helper functions
 # =========================================================
