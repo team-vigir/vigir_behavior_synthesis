@@ -118,15 +118,10 @@ class TestSmGeneration(unittest.TestCase):
 
             val_str = si.parameter_values[idx]
             # Converts string -> dict.
-            states = ast.literal_eval(val_str)
-            self.assertTrue(type(states) is dict,
-                "'states' value is not a dictionary.")
-
-            for k, v in states.items():
-                self.assertTrue(type(k) is str,
-                    "State dictionary key is not a string.")
-                self.assertTrue(type(v) is str,
-                    "State dictionary value is not a string.")
+            self.assertEqual(val_str[0], "{",
+                "state parameter is not a dictionary string")
+            self.assertEqual(val_str[-1], "}",
+                "state parameter is not a dictionary string")
 
     def test_outcomes_param_type(self):
         """ Test that the outcome parameter (if set) has valid types. """
