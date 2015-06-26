@@ -14,6 +14,10 @@ class FormulaGenerationTests(unittest.TestCase):
 		self.sys_props = ['dance', 'sleep']
 		self.outcomes  = ['completed', 'failed', 'preempted']
 
+		self.ts = {'r1': ['r1', 'r2', 'r3'],
+               	   'r2': ['r2'],
+               	   'r3': ['r3', 'r1']}
+
 	def tearDown(self):
 		"""Gets called after every test case."""
 
@@ -21,7 +25,6 @@ class FormulaGenerationTests(unittest.TestCase):
 		del self.outcomes
 
 	def test_base_class(self):
-		"""..."""
 
 		formula = ActivationOutcomesFormula(self.sys_props, self.outcomes)
 
@@ -44,41 +47,72 @@ class FormulaGenerationTests(unittest.TestCase):
 		self.assertItemsEqual(expected_env_props, formula.env_props)
 
 	def test_constructor_raises_exceptions(self):
-		"""Test whether the formula constructors raise Exceptions"""
 
-		self.assertRaises(TypeError, ActivationOutcomesFormula, ['dance', 1.0])
+		self.assertRaises(TypeError,  ActivationOutcomesFormula, ['dance', 1.0])
 		self.assertRaises(ValueError, ActivationOutcomesFormula, ['dance'],[])
-		self.assertRaises(TypeError, ActivationOutcomesFormula, ['dance'],[2.0])
+		self.assertRaises(TypeError,  ActivationOutcomesFormula, ['dance'],[2])
 		self.assertRaises(ValueError, ActivationOutcomesFormula, ['dance'],
 						  ['completed', 'capitalized', 'called', 'calculated'])
+
+	def test_system_initial_conditions(self):
+		
+		self.fail('Incomplete test!')
+
+	def test_mutex_formula(self):
+
+		formula = OutcomeMutexFormula(
+						['dance'],
+						outcomes = ['completed', 'failed', 'preempted'])
+
+		expected_formula_c = 'next(dance_c) -> (next(! dance_f) & next(! dance_p))'
+		expected_formula_f = 'next(dance_f) -> (next(! dance_c) & next(! dance_p))'
+		expected_formula_p = 'next(dance_p) -> (next(! dance_c) & next(! dance_f))'
+
+		expected_formulas = [expected_formula_c, expected_formula_f, expected_formula_p]
+
+		self.assertEqual('env_trans', formula.type)
+		self.assertItemsEqual(expected_formulas, formula.formulas)
+
+	def test_mutex_single_outcome(self):
+
+		formula = OutcomeMutexFormula(['dance'], outcomes = ['completed'])
+
+		self.assertItemsEqual(list(), formula.formulas)
+
+	def test_transition_relation_formula(self):
+
+		formula = TransitionRelationFormula(self.ts)
+
+		self.assertEqual('sys_trans', formula.type)
+
+		self.fail('Incomplete test!')
+
+	def test_single_step_change_formula_without_outcomes(self):
+
+		formula = SingleStepChangeFormula(self.ts) # 'completed' used by default
+
+		self.assertEqual('env_trans', formula.type)
+
+		self.fail('Incomplete test!')
+
+	def test_single_step_change_formula_with_extra_outcomes(self):
+		
+		formula = SingleStepChangeFormula(self.ts, ['completed', 'failed'])
+
+		self.assertEqual('env_trans', formula.type)
+
+		self.fail('Incomplete test!')
 
 	def test_preconditions_formula(self):
 		
 		formula = PreconditionsFormula(action = 'run',
 									   preconditions = ['step', 'walk'])
 
-		expected_formula = '! step_c | ! walk_c -> ! run_a'
+		expected_formula = '(! step_c | ! walk_c) -> ! run_a'
 
-		self.assertEqual(expected_formula, formula.formulas[0])
+		self.assertEqual('sys_trans', formula.type)
+		self.assertItemsEqual([expected_formula], formula.formulas)
 
-# =============================================================================
-# The following code is not actually useful. It will be removed promptly.
-# =============================================================================
-
-# docs.python.org/2/library/unittest.html#skipping-tests-and-expected-failures
-
-@unittest.skip("Demonstrating class skipping")
-class MySkippedTestCase(unittest.TestCase):
-	
-	@unittest.skip("Demonstrating skipping of a test")
-	def test_nothing(self):
-		self.fail("Shouldn't happen!")
-
-class ExpectedFailureTestCase(unittest.TestCase):
-    
-    @unittest.expectedFailure
-    def test_fail(self):
-        self.assertEqual(True, False, "Broken test")
 
 # =============================================================================
 # Entry point
@@ -87,16 +121,3 @@ class ExpectedFailureTestCase(unittest.TestCase):
 if __name__ == '__main__':
 	# Run all tests
 	unittest.main()
-
-### Organization (docs.python.org/2/library/unittest.html#organizing-tests)
-
-# def suite():
-# 	tests = ['test_default_size', 'test_resize']
-
-# 	return unittest.TestSuite(map(WidgetTestCase, tests))
-
-# suite = unittest.TestLoader().loadTestsFromTestCase(WidgetTestCase)
-
-# suite1 = module1.TheTestSuite()
-# suite2 = module2.TheTestSuite()
-# alltests = unittest.TestSuite([suite1, suite2])

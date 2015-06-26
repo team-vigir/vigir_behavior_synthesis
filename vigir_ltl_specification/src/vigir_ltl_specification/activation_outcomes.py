@@ -125,11 +125,17 @@ class ActivationOutcomesFormula(GR1Formula):
 class OutcomeMutexFormula(ActivationOutcomesFormula):
     """The outcomes of an action are mutually exclusive."""
     
-    def __init__(self, sys_props, outcomes = ['completed']):
+    def __init__(self, sys_props, outcomes):
         super(OutcomeMutexFormula, self).__init__(sys_props = sys_props,
                                                   outcomes = outcomes)
 
-        self.formulas = self._gen_outcome_mutex_formulas()
+        if len(outcomes) == 1:
+            print('No need for OutcomeMutex for: ' +
+                  '{0} Only one outcome found: {1}'
+                  .format(sys_props, outcomes))
+        else:
+            self.formulas = self._gen_outcome_mutex_formulas()
+        
         self.type = 'env_trans'
 
     def _gen_outcome_mutex_formulas(self):
@@ -139,12 +145,28 @@ class OutcomeMutexFormula(ActivationOutcomesFormula):
 
         for pi in self.outcome_props.keys():
 
-            # Use the mutex formula method of the GR1Formula class
+            # Use the method of the parent's parent class (GR1Formula)
             pi_outs = self.outcome_props[pi]
-            formula = self.gen_mutex_formulas(pi_outs, future = True)
-            mutex_formulas.extend(formula)
+            formulas = self._gen_single_mutex_formulas(pi_outs)
+            mutex_formulas.extend(formulas)
 
         return mutex_formulas
+
+    def _gen_single_mutex_formulas(self, outcome_props):
+        
+        formulas = list()
+
+        for prop in outcome_props:
+            other_props = [p for p in outcome_props if p != prop]
+            
+            next_neg_props = map(LTL.next, map(LTL.neg, other_props))
+
+            right_hand_side = LTL.conj(next_neg_props)
+            
+            formulas.append(LTL.implication(left_hand_side = LTL.next(prop),
+                                            right_hand_side = right_hand_side))
+
+        return formulas
 
 class TransitionRelationFormula(ActivationOutcomesFormula):
     """
@@ -158,10 +180,10 @@ class TransitionRelationFormula(ActivationOutcomesFormula):
         super(TransitionRelationFormula, self).__init__(sys_props = [],
                                                         ts = ts)
 
-        self.formulas = self._gen_trans_relation_formulas()
+        self.formulas = self._gen_system_transition_relation_formulas()
         self.type = 'sys_trans'
 
-    def _gen_trans_relation_formulas(self):
+    def _gen_system_transition_relation_formulas(self):
         """Safety requirements from Section V-B (2)"""
 
         sys_trans_formulas = list()
@@ -171,7 +193,7 @@ class TransitionRelationFormula(ActivationOutcomesFormula):
             
             for adj_prop in self.ts[prop]:
                 adj_phi_prop = self._gen_phi_prop(adj_prop)
-                disjunct = LTL.next(adj_phi_prop) if future else adj_phi_prop
+                disjunct = LTL.next(adj_phi_prop)
                 right_hand_side.append(disjunct)
 
             right_hand_side = LTL.disj(right_hand_side)
@@ -179,6 +201,31 @@ class TransitionRelationFormula(ActivationOutcomesFormula):
                                                       right_hand_side))
 
         return sys_trans_formulas
+
+
+class SingleStepChangeFormula(ActivationOutcomesFormula):
+    """
+    Safety formulas that govern how the topology propositions can change
+    in a single time step in response to activation propositions.
+
+    If no outcomes (besides 'completed') are provided, the transition system
+    will be used instead (e.g. ending up in a different region than expected).
+    If they are provided, those outcomes will be used in the formulas
+    (e.g. failed to transition to the next region).
+    """
+
+    def __init__(self, ts, outcomes = ['completed']):
+        super(SingleStepChangeFormula, self).__init__(sys_props = ts.keys(),
+                                                      outcomes = outcomes)
+        
+        self.formulas = self._gen_single_step_change_formulas()
+        self.type = 'env_trans'
+
+    def _gen_single_step_change_formulas(self):
+        """Equivalent of Eq. (2)"""
+        
+        return []
+
 
 class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
     """Safety formulas that constrain the outcomes of actions."""
