@@ -204,7 +204,7 @@ class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
             pi_outcomes = self.outcome_props[pi]
 
             # Generate Eq. (3)
-            lhs_disjunct = LTL.paren(LTL.disj(pi_outcomes))
+            lhs_disjunct = LTL.disj(pi_outcomes)
             left_hand_side = LTL.conj([lhs_disjunct, pi_a])
 
             rhs_props = map(LTL.next, pi_outcomes)
@@ -251,7 +251,7 @@ class PropositionDeactivationFormula(ActivationOutcomesFormula):
 
             pi_outs = self.outcome_props[pi]
             next_pi_outs = map(LTL.next, pi_outs)
-            out_disjunct = LTL.paren(LTL.disj(next_pi_outs))
+            out_disjunct = LTL.disj(next_pi_outs)
 
             pi_a = _get_act_prop(pi)
             next_not_pi_a = LTL.next(LTL.neg(pi_a))
@@ -294,16 +294,16 @@ class ActionFairnessConditionsFormula(ActivationOutcomesFormula):
             pi_outcomes = self.outcome_props[pi]
 
             next_pi_outs = map(LTL.next, pi_outcomes)
-            out_disjunct = LTL.paren(LTL.disj(next_pi_outs))
+            out_disjunct = LTL.disj(next_pi_outs)
             next_not_pi_outs = map(LTL.next, map(LTL.neg, pi_outcomes))
-            out_conjunct = LTL.paren(LTL.conj(next_not_pi_outs))
+            out_conjunct = LTL.conj(next_not_pi_outs)
             
             outcomes_disjunct_1 = LTL.conj([pi_a, out_disjunct])
             outcomes_disjunct_2 = LTL.conj([not_pi_a, out_conjunct])
             outcomes_formula = LTL.disj([outcomes_disjunct_1, outcomes_disjunct_2])
 
-            change_disjunt_1 = LTL.paren(LTL.conj([pi_a, LTL.next(not_pi_a)]))
-            change_disjunt_2 = LTL.paren(LTL.conj([not_pi_a, LTL.next(pi_a)]))
+            change_disjunt_1 = LTL.conj([pi_a, LTL.next(not_pi_a)])
+            change_disjunt_2 = LTL.conj([not_pi_a, LTL.next(pi_a)])
             change_formula = LTL.disj([change_disjunt_1, change_disjunt_2])
 
             fairness_condition = LTL.disj([outcomes_formula, change_formula])
@@ -344,10 +344,10 @@ class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
             next_pi_c = LTL.next(pi_c)
             not_next_phi = LTL.neg(LTL.next(phi))
 
-            completion_term = LTL.paren(LTL.conj([phi, next_pi_c]))
+            completion_term = LTL.conj([phi, next_pi_c])
             completion_terms.append(completion_term)
             
-            change_term = LTL.paren(LTL.conj([phi, not_next_phi]))
+            change_term = LTL.conj([phi, not_next_phi])
             change_terms.append(change_term)
 
         completion_formula = LTL.disj(completion_terms)
