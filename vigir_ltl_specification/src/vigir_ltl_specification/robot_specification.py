@@ -9,9 +9,6 @@ from activation_outcomes import *
 """
 Module's docstring #TODO
 
-* Generate formulas
-* Load formulas in specification
-
 """
 
 class ActionSpecification(GR1Specification):
@@ -54,8 +51,6 @@ class ActionSpecification(GR1Specification):
         act_out_formulas = self._gen_activation_outcomes_formulas(action,
                                                                   outcomes)
         action_formulas.extend(act_out_formulas)
-
-        #TODO: In addition, handle the action's initial conditions
 
         # Finally, load the formulas (and props) into the GR1 Specification
         self.load_formulas(action_formulas)

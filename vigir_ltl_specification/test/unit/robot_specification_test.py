@@ -4,30 +4,8 @@ import unittest
 
 from vigir_ltl_specification.robot_specification import *
 
-class SpecificationConstructionTests(unittest.TestCase):
-    """Test the construction of the ActionSpecification class."""
 
-    def setUp(self):
-        """Gets called before every test case."""
-
-        self.spec_name = 'test'
-        self.preconditions = {'a': ['b']}
-
-        self.spec = ActionSpecification(name = self.spec_name,
-                                        preconditions = self.preconditions)
-
-    def tearDown(self):
-        """Gets called after every test case."""
-
-        del self.spec
-
-    def test_input_to_object(self):
-
-        self.assertEqual(self.spec_name, self.spec.spec_name)
-        self.assertEqual(self.preconditions, self.spec.preconditions)
-
-
-class ActionHandlingTests(unittest.TestCase):
+class ActionSpecificationTests(unittest.TestCase):
     """The calls to the method(s) handling new actions."""
 
     def setUp(self):
@@ -46,6 +24,11 @@ class ActionHandlingTests(unittest.TestCase):
         """Gets called after every test case."""
 
         del self.spec
+
+    def test_input_to_object(self):
+
+        self.assertEqual(self.spec_name, self.spec.spec_name)
+        self.assertEqual(self.preconditions, self.spec.preconditions)
 
     def test_formulas_from_preconditions(self):
         
@@ -105,18 +88,34 @@ class ActionHandlingTests(unittest.TestCase):
         expected_formula_4b = '((run_a & next(! run_a)) | (! run_a & next(run_a)))'
         expected_formula_4 = '(' + expected_formula_4a + ' | ' + \
                               expected_formula_4b + ')' # fairness condition
-         
-                             
 
-        self.assertIn(expected_formula_0, self.spec.env_trans)
-        self.assertIn(expected_formula_1, self.spec.env_trans)
-        self.assertIn(expected_formula_2, self.spec.sys_trans)
-        self.assertIn(expected_formula_3, self.spec.sys_trans)
-        self.assertIn(expected_formula_4, self.spec.env_liveness)
+        self.assertItemsEqual([expected_formula_0, expected_formula_1],
+                               self.spec.env_trans)
+        self.assertItemsEqual([expected_formula_2, expected_formula_3],
+                               self.spec.sys_trans)
+        self.assertItemsEqual([expected_formula_4], self.spec.env_liveness)
 
     def test_handle_multiple_outcomes(self):
         
-        self.fail('Incomplete test!')
+        action = 'run'
+        self.spec.handle_new_action(action, outcomes = ['completed', 'failed'])
+
+        expected_formula_0 = '((run_c | run_f) & run_a) -> (next(run_c) | next(run_f))' # outcome
+        expected_formula_1a = '(! run_c & ! run_a) -> next(! run_c)' # outcome
+        expected_formula_1b = '(! run_f & ! run_a) -> next(! run_f)' # outcome
+        expected_formula_2 = '(run_a & (next(run_c) | next(run_f))) -> next(! run_a)' # deactivation
+        expected_formula_3 = '(! step_c | ! walk_c) -> ! run_a' # preconditions
+        expected_formula_4a = '((run_a & (next(run_c) | next(run_f))) | (! run_a & (next(! run_c) & next(! run_f))))'
+        expected_formula_4b = '((run_a & next(! run_a)) | (! run_a & next(run_a)))'
+        expected_formula_4 = '(' + expected_formula_4a + ' | ' + \
+                              expected_formula_4b + ')' # fairness condition
+
+        self.assertItemsEqual([expected_formula_0, expected_formula_1a, expected_formula_1b],
+                               self.spec.env_trans)
+        self.assertItemsEqual([expected_formula_2, expected_formula_3],
+                               self.spec.sys_trans)
+        self.assertItemsEqual([expected_formula_4], self.spec.env_liveness)
+
 
 class ConfigurationTests(unittest.TestCase):
     """Test the construction of the RobotConfiguration class."""
