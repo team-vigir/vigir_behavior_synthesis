@@ -103,12 +103,19 @@ class ConcurrentStateGenerator():
                        decl['param_values'],
                        autonomy)
 
-    def gen_states(self):
-        """Turn return states parameters for the ConcurrentState."""
-        states = {}
-        for label, class_decl in self.internal_states.items():
-            states[label] = class_decl_to_string(class_decl)
-        return states
+    def gen_states_str(self):
+        """
+        Return a string version of the states parameters for the
+        ConcurrentState.
+        """
+        states_str = "{"
+        # Key should be in quotes, but not the value
+        dict_items = ["'{0}': {1}".format(label, class_decl_to_string(class_decl))
+                      for (label, class_decl)
+                      in self.internal_states.items()]
+        states_str += ", ".join(dict_items)
+        states_str += "}"
+        return states_str
 
     def gen(self):
         """Generate the state instantiation for this concurrent state."""
@@ -116,8 +123,7 @@ class ConcurrentStateGenerator():
             return self.gen_single()
 
         p_names = ["states", "outcomes", "outcome_mapping"]
-        states = self.gen_states()
-        p_vals = [str(states),
+        p_vals = [self.gen_states_str(),
                   str(self.internal_outcomes),
                   str(self.internal_outcome_maps)]
 
