@@ -69,17 +69,15 @@ class ActionHandlingTests(unittest.TestCase):
         
         action = 'i_am_not_in_the_dict'
         self.spec.handle_new_action(action)
-        #FIX: This assertion will fail once formulas other than 
-        # preconditions are added to the handle_new_action method
-        self.assertEqual(len(self.spec.sys_trans), 0)
+        #FIX: This assertion will fail once more formulas are added
+        self.assertEqual(len(self.spec.sys_trans), 1) # 1 for deactivation
 
     def test_action_without_preconditions(self):
         
         action = 'foo'
         self.spec.handle_new_action(action)
-        #FIX: This assertion will fail once formulas other than 
-        # preconditions are added to the handle_new_action method
-        self.assertEqual(len(self.spec.sys_trans), 0)
+        #FIX: This assertion will fail once more formulas are added
+        self.assertEqual(len(self.spec.sys_trans), 1) # 1 for deactivation
 
     def test_recursive_preconditions(self):
 
@@ -91,18 +89,33 @@ class ActionHandlingTests(unittest.TestCase):
 
         self.assertIn(expected_formula_0, self.spec.sys_trans)
         self.assertIn(expected_formula_1, self.spec.sys_trans)
-        #FIX: This assertion will fail once formulas other than 
-        # preconditions are added to the handle_new_action method
-        self.assertEqual(len(self.spec.sys_trans), 2)
+        #FIX: This assertion will fail once more formulas are added
+        self.assertEqual(len(self.spec.sys_trans), 5) # 2 preconditions + 3 deactivation
         
-    def test_handle_new_action(self):
+    def test_handle_new_action_with_multiple_preconditions(self):
         
         action = 'run'
         self.spec.handle_new_action(action)
 
-        # self.assertNotEqual(list(), self.spec.env_trans) # activation
-        # self.assertNotEqual(list(), self.spec.env_liveness) # fairness
+        expected_formula_0 = '(run_c & run_a) -> next(run_c)' # outcome
+        expected_formula_1 = '(! run_c & ! run_a) -> next(! run_c)' # outcome
+        expected_formula_2 = '(run_a & next(run_c)) -> next(! run_a)' # deactivation
+        expected_formula_3 = '(! step_c | ! walk_c) -> ! run_a' # preconditions
+        expected_formula_4a = '((run_a & next(run_c)) | (! run_a & next(! run_c)))'
+        expected_formula_4b = '((run_a & next(! run_a)) | (! run_a & next(run_a)))'
+        expected_formula_4 = '(' + expected_formula_4a + ' | ' + \
+                              expected_formula_4b + ')' # fairness condition
+         
+                             
 
+        self.assertIn(expected_formula_0, self.spec.env_trans)
+        self.assertIn(expected_formula_1, self.spec.env_trans)
+        self.assertIn(expected_formula_2, self.spec.sys_trans)
+        self.assertIn(expected_formula_3, self.spec.sys_trans)
+        self.assertIn(expected_formula_4, self.spec.env_liveness)
+
+    def test_handle_multiple_outcomes(self):
+        
         self.fail('Incomplete test!')
 
 class ConfigurationTests(unittest.TestCase):

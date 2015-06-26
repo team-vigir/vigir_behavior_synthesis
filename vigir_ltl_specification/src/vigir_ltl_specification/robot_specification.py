@@ -30,25 +30,34 @@ class ActionSpecification(GR1Specification):
 
         self.preconditions = preconditions
 
-    def handle_new_action(self, action, act_out = True):
+    def handle_new_action(self, action, act_out = True,
+                          outcomes = ['completed']):
         """
         ...
 
         Arguments:
-          action    string  ...
+          action    string  The action's name (plan name, not activation prop)
           act_out   bool    Whether to use activation_outcomes paradigm
+          outcomes  list    The possible outcomes of this action
 
         """
         
         action_formulas = list()
 
+        # First, handle the action's preconditions (recursively)
         if action in self.preconditions.keys() and self.preconditions[action]:
             preconditions_formula = self._gen_preconditions_formula(action,
                                                                     act_out) 
             action_formulas.append(preconditions_formula)
 
-        #TODO: Generate all action formulas ...
+        # Then, handle the action's outcomes (if activation-outcomes framework)
+        act_out_formulas = self._gen_activation_outcomes_formulas(action,
+                                                                  outcomes)
+        action_formulas.extend(act_out_formulas)
 
+        #TODO: In addition, handle the action's initial conditions
+
+        # Finally, load the formulas (and props) into the GR1 Specification
         self.load_formulas(action_formulas)
 
     def _gen_preconditions_formula(self, action, act_out = True):
@@ -71,6 +80,22 @@ class ActionSpecification(GR1Specification):
 
         return formula
 
+    def _gen_activation_outcomes_formulas(self, action, outcomes):
+    
+        actions = [action]
+        act_out_formulas = list()
+
+        outcomes_formula = ActionOutcomeConstraintsFormula(actions, outcomes)
+
+        deactivation_formula = PropositionDeactivationFormula(actions, outcomes)
+
+        fairness_formula = ActionFairnessConditionsFormula(actions, outcomes)
+
+        act_out_formulas.extend([outcomes_formula,
+                                deactivation_formula,
+                                fairness_formula])
+
+        return act_out_formulas
 
 class RobotConfiguration(object):
     """
