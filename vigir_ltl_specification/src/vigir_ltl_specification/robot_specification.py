@@ -80,15 +80,18 @@ class ActionSpecification(GR1Specification):
         actions = [action]
         act_out_formulas = list()
 
+        mutex_formula = OutcomeMutexFormula(actions, outcomes)
+
         outcomes_formula = ActionOutcomeConstraintsFormula(actions, outcomes)
 
         deactivation_formula = PropositionDeactivationFormula(actions, outcomes)
 
         fairness_formula = ActionFairnessConditionsFormula(actions, outcomes)
 
-        act_out_formulas.extend([outcomes_formula,
-                                deactivation_formula,
-                                fairness_formula])
+        act_out_formulas.extend([mutex_formula,
+                                 outcomes_formula,
+                                 deactivation_formula,
+                                 fairness_formula])
 
         return act_out_formulas
 

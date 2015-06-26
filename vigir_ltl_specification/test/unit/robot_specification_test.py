@@ -89,11 +89,12 @@ class ActionSpecificationTests(unittest.TestCase):
         expected_formula_4 = '(' + expected_formula_4a + ' | ' + \
                               expected_formula_4b + ')' # fairness condition
 
-        self.assertItemsEqual([expected_formula_0, expected_formula_1],
-                               self.spec.env_trans)
-        self.assertItemsEqual([expected_formula_2, expected_formula_3],
-                               self.spec.sys_trans)
-        self.assertItemsEqual([expected_formula_4], self.spec.env_liveness)
+        self.assertItemsEqual(actual_seq = self.spec.env_trans,
+                              expected_seq = [expected_formula_0, expected_formula_1])
+        self.assertItemsEqual(actual_seq = self.spec.sys_trans,
+                              expected_seq = [expected_formula_2, expected_formula_3])
+        self.assertItemsEqual(actual_seq = self.spec.env_liveness,
+                              expected_seq = [expected_formula_4])
 
     def test_handle_multiple_outcomes(self):
         
@@ -109,12 +110,18 @@ class ActionSpecificationTests(unittest.TestCase):
         expected_formula_4b = '((run_a & next(! run_a)) | (! run_a & next(run_a)))'
         expected_formula_4 = '(' + expected_formula_4a + ' | ' + \
                               expected_formula_4b + ')' # fairness condition
+        expected_formula_5a = 'next(run_c) -> next(! run_f)' # mutex
+        expected_formula_5b = 'next(run_f) -> next(! run_c)' # mutex
 
-        self.assertItemsEqual([expected_formula_0, expected_formula_1a, expected_formula_1b],
-                               self.spec.env_trans)
-        self.assertItemsEqual([expected_formula_2, expected_formula_3],
-                               self.spec.sys_trans)
-        self.assertItemsEqual([expected_formula_4], self.spec.env_liveness)
+        self.assertItemsEqual(actual_seq = self.spec.env_trans,
+                              expected_seq = [expected_formula_0,
+                                expected_formula_1a, expected_formula_1b,
+                                expected_formula_5a, expected_formula_5b])
+        self.assertItemsEqual(actual_seq = self.spec.sys_trans,
+                              expected_seq = [expected_formula_2,
+                                              expected_formula_3])
+        self.assertItemsEqual(actual_seq = self.spec.env_liveness,
+                              expected_seq = [expected_formula_4])
 
 
 class ConfigurationTests(unittest.TestCase):
@@ -146,9 +153,9 @@ class ConfigurationTests(unittest.TestCase):
     	
     	self.config = RobotConfiguration(robot = 'bad_robot_name')
 
-    	self.assertItemsEqual(dict(), self.config._full_config)
-    	self.assertItemsEqual(dict(), self.config.ts)
-    	self.assertItemsEqual(dict(), self.config.preconditions)
+    	self.assertItemsEqual(self.config._full_config, dict())
+    	self.assertItemsEqual(self.config.ts, dict())
+    	self.assertItemsEqual(self.config.preconditions, dict())
 
 # =============================================================================
 # Entry point
