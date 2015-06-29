@@ -45,10 +45,17 @@ class ActionFormulaGenerationTests(unittest.TestCase):
     def test_constructor_raises_exceptions(self):
 
         self.assertRaises(TypeError,  ActivationOutcomesFormula, ['dance', 1.0])
+        self.assertRaises(ValueError, ActivationOutcomesFormula, ['dance_a'])
         self.assertRaises(ValueError, ActivationOutcomesFormula, ['dance'],[])
         self.assertRaises(TypeError,  ActivationOutcomesFormula, ['dance'],[2])
         self.assertRaises(ValueError, ActivationOutcomesFormula, ['dance'],
                           ['completed', 'capitalized', 'called', 'calculated'])
+
+    def test_bad_activation_prop_request_raises_exception(self):
+        
+        from vigir_ltl_specification.activation_outcomes import _get_act_prop
+
+        self.assertRaises(ValueError, _get_act_prop, 'dance_a')
 
     def test_system_initial_conditions(self):
         
@@ -73,6 +80,18 @@ class ActionFormulaGenerationTests(unittest.TestCase):
         formula = OutcomeMutexFormula(['dance'], outcomes = ['completed'])
 
         self.assertItemsEqual(list(), formula.formulas)
+
+    def test_action_deactivation_formula(self):
+        
+        self.fail('Incomplete test!')
+
+    def test_action_outcome_constraints(self):
+        
+        self.fail('Incomplete test!')
+
+    def test_action_fairness_conditions(self):
+        
+        self.fail('Incomplete test!')
 
     def test_preconditions_formula(self):
         
@@ -230,6 +249,10 @@ class TSFormulaGenerationTests(unittest.TestCase):
                              expected_formula_2, expected_formula_3a, expected_formula_3b]
 
         self.assertItemsEqual(formula.formulas, expected_formulas)
+
+    def test_topology_fairness_conditions(self):
+        
+        self.fail('Incomplete test!')
 
 # =============================================================================
 # Entry point

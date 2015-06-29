@@ -15,7 +15,6 @@ class ActivationOutcomesFormula(GR1Formula):
     """
     
     Arguments:
-      env_props (list of str)   Environment propositions (strings)
       sys_props (list of str)   System propositions (strings)
       outcomes  (list of str)   The possible outcomes of activating actions.
                                 Example: ['completed', 'failed', 'preempted']
@@ -26,10 +25,11 @@ class ActivationOutcomesFormula(GR1Formula):
                                 Implicitly contains some props in its keys.
 
     Attributes:
-      activation (list of str)  Activation propositions (subset of system)
-      outcomes   (list of str)  The possible outcomes of an action
-      outcome_props (dict of str:list)  The propositions corresponding
-                                        to each possible activation outcome
+      outcomes   (list of str)  The possible outcomes of activating a prop.
+      outcome_props (dict of str)   The propositions corresponding
+                                    to each possible activation outcome.
+      ts        (dict of str)   The input TS but transformed such that the keys
+                                are completion props and the values activation.
 
     Raises:
       TypeError
@@ -57,6 +57,7 @@ class ActivationOutcomesFormula(GR1Formula):
                                                         ts = {}) # bypass ts
 
         # Convert the transition system's props to activation-outcome props
+        #TODO: Not really useful besides for TransitionRelation formula [?]
         self.original_ts = ts
         self.ts = self._convert_ts_to_act_out(ts) # overwrites self.ts
 
@@ -68,6 +69,11 @@ class ActivationOutcomesFormula(GR1Formula):
         if any([type(pi) != str for pi in sys_props]):
             raise TypeError('Invalid type of system props (expected str): {}'
                             .format(map(type, sys_props)))
+
+        # Check that the system propositions are not in activation format
+        if any([_is_activation(pi) for pi in sys_props]):
+            raise ValueError('Invalid system props (already activation): {}'
+                            .format(sys_props))
 
         if not outcomes:
             raise ValueError('No outcomes where provided! ' +
@@ -177,117 +183,6 @@ class OutcomeMutexFormula(ActivationOutcomesFormula):
                                             right_hand_side = right_hand_side))
 
         return formulas
-
-class TransitionRelationFormula(ActivationOutcomesFormula):
-    """
-    Generate system requirement formulas that
-    encode the transition system (e.g. workspace topology).
-
-    The transition system TS, is provided in the form of a dictionary.
-    """
-    
-    def __init__(self, ts):
-        super(TransitionRelationFormula, self).__init__(sys_props = [],
-                                                        ts = ts)
-
-        self.formulas = self._gen_system_transition_relation_formulas(ts)
-        self.type = 'sys_trans'
-
-    def _gen_system_transition_relation_formulas(self, ts):
-        """
-        Safety requirements from Section V-B (2), but extended with the 
-        option to not activate any proposition in the next time step.
-        """
-
-        sys_trans_formulas = list()
-        for prop in ts.keys():
-            left_hand_side = _get_com_prop(prop)
-            right_hand_side = list()
-            
-            for adj_prop in ts[prop]:
-                adj_prop_a = _get_act_prop(adj_prop)
-                adj_phi_prop = self._gen_phi_prop(adj_prop_a)
-                disjunct = LTL.next(adj_phi_prop)
-                right_hand_side.append(disjunct)
-
-            # The last disjunct encodes the option to not activate anything next
-            do_nothing_disjunct = LTL.next(LTL.neg(_get_act_prop(prop)))
-            right_hand_side.append(do_nothing_disjunct)
-            
-            right_hand_side = LTL.disj(right_hand_side)
-            sys_trans_formulas.append(LTL.implication(left_hand_side,
-                                                      right_hand_side))
-
-        return sys_trans_formulas
-
-
-class TopologyMutexFormula(ActivationOutcomesFormula):
-    """
-    Generate environment assumptions/constraints that enforce 
-    mutual exclusion between the topology propositions; Eq. (1)
-
-    The transition system TS, is provided in the form of a dictionary.
-    """
-    
-    def __init__(self, ts):
-        super(TopologyMutexFormula, self).__init__(sys_props = [],
-                                                   outcomes = ['completed'],
-                                                   ts = ts)
-        
-        # Delegate to the parent's parent class (GR1Formula) method
-        self.formulas = self.gen_mutex_formulas(self.env_props, future = True)
-        self.type = 'env_trans'
-
-
-class SingleStepChangeFormula(ActivationOutcomesFormula):
-    """
-    Safety formulas that govern how the topology propositions can change
-    in a single time step in response to activation propositions.
-
-    If no outcomes (besides 'completed') are provided, the transition system
-    will be used instead (e.g. ending up in a different region than expected).
-    If they are provided, those outcomes will be used in the formulas
-    (e.g. failed to transition to the next region).
-    """
-
-    def __init__(self, ts, outcomes = ['completed']):
-        super(SingleStepChangeFormula, self).__init__(sys_props = [],
-                                                      outcomes = outcomes,
-                                                      ts = ts)
-        
-        self.formulas = self._gen_single_step_change_formulas(ts)
-        self.type = 'env_trans'
-
-    def _gen_single_step_change_formulas(self, ts):
-        """Equivalent of Eq. (2)"""
-        
-        all_formulas = list()
-
-        for pi in ts.keys():
-            
-            pi_c = _get_com_prop(pi)
-            next_pi_c = LTL.next(pi_c)
-            
-            for pi_prime in ts[pi]:
-                
-                pi_prime_a = _get_act_prop(pi_prime)
-                phi = self._gen_phi_prop(pi_prime_a)
-
-                left_hand_side = LTL.conj([pi_c, phi])
-
-                act_outcomes = map(LTL.next, self.outcome_props[pi_prime])
-                
-                rhs_elements = [next_pi_c] # reinitialize list for new pi_prime
-                rhs_elements.extend(act_outcomes)
-                rhs_elements = list(set(rhs_elements)) # clear duplicates
-
-                right_hand_side = LTL.disj(rhs_elements)
-
-                implication = LTL.implication(left_hand_side, right_hand_side)
-
-                all_formulas.append(implication)
-
-        return all_formulas
 
 
 class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
@@ -422,6 +317,137 @@ class ActionFairnessConditionsFormula(ActivationOutcomesFormula):
 
         return fairness_formulas
 
+
+class PreconditionsFormula(GR1Formula):
+    """The outcomes of an action are mutually exclusive."""
+    
+    def __init__(self, action, preconditions):
+
+        action_prop = _get_act_prop(action)
+        pc_props = map(_get_com_prop, preconditions)
+
+        super(PreconditionsFormula, self).__init__(env_props = pc_props,
+                                                   sys_props = [action_prop])
+
+        self.formulas = [self.gen_precondition_formula(action_prop,
+                                                       pc_props)]
+        self.type = 'sys_trans'
+
+# =============================================================================
+# Topology-specific formulas (i.e., those based on a transition system encoding)
+# =============================================================================
+
+class TransitionRelationFormula(ActivationOutcomesFormula):
+    """
+    Generate system requirement formulas that
+    encode the transition system (e.g. workspace topology).
+
+    The transition system TS, is provided in the form of a dictionary.
+    """
+    
+    def __init__(self, ts):
+        super(TransitionRelationFormula, self).__init__(sys_props = [],
+                                                        ts = ts)
+
+        self.formulas = self._gen_system_transition_relation_formulas(ts)
+        self.type = 'sys_trans'
+
+    def _gen_system_transition_relation_formulas(self, ts):
+        """
+        Safety requirements from Section V-B (2), but extended with the 
+        option to not activate any proposition in the next time step.
+        """
+
+        sys_trans_formulas = list()
+        for prop in ts.keys():
+            left_hand_side = _get_com_prop(prop)
+            right_hand_side = list()
+            
+            for adj_prop in ts[prop]:
+                adj_prop_a = _get_act_prop(adj_prop)
+                adj_phi_prop = self._gen_phi_prop(adj_prop_a)
+                disjunct = LTL.next(adj_phi_prop)
+                right_hand_side.append(disjunct)
+
+            # The last disjunct encodes the option to not activate anything next
+            do_nothing_disjunct = LTL.next(LTL.neg(_get_act_prop(prop)))
+            right_hand_side.append(do_nothing_disjunct)
+            
+            right_hand_side = LTL.disj(right_hand_side)
+            sys_trans_formulas.append(LTL.implication(left_hand_side,
+                                                      right_hand_side))
+
+        return sys_trans_formulas
+
+
+class TopologyMutexFormula(ActivationOutcomesFormula):
+    """
+    Generate environment assumptions/constraints that enforce 
+    mutual exclusion between the topology propositions; Eq. (1)
+
+    The transition system TS, is provided in the form of a dictionary.
+    """
+    
+    def __init__(self, ts):
+        super(TopologyMutexFormula, self).__init__(sys_props = [],
+                                                   outcomes = ['completed'],
+                                                   ts = ts)
+        
+        # Delegate to the parent's parent class (GR1Formula) method
+        self.formulas = self.gen_mutex_formulas(self.env_props, future = True)
+        self.type = 'env_trans'
+
+
+class SingleStepChangeFormula(ActivationOutcomesFormula):
+    """
+    Safety formulas that govern how the topology propositions can change
+    in a single time step in response to activation propositions.
+
+    If no outcomes (besides 'completed') are provided, the transition system
+    will be used instead (e.g. ending up in a different region than expected).
+    If they are provided, those outcomes will be used in the formulas
+    (e.g. failed to transition to the next region).
+    """
+
+    def __init__(self, ts, outcomes = ['completed']):
+        super(SingleStepChangeFormula, self).__init__(sys_props = [],
+                                                      outcomes = outcomes,
+                                                      ts = ts)
+        
+        self.formulas = self._gen_single_step_change_formulas(ts)
+        self.type = 'env_trans'
+
+    def _gen_single_step_change_formulas(self, ts):
+        """Equivalent of Eq. (2)"""
+        
+        all_formulas = list()
+
+        for pi in ts.keys():
+            
+            pi_c = _get_com_prop(pi)
+            next_pi_c = LTL.next(pi_c)
+            
+            for pi_prime in ts[pi]:
+                
+                pi_prime_a = _get_act_prop(pi_prime)
+                phi = self._gen_phi_prop(pi_prime_a)
+
+                left_hand_side = LTL.conj([pi_c, phi])
+
+                act_outcomes = map(LTL.next, self.outcome_props[pi_prime])
+                
+                rhs_elements = [next_pi_c] # reinitialize list for new pi_prime
+                rhs_elements.extend(act_outcomes)
+                rhs_elements = list(set(rhs_elements)) # clear duplicates
+
+                right_hand_side = LTL.disj(rhs_elements)
+
+                implication = LTL.implication(left_hand_side, right_hand_side)
+
+                all_formulas.append(implication)
+
+        return all_formulas
+
 class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
     """
     Environment liveness formulas that ensure that every transition on the
@@ -466,29 +492,15 @@ class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
 
         return fairness_formula
 
-
-class PreconditionsFormula(GR1Formula):
-    """The outcomes of an action are mutually exclusive."""
-    
-    def __init__(self, action, preconditions):
-
-        action_prop = _get_act_prop(action)
-        pc_props = map(_get_com_prop, preconditions)
-
-        super(PreconditionsFormula, self).__init__(env_props = pc_props,
-                                                   sys_props = [action_prop])
-
-        self.formulas = [self.gen_precondition_formula(action_prop,
-                                                       pc_props)]
-        self.type = 'sys_trans'
-
-
-# =========================================================
+# =============================================================================
 # Module-level helper functions
-# =========================================================
+# =============================================================================
 
 def _get_act_prop(prop):
-    return prop + "_a" # 'a' stands for activation
+    if _is_activation(prop):
+        raise ValueError('Activation prop was requested for {}!'.format(prop))
+    else:
+        return prop + "_a" # 'a' stands for activation
 
 def _get_com_prop(prop):
     # Still necessary due to preconditions and topology formulas
