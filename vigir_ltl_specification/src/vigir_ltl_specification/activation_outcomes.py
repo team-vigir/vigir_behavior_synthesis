@@ -44,16 +44,13 @@ class ActivationOutcomesFormula(GR1Formula):
         
         self.outcomes = outcomes
 
+        sys_props = sys_props + ts.keys()
+
         # Generate activation (list) and outcome (dict) propositions
-        act_props = self._gen_activation_propositions(sys_props)
+        act_props = map(_get_act_prop, sys_props)
         self.outcome_props = self._gen_outcome_propositions(sys_props)
         # Get the outcome props (environment) as a list
         env_props = self._get_env_props_from_outcome_props()
-
-        #TODO: Refactor handling of TS dictionary (here and conversion below)
-        for k, v in ts.iteritems():
-            act_props.extend(map(_get_act_prop, v))
-            env_props.append(_get_com_prop(k))
 
         super(ActivationOutcomesFormula, self).__init__(env_props = env_props,
                                                         sys_props = act_props,
@@ -105,64 +102,33 @@ class ActivationOutcomesFormula(GR1Formula):
             raise ValueError('Some values are not in the keys of the TS: {}'
                              .format(all_values))
 
-    @staticmethod
-    def _gen_activation_propositions(sys_props):
-        """
-        For each system proposition (action, region ,etc.), create the
-        corresponding activation and outcome propositions (e.g. completion).        
-        """
-
-        act_props = list()
-
-        for pi in sys_props:
-            if not _is_activation(pi):
-                # Add activation proposition
-                pi_a = _get_act_prop(pi)
-                act_props.append(pi_a)
-
-        return act_props
-
     def _gen_outcome_propositions(self, sys_props):
         """
-        For each system proposition (action, region ,etc.), create the
-        corresponding activation and outcome propositions (e.g. completion).        
+        For each system proposition (action, region ,etc.), 
+        create the corresponding outcome propositions (e.g. completion).      
         """
 
         outcome_props = dict()
-
-        for pi in sys_props:
-            outcome_props[pi] = list()
-            # Add outcome propositions
-            for outcome in self.outcomes:
-                outcome_props[pi].append(_get_out_prop(pi, outcome))
-
+        for pi in sys_props:       
+            outcome_props[pi] = [_get_out_prop(pi,out) for out in self.outcomes]
         return outcome_props
 
     def _get_env_props_from_outcome_props(self):
-        """..."""
+        """Collect all the outcome propositions in one list."""
 
         env_props = reduce(lambda acc, ele: acc + ele,
                            self.outcome_props.values(), [])
-
         return env_props
 
     @staticmethod
     def _convert_ts_to_act_out(ts):
         """Convert the keys to completion props and the values to activation."""
         
-        new_ts = {}
-
+        new_ts = dict()
         for k in ts.keys():        
-            k_c = _get_com_prop(k)       # completion prop
-
-            k_c_values = list()
-            for v in ts[k]:            
-                v_a = _get_act_prop(v)   # activation prop
-
-                k_c_values.append(v_a)
-
+            k_c = _get_com_prop(k)                  # completion prop
+            k_c_values = map(_get_act_prop, ts[k])  # activation props
             new_ts[k_c] = k_c_values
-
         return new_ts
 
 
@@ -255,6 +221,24 @@ class TransitionRelationFormula(ActivationOutcomesFormula):
         return sys_trans_formulas
 
 
+class TopologyMutexFormula(ActivationOutcomesFormula):
+    """
+    Generate environment assumptions/constraints that enforce 
+    mutual exclusion between the topology propositions; Eq. (1)
+
+    The transition system TS, is provided in the form of a dictionary.
+    """
+    
+    def __init__(self, ts):
+        super(TopologyMutexFormula, self).__init__(sys_props = [],
+                                                   outcomes = ['completed'],
+                                                   ts = ts)
+        
+        # Delegate to the parent's parent class (GR1Formula) method
+        self.formulas = self.gen_mutex_formulas(self.env_props, future = True)
+        self.type = 'env_trans'
+
+
 class SingleStepChangeFormula(ActivationOutcomesFormula):
     """
     Safety formulas that govern how the topology propositions can change
@@ -267,16 +251,43 @@ class SingleStepChangeFormula(ActivationOutcomesFormula):
     """
 
     def __init__(self, ts, outcomes = ['completed']):
-        super(SingleStepChangeFormula, self).__init__(sys_props = ts.keys(),
-                                                      outcomes = outcomes)
+        super(SingleStepChangeFormula, self).__init__(sys_props = [],
+                                                      outcomes = outcomes,
+                                                      ts = ts)
         
-        self.formulas = self._gen_single_step_change_formulas()
+        self.formulas = self._gen_single_step_change_formulas(ts)
         self.type = 'env_trans'
 
-    def _gen_single_step_change_formulas(self):
+    def _gen_single_step_change_formulas(self, ts):
         """Equivalent of Eq. (2)"""
         
-        return []
+        all_formulas = list()
+
+        for pi in ts.keys():
+            
+            pi_c = _get_com_prop(pi)
+            next_pi_c = LTL.next(pi_c)
+            
+            for pi_prime in ts[pi]:
+                
+                pi_prime_a = _get_act_prop(pi_prime)
+                phi = self._gen_phi_prop(pi_prime_a)
+
+                left_hand_side = LTL.conj([pi_c, phi])
+
+                act_outcomes = map(LTL.next, self.outcome_props[pi_prime])
+                
+                rhs_elements = [next_pi_c] # reinitialize list for new pi_prime
+                rhs_elements.extend(act_outcomes)
+                rhs_elements = list(set(rhs_elements)) # clear duplicates
+
+                right_hand_side = LTL.disj(rhs_elements)
+
+                implication = LTL.implication(left_hand_side, right_hand_side)
+
+                all_formulas.append(implication)
+
+        return all_formulas
 
 
 class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):

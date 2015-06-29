@@ -161,6 +161,19 @@ class TSFormulaGenerationTests(unittest.TestCase):
         self.assertItemsEqual(actual_seq =  formula.env_props,
                               expected_seq = expected_env_props)
 
+    def test_topology_mutex_formula(self):
+        
+        formula = TopologyMutexFormula(self.ts)
+
+        self.assertEqual('env_trans', formula.type)
+
+        expected_formula_1 = 'next(r1_c) <-> (! next(r2_c) & ! next(r3_c))'
+        expected_formula_2 = 'next(r2_c) <-> (! next(r1_c) & ! next(r3_c))'
+        expected_formula_3 = 'next(r3_c) <-> (! next(r1_c) & ! next(r2_c))'
+
+        expected_formulas = [expected_formula_1, expected_formula_2, expected_formula_3]
+
+        self.assertItemsEqual(formula.formulas, expected_formulas)
 
     def test_transition_relation_formula(self):
 
@@ -182,21 +195,41 @@ class TSFormulaGenerationTests(unittest.TestCase):
 
         self.assertItemsEqual(formula.formulas, expected_formulas)
 
-    def test_single_step_change_formula_without_outcomes(self):
+    def test_single_step_change_formula_with_one_outcome(self):
 
         formula = SingleStepChangeFormula(self.ts) # 'completed' used by default
 
         self.assertEqual('env_trans', formula.type)
 
-        self.fail('Incomplete test!')
+        expected_formula_1a = '(r1_c & (r1_a & ! r2_a & ! r3_a)) -> next(r1_c)'
+        expected_formula_1b = '(r1_c & (r2_a & ! r1_a & ! r3_a)) -> (next(r1_c) | next(r2_c))'
+        expected_formula_1c = '(r1_c & (r3_a & ! r1_a & ! r2_a)) -> (next(r3_c) | next(r1_c))'
+        expected_formula_2  = '(r2_c & (r2_a & ! r1_a & ! r3_a)) -> next(r2_c)'
+        expected_formula_3a = '(r3_c & (r1_a & ! r2_a & ! r3_a)) -> (next(r3_c) | next(r1_c))'
+        expected_formula_3b = '(r3_c & (r3_a & ! r1_a & ! r2_a)) -> next(r3_c)'
 
-    def test_single_step_change_formula_with_extra_outcomes(self):
+        expected_formulas = [expected_formula_1a, expected_formula_1b, expected_formula_1c,
+                             expected_formula_2, expected_formula_3a, expected_formula_3b]
+
+        self.assertItemsEqual(formula.formulas, expected_formulas)
+
+    def test_single_step_change_formula_with_multiple_outcomes(self):
         
         formula = SingleStepChangeFormula(self.ts, ['completed', 'failed'])
 
         self.assertEqual('env_trans', formula.type)
 
-        self.fail('Incomplete test!')
+        expected_formula_1a = '(r1_c & (r1_a & ! r2_a & ! r3_a)) -> (next(r1_c) | next(r1_f))'
+        expected_formula_1b = '(r1_c & (r2_a & ! r1_a & ! r3_a)) -> (next(r1_c) | next(r2_f) | next(r2_c))'
+        expected_formula_1c = '(r1_c & (r3_a & ! r1_a & ! r2_a)) -> (next(r3_c) | next(r3_f) | next(r1_c))'
+        expected_formula_2  = '(r2_c & (r2_a & ! r1_a & ! r3_a)) -> (next(r2_f) | next(r2_c))'
+        expected_formula_3a = '(r3_c & (r1_a & ! r2_a & ! r3_a)) -> (next(r3_c) | next(r1_c) | next(r1_f))'
+        expected_formula_3b = '(r3_c & (r3_a & ! r1_a & ! r2_a)) -> (next(r3_c) | next(r3_f))'
+
+        expected_formulas = [expected_formula_1a, expected_formula_1b, expected_formula_1c,
+                             expected_formula_2, expected_formula_3a, expected_formula_3b]
+
+        self.assertItemsEqual(formula.formulas, expected_formulas)
 
 # =============================================================================
 # Entry point
