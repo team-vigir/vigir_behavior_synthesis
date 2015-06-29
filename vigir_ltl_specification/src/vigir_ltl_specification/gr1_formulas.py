@@ -233,7 +233,7 @@ class GR1Formula(object):
 
 		phi_prop = LTL.conj(props_in_phi)
 
-		return '(' + phi_prop + ')'
+		return phi_prop
 
 	def _get_other_trans_props(self, prop):
 		"""For some proposition \pi_r, get all propositions \pi_r' such that r' =/= r."""

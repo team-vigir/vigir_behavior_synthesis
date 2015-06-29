@@ -5,119 +5,203 @@ from vigir_ltl_specification.activation_outcomes import *
 import unittest
 
 
-class FormulaGenerationTests(unittest.TestCase):
-	"""Test the generation of Activation-Outcomes formulas"""
+class ActionFormulaGenerationTests(unittest.TestCase):
+    """Test the generation of Activation-Outcomes action formulas"""
 
-	def setUp(self):
-		"""Gets called before every test case."""
+    def setUp(self):
+        """Gets called before every test case."""
 
-		self.sys_props = ['dance', 'sleep']
-		self.outcomes  = ['completed', 'failed', 'preempted']
+        self.sys_props = ['dance', 'sleep']
+        self.outcomes  = ['completed', 'failed', 'preempted']
 
-		self.ts = {'r1': ['r1', 'r2', 'r3'],
-               	   'r2': ['r2'],
-               	   'r3': ['r3', 'r1']}
+    def tearDown(self):
+        """Gets called after every test case."""
 
-	def tearDown(self):
-		"""Gets called after every test case."""
+        del self.sys_props
+        del self.outcomes
 
-		del self.sys_props
-		del self.outcomes
+    def test_base_class(self):
 
-	def test_base_class(self):
+        formula = ActivationOutcomesFormula(self.sys_props, self.outcomes)
 
-		formula = ActivationOutcomesFormula(self.sys_props, self.outcomes)
+        # Test whether the obvious things are working as expected
+        self.assertItemsEqual(self.outcomes, formula.outcomes)
+        self.assertEqual(list(), formula.formulas)
 
-		# Test whether the obvious things are working as expected
-		self.assertItemsEqual(self.outcomes, formula.outcomes)
-		self.assertEqual(list(), formula.formulas)
+        # Test whether the activation propositions are generated correctly
+        expected_act_props = ['sleep_a', 'dance_a']
+        self.assertItemsEqual(expected_act_props, formula.sys_props)
 
-		# Test whether the activation propositions are generated correctly
-		expected_act_props = ['sleep_a', 'dance_a']
-		self.assertItemsEqual(expected_act_props, formula.sys_props)
+        # Test whether the outcome propositions are generated correctly
+        expected_out_props = {'dance': ['dance_c', 'dance_f', 'dance_p'],
+                              'sleep': ['sleep_c', 'sleep_f', 'sleep_p']}
+        self.assertItemsEqual(expected_out_props, formula.outcome_props)
 
-		# Test whether the outcome propositions are generated correctly
-		expected_out_props = {'dance': ['dance_c', 'dance_f', 'dance_p'],
-							  'sleep': ['sleep_c', 'sleep_f', 'sleep_p']}
-		self.assertItemsEqual(expected_out_props, formula.outcome_props)
+        # Test whether the environment propositions are generated correctly
+        expected_env_props = ['dance_c', 'dance_f', 'dance_p',
+                              'sleep_c', 'sleep_f', 'sleep_p']
+        self.assertItemsEqual(expected_env_props, formula.env_props)
 
-		# Test whether the environment propositions are generated correctly
-		expected_env_props = ['dance_c', 'dance_f', 'dance_p',
-							  'sleep_c', 'sleep_f', 'sleep_p']
-		self.assertItemsEqual(expected_env_props, formula.env_props)
+    def test_constructor_raises_exceptions(self):
 
-	def test_constructor_raises_exceptions(self):
+        self.assertRaises(TypeError,  ActivationOutcomesFormula, ['dance', 1.0])
+        self.assertRaises(ValueError, ActivationOutcomesFormula, ['dance'],[])
+        self.assertRaises(TypeError,  ActivationOutcomesFormula, ['dance'],[2])
+        self.assertRaises(ValueError, ActivationOutcomesFormula, ['dance'],
+                          ['completed', 'capitalized', 'called', 'calculated'])
 
-		self.assertRaises(TypeError,  ActivationOutcomesFormula, ['dance', 1.0])
-		self.assertRaises(ValueError, ActivationOutcomesFormula, ['dance'],[])
-		self.assertRaises(TypeError,  ActivationOutcomesFormula, ['dance'],[2])
-		self.assertRaises(ValueError, ActivationOutcomesFormula, ['dance'],
-						  ['completed', 'capitalized', 'called', 'calculated'])
+    def test_system_initial_conditions(self):
+        
+        self.fail('Incomplete test!')
 
-	def test_system_initial_conditions(self):
-		
-		self.fail('Incomplete test!')
+    def test_mutex_formula(self):
 
-	def test_mutex_formula(self):
+        formula = OutcomeMutexFormula(['dance'],
+                                      ['completed', 'failed', 'preempted'])
 
-		formula = OutcomeMutexFormula(
-						['dance'],
-						outcomes = ['completed', 'failed', 'preempted'])
+        expected_formula_c = 'next(dance_c) -> (next(! dance_f) & next(! dance_p))'
+        expected_formula_f = 'next(dance_f) -> (next(! dance_c) & next(! dance_p))'
+        expected_formula_p = 'next(dance_p) -> (next(! dance_c) & next(! dance_f))'
 
-		expected_formula_c = 'next(dance_c) -> (next(! dance_f) & next(! dance_p))'
-		expected_formula_f = 'next(dance_f) -> (next(! dance_c) & next(! dance_p))'
-		expected_formula_p = 'next(dance_p) -> (next(! dance_c) & next(! dance_f))'
+        expected_formulas = [expected_formula_c, expected_formula_f, expected_formula_p]
 
-		expected_formulas = [expected_formula_c, expected_formula_f, expected_formula_p]
+        self.assertEqual('env_trans', formula.type)
+        self.assertItemsEqual(expected_formulas, formula.formulas)
 
-		self.assertEqual('env_trans', formula.type)
-		self.assertItemsEqual(expected_formulas, formula.formulas)
+    def test_mutex_single_outcome(self):
 
-	def test_mutex_single_outcome(self):
+        formula = OutcomeMutexFormula(['dance'], outcomes = ['completed'])
 
-		formula = OutcomeMutexFormula(['dance'], outcomes = ['completed'])
+        self.assertItemsEqual(list(), formula.formulas)
 
-		self.assertItemsEqual(list(), formula.formulas)
+    def test_preconditions_formula(self):
+        
+        formula = PreconditionsFormula(action = 'run',
+                                       preconditions = ['step', 'walk'])
 
-	def test_transition_relation_formula(self):
+        expected_formula = '(! step_c | ! walk_c) -> ! run_a'
 
-		formula = TransitionRelationFormula(self.ts)
+        self.assertEqual('sys_trans', formula.type)
+        self.assertItemsEqual([expected_formula], formula.formulas)
 
-		self.assertEqual('sys_trans', formula.type)
 
-		self.fail('Incomplete test!')
+class TSFormulaGenerationTests(unittest.TestCase):
+    """Test the generation of Activation-Outcomes 'topology' formulas"""
 
-	def test_single_step_change_formula_without_outcomes(self):
+    def setUp(self):
+        """Gets called before every test case."""
 
-		formula = SingleStepChangeFormula(self.ts) # 'completed' used by default
+        self.outcomes  = ['completed', 'failed']
 
-		self.assertEqual('env_trans', formula.type)
+        self.ts = {'r1': ['r1', 'r2', 'r3'],
+                   'r2': ['r2'],
+                   'r3': ['r3', 'r1']}
 
-		self.fail('Incomplete test!')
+    def tearDown(self):
+        """Gets called after every test case."""
 
-	def test_single_step_change_formula_with_extra_outcomes(self):
-		
-		formula = SingleStepChangeFormula(self.ts, ['completed', 'failed'])
+        del self.outcomes
+        del self.ts
 
-		self.assertEqual('env_trans', formula.type)
+    def test_bad_key_raises_exception(self):
+        
+        bad_ts = {100: ['ok_value']} # bad key, not str
+        self.assertRaises(TypeError, ActivationOutcomesFormula,
+                          sys_props = [], outcomes = ['completed'], ts = bad_ts)
 
-		self.fail('Incomplete test!')
+    def test_bad_value_raises_exception(self):
+        
+        bad_ts = {'ok_key': 'bad_value'} # ok key, but value isn't a list
+        self.assertRaises(TypeError, ActivationOutcomesFormula,
+                          sys_props = [], outcomes = ['completed'], ts = bad_ts)
 
-	def test_preconditions_formula(self):
-		
-		formula = PreconditionsFormula(action = 'run',
-									   preconditions = ['step', 'walk'])
+    def test_bad_values_raise_exception(self):
+        
+        bad_ts = {'ok_key': [100, 200]} # ok key, bad list elements are not str
+        self.assertRaises(TypeError, ActivationOutcomesFormula,
+                          sys_props = [], outcomes = ['completed'], ts = bad_ts)
 
-		expected_formula = '(! step_c | ! walk_c) -> ! run_a'
+    def test_value_not_in_keys_raises_exception(self):
+        
+        bad_ts = {'key_1': ['key_1', 'key_2']}
+        self.assertRaises(ValueError, ActivationOutcomesFormula,
+                          sys_props = [], outcomes = ['completed'], ts = bad_ts)
 
-		self.assertEqual('sys_trans', formula.type)
-		self.assertItemsEqual([expected_formula], formula.formulas)
+    def test_transition_system_conversion(self):
+        
+        formula = ActivationOutcomesFormula(sys_props = [], 
+                                            outcomes = ['completed'],
+                                            ts = self.ts)
 
+        expected_ts = {'r1_c': ['r1_a', 'r2_a', 'r3_a'],
+                       'r2_c': ['r2_a'],
+                       'r3_c': ['r3_a', 'r1_a']}
+
+        self.assertDictEqual(formula.ts, expected_ts)
+
+    def test_sys_propositions_from_ts(self):
+        
+        formula = ActivationOutcomesFormula(sys_props = [], 
+                                            outcomes = ['completed'],
+                                            ts = self.ts)
+
+        expected_sys_props = ['r1_a', 'r2_a', 'r3_a']
+
+        self.assertItemsEqual(actual_seq =  formula.sys_props,
+                              expected_seq = expected_sys_props)
+
+    def test_env_propositions_from_ts(self):
+        
+        formula = ActivationOutcomesFormula(sys_props = [], 
+                                            outcomes = ['completed'],
+                                            ts = self.ts)
+
+        expected_env_props = ['r1_c', 'r2_c', 'r3_c']
+
+        self.assertItemsEqual(actual_seq =  formula.env_props,
+                              expected_seq = expected_env_props)
+
+
+    def test_transition_relation_formula(self):
+
+        formula = TransitionRelationFormula(self.ts)
+
+        self.assertEqual('sys_trans', formula.type)
+
+        expected_formula_1 = 'r1_c -> (next((r1_a & ! r2_a & ! r3_a)) | ' + \
+                                      'next((r2_a & ! r1_a & ! r3_a)) | ' + \
+                                      'next((r3_a & ! r1_a & ! r2_a)) | ' + \
+                                      'next(! r1_a))'
+        expected_formula_2 = 'r2_c -> (next((r2_a & ! r1_a & ! r3_a)) | ' + \
+                                      'next(! r2_a))'
+        expected_formula_3 = 'r3_c -> (next((r3_a & ! r1_a & ! r2_a)) | ' + \
+                                      'next((r1_a & ! r2_a & ! r3_a)) | ' + \
+                                      'next(! r3_a))'
+
+        expected_formulas = [expected_formula_1, expected_formula_2, expected_formula_3]
+
+        self.assertItemsEqual(formula.formulas, expected_formulas)
+
+    def test_single_step_change_formula_without_outcomes(self):
+
+        formula = SingleStepChangeFormula(self.ts) # 'completed' used by default
+
+        self.assertEqual('env_trans', formula.type)
+
+        self.fail('Incomplete test!')
+
+    def test_single_step_change_formula_with_extra_outcomes(self):
+        
+        formula = SingleStepChangeFormula(self.ts, ['completed', 'failed'])
+
+        self.assertEqual('env_trans', formula.type)
+
+        self.fail('Incomplete test!')
 
 # =============================================================================
 # Entry point
 # =============================================================================
 
 if __name__ == '__main__':
-	# Run all tests
-	unittest.main()
+    # Run all tests
+    unittest.main()

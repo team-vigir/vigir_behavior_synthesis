@@ -50,9 +50,18 @@ class ActivationOutcomesFormula(GR1Formula):
         # Get the outcome props (environment) as a list
         env_props = self._get_env_props_from_outcome_props()
 
+        #TODO: Refactor handling of TS dictionary (here and conversion below)
+        for k, v in ts.iteritems():
+            act_props.extend(map(_get_act_prop, v))
+            env_props.append(_get_com_prop(k))
+
         super(ActivationOutcomesFormula, self).__init__(env_props = env_props,
                                                         sys_props = act_props,
-                                                        ts = ts)
+                                                        ts = {}) # bypass ts
+
+        # Convert the transition system's props to activation-outcome props
+        self.original_ts = ts
+        self.ts = self._convert_ts_to_act_out(ts) # overwrites self.ts
 
     @staticmethod
     def _check_input_arguments(sys_props, outcomes, ts):
@@ -78,7 +87,23 @@ class ActivationOutcomesFormula(GR1Formula):
                              'that their first character is unique: {}'
                              .format(outcomes))
 
-        #TODO: Check transition system (ts)
+        # Check that the TS dictionary is well-formed: {str: list of str}
+        if any([type(k) is not str for k in ts.keys()]):
+            raise TypeError('Invalid type of TS key props (expected str): {}'
+                            .format(map(type, ts.keys())))
+        if any([type(v) is not list for v in ts.values()]):
+            raise TypeError('Invalid type of TS dict values (expected list): {}'
+                            .format(map(type, ts.values())))
+        
+        all_values = reduce(lambda acc, ele: acc + ele, ts.values(), [])
+        
+        if any([type(v) is not str for v in all_values]):
+            raise TypeError('Invalid type of TS value props (expected str): {}'
+                            .format(map(type, all_values)))
+
+        if any([v not in ts.keys() for v in all_values]):
+            raise ValueError('Some values are not in the keys of the TS: {}'
+                             .format(all_values))
 
     @staticmethod
     def _gen_activation_propositions(sys_props):
@@ -120,6 +145,25 @@ class ActivationOutcomesFormula(GR1Formula):
                            self.outcome_props.values(), [])
 
         return env_props
+
+    @staticmethod
+    def _convert_ts_to_act_out(ts):
+        """Convert the keys to completion props and the values to activation."""
+        
+        new_ts = {}
+
+        for k in ts.keys():        
+            k_c = _get_com_prop(k)       # completion prop
+
+            k_c_values = list()
+            for v in ts[k]:            
+                v_a = _get_act_prop(v)   # activation prop
+
+                k_c_values.append(v_a)
+
+            new_ts[k_c] = k_c_values
+
+        return new_ts
 
 
 class OutcomeMutexFormula(ActivationOutcomesFormula):
@@ -180,22 +224,30 @@ class TransitionRelationFormula(ActivationOutcomesFormula):
         super(TransitionRelationFormula, self).__init__(sys_props = [],
                                                         ts = ts)
 
-        self.formulas = self._gen_system_transition_relation_formulas()
+        self.formulas = self._gen_system_transition_relation_formulas(ts)
         self.type = 'sys_trans'
 
-    def _gen_system_transition_relation_formulas(self):
-        """Safety requirements from Section V-B (2)"""
+    def _gen_system_transition_relation_formulas(self, ts):
+        """
+        Safety requirements from Section V-B (2), but extended with the 
+        option to not activate any proposition in the next time step.
+        """
 
         sys_trans_formulas = list()
-        for prop in self.ts.keys():
-            left_hand_side = prop
+        for prop in ts.keys():
+            left_hand_side = _get_com_prop(prop)
             right_hand_side = list()
             
-            for adj_prop in self.ts[prop]:
-                adj_phi_prop = self._gen_phi_prop(adj_prop)
+            for adj_prop in ts[prop]:
+                adj_prop_a = _get_act_prop(adj_prop)
+                adj_phi_prop = self._gen_phi_prop(adj_prop_a)
                 disjunct = LTL.next(adj_phi_prop)
                 right_hand_side.append(disjunct)
 
+            # The last disjunct encodes the option to not activate anything next
+            do_nothing_disjunct = LTL.next(LTL.neg(_get_act_prop(prop)))
+            right_hand_side.append(do_nothing_disjunct)
+            
             right_hand_side = LTL.disj(right_hand_side)
             sys_trans_formulas.append(LTL.implication(left_hand_side,
                                                       right_hand_side))
@@ -428,8 +480,8 @@ def _get_act_prop(prop):
     return prop + "_a" # 'a' stands for activation
 
 def _get_com_prop(prop):
-    # Still necessary due to preconditions
-    return prop + "_c" # 'c' stands for completion or completed
+    # Still necessary due to preconditions and topology formulas
+    return _get_out_prop(prop, 'completed')
 
 def _get_out_prop(prop, outcome):
     # If an activation proposition was passed, strip the '_a' suffix
