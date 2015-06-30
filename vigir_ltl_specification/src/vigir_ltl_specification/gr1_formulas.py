@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from ltl import LTL
+import ltl as LTL
 
 """
 Formulas for the GR(1) fragment of Linear Temporal Logic

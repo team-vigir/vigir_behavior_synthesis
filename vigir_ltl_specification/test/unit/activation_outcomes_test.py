@@ -57,6 +57,12 @@ class ActionFormulaGenerationTests(unittest.TestCase):
 
         self.assertRaises(ValueError, _get_act_prop, 'dance_a')
 
+    def test_outcome_prop_from_activation(self):
+        
+        from vigir_ltl_specification.activation_outcomes import _get_out_prop
+
+        self.assertEqual(_get_out_prop('dance_a', 'failed'), 'dance_f')
+
     def test_system_initial_conditions(self):
         
         self.fail('Incomplete test!')
@@ -246,14 +252,14 @@ class TSFormulaGenerationTests(unittest.TestCase):
 
         self.assertEqual('sys_trans', formula.type)
 
-        expected_formula_1 = 'r1_c -> (next((r1_a & ! r2_a & ! r3_a)) | ' + \
-                                      'next((r2_a & ! r1_a & ! r3_a)) | ' + \
-                                      'next((r3_a & ! r1_a & ! r2_a)) | ' + \
+        expected_formula_1 = 'r1_c -> (next(r1_a & ! r2_a & ! r3_a) | ' + \
+                                      'next(r2_a & ! r1_a & ! r3_a) | ' + \
+                                      'next(r3_a & ! r1_a & ! r2_a) | ' + \
                                       'next(! r1_a))'
-        expected_formula_2 = 'r2_c -> (next((r2_a & ! r1_a & ! r3_a)) | ' + \
+        expected_formula_2 = 'r2_c -> (next(r2_a & ! r1_a & ! r3_a) | ' + \
                                       'next(! r2_a))'
-        expected_formula_3 = 'r3_c -> (next((r3_a & ! r1_a & ! r2_a)) | ' + \
-                                      'next((r1_a & ! r2_a & ! r3_a)) | ' + \
+        expected_formula_3 = 'r3_c -> (next(r3_a & ! r1_a & ! r2_a) | ' + \
+                                      'next(r1_a & ! r2_a & ! r3_a) | ' + \
                                       'next(! r3_a))'
 
         expected_formulas = [expected_formula_1, expected_formula_2, expected_formula_3]
@@ -296,9 +302,50 @@ class TSFormulaGenerationTests(unittest.TestCase):
 
         self.assertItemsEqual(formula.formulas, expected_formulas)
 
-    def test_topology_fairness_conditions(self):
+    def test_topology_fairness_conditions_single_outcome(self):
+        
+        formula = TopologyFairnessConditionsFormula(self.ts)
+
+        expected_formula_1a = '((r1_a & ! r2_a & ! r3_a) & next(r1_c))'
+        expected_formula_1b = '((r2_a & ! r1_a & ! r3_a) & next(r2_c))'
+        expected_formula_1c = '((r3_a & ! r1_a & ! r2_a) & next(r3_c))'
+        expected_formula_1  = '(' + expected_formula_1a + ' | ' + \
+                                    expected_formula_1b + ' | ' + \
+                                    expected_formula_1c + ')' # completion
+        
+        expected_formula_2a = '((r1_a & ! r2_a & ! r3_a) & ! next(r1_a & ! r2_a & ! r3_a))'
+        expected_formula_2b = '((r2_a & ! r1_a & ! r3_a) & ! next(r2_a & ! r1_a & ! r3_a))'
+        expected_formula_2c = '((r3_a & ! r1_a & ! r2_a) & ! next(r3_a & ! r1_a & ! r2_a))'
+        expected_formula_2  = '(' + expected_formula_2a + ' | ' + \
+                                    expected_formula_2b + ' | ' + \
+                                    expected_formula_2c + ')' # change
+        
+        expected_formula = '(' + expected_formula_1 + ' | ' + \
+                                 expected_formula_2 + ')'
+
+        self.assertItemsEqual([expected_formula], formula.formulas)
+
+    def test_topology_fairness_conditions_with_outcomes(self):
         
         self.fail('Incomplete test!')
+
+        formula = TopologyFairnessConditionsFormula(
+                                    ts = self.ts,
+                                    outcomes = ['completed', 'failed'])
+
+        expected_formula_1a = '(r1_a & (next(dance_c) | next(dance_f)))'
+        expected_formula_1b = '(! dance_a & (next(! dance_c) & next(! dance_f)))'
+        expected_formula_1  = '(' + expected_formula_1a + ' | ' + \
+                                 expected_formula_1b + ')'
+        expected_formula_2a = '(dance_a & next(! dance_a))'
+        expected_formula_2b = '(! dance_a & next(dance_a))' # change
+        expected_formula_2  = '(' + expected_formula_2a + ' | ' + \
+                                 expected_formula_2b + ')'
+        
+        expected_formula = '(' + expected_formula_1 + ' | ' + \
+                                 expected_formula_2 + ')'
+
+        self.assertItemsEqual([expected_formula], formula.formulas)
 
 # =============================================================================
 # Entry point

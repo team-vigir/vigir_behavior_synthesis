@@ -1,40 +1,38 @@
-class LTL(object):
-	"""docstring for LTL"""	
+#!/usr/bin/env python
 
-	def __init__(self):
-		print('The LTL class is not meant to be instantiated!') #pragma: no cover
+"""
+Boolean operators and the 'next' LTL operator.
 
-	@staticmethod
-	def conj(terms):
-		if len(terms) > 1:
-			return LTL.paren(" & ".join(terms))
-		else:
-			return terms[0]
+The remaining LTL operators are not (currently) needed because 
+the specification module is using the .structuredslugs format.
+"""
+		
+def conj(terms):
+	if len(terms) > 1:
+		return paren(" & ".join(terms))
+	else:
+		return terms[0]
 
-	@staticmethod
-	def disj(terms):
-		if len(terms) > 1:
-			return LTL.paren(" | ".join(terms))
-		else:
-			return terms[0]
+def disj(terms):
+	if len(terms) > 1:
+		return paren(" | ".join(terms))
+	else:
+		return terms[0]
 
-	@staticmethod
-	def neg(term):
-		return "! " + term
+def neg(term):
+	return "! " + term
 
-	@staticmethod
-	def next(proposition):
-		# return proposition + "'"
-		return "next(" + proposition + ")"
+def next(term):
+	if term[0] == '(' and term[-1] == ')':
+		return 'next' + term
+	else:
+		return 'next' + paren(term)
 
-	@staticmethod
-	def implication(left_hand_side, right_hand_side):
-		return left_hand_side + " -> " + right_hand_side
+def implication(left_hand_side, right_hand_side):
+	return left_hand_side + " -> " + right_hand_side
 
-	@staticmethod
-	def iff(left_hand_side, right_hand_side):
-		return left_hand_side + " <-> " + right_hand_side
+def iff(left_hand_side, right_hand_side):
+	return left_hand_side + " <-> " + right_hand_side
 
-	@staticmethod
-	def paren(term):
-		return "(" + term + ")"
+def paren(term):
+	return "(" + term + ")"

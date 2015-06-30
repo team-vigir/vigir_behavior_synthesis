@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from ltl import LTL
+import ltl as LTL
 from gr1_formulas import GR1Formula
 
 """
@@ -453,12 +453,11 @@ class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
     The possible outcomes are all adjacent states in the transition system.
     """
 
-    #TODO: Rethink topology propositions in the Activation-Outcomes framework
-
-    def __init__(self, ts):
-        super(TopologyFairnessConditionsFormula, self).__init__(sys_props = [],
-                                                                outcomes = [],
-                                                                ts = ts)
+    def __init__(self, ts, outcomes = ['completed']):
+        super(TopologyFairnessConditionsFormula, self).__init__(
+                                        sys_props = [],
+                                        outcomes = outcomes,
+                                        ts = ts)
         
         self.formulas = self._gen_ts_fairness_formulas(ts)
         self.type = 'env_liveness'
@@ -488,7 +487,7 @@ class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
         change_formula = LTL.disj(change_terms)
         fairness_formula = LTL.disj([completion_formula, change_formula])
 
-        return fairness_formula
+        return [fairness_formula]
 
 # =============================================================================
 # Module-level helper functions
