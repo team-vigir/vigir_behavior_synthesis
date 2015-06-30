@@ -63,10 +63,6 @@ class ActionFormulaGenerationTests(unittest.TestCase):
 
         self.assertEqual(_get_out_prop('dance_a', 'failed'), 'dance_f')
 
-    def test_system_initial_conditions(self):
-        
-        self.fail('Incomplete test!')
-
     def test_mutex_formula(self):
 
         formula = OutcomeMutexFormula(['dance'],
@@ -306,6 +302,8 @@ class TSFormulaGenerationTests(unittest.TestCase):
         
         formula = TopologyFairnessConditionsFormula(self.ts)
 
+        self.assertEqual('env_liveness', formula.type)
+
         expected_formula_1a = '((r1_a & ! r2_a & ! r3_a) & next(r1_c))'
         expected_formula_1b = '((r2_a & ! r1_a & ! r3_a) & next(r2_c))'
         expected_formula_1c = '((r3_a & ! r1_a & ! r2_a) & next(r3_c))'
@@ -333,6 +331,8 @@ class TSFormulaGenerationTests(unittest.TestCase):
                                     ts = self.ts,
                                     outcomes = ['completed', 'failed'])
 
+        self.assertEqual('env_liveness', formula.type)
+
         expected_formula_1a = '(r1_a & (next(dance_c) | next(dance_f)))'
         expected_formula_1b = '(! dance_a & (next(! dance_c) & next(! dance_f)))'
         expected_formula_1  = '(' + expected_formula_1a + ' | ' + \
@@ -346,6 +346,53 @@ class TSFormulaGenerationTests(unittest.TestCase):
                                  expected_formula_2 + ')'
 
         self.assertItemsEqual([expected_formula], formula.formulas)
+
+class ICFormulaGenerationTests(unittest.TestCase):
+    """Test the generation of Activation-Outcomes initial condition formulas"""
+
+    def setUp(self):
+        """Gets called before every test case."""
+
+        self.sys_props = ['dance', 'sleep', 'swim']
+
+        self.ts = {'r1': ['r1', 'r2', 'r3'],
+                   'r2': ['r2'],
+                   'r3': ['r3', 'r1']}
+
+    def tearDown(self):
+        """Gets called after every test case."""
+
+        del self.sys_props, self.ts
+
+    def test_sys_init_from_true_actions(self):
+        
+        sys_props = ['dance_a', 'sleep_a', 'swim_a']
+        true_props = ['dance', 'swim']
+        formula = SystemInitialConditions(sys_props, true_props)
+
+        self.assertEqual('sys_init', formula.type)
+        self.assertItemsEqual(sys_props, formula.sys_props)
+        self.assertItemsEqual(list(), formula.env_props)
+
+        expected_formula = ['dance_a', 'swim_a', '! sleep_a']
+
+        self.assertItemsEqual(expected_formula, formula.formulas)
+
+    def test_env_init_from_true_actions(self):
+        
+        env_props = ['dance_c', 'sleep_c', 'swim_c',
+                     'dance_f', 'sleep_f', 'swim_f']
+        true_props = ['dance', 'swim']
+        formula = EnvironmentInitialConditions(env_props, true_props)
+
+        self.assertEqual('env_init', formula.type)
+        self.assertItemsEqual(list(), formula.sys_props)
+        self.assertItemsEqual(env_props, formula.env_props)
+
+        expected_formula = ['dance_c', '! dance_f', 'swim_c', '! swim_f',
+                            '! sleep_c', '! sleep_f']
+
+        self.assertItemsEqual(expected_formula, formula.formulas)
 
 # =============================================================================
 # Entry point

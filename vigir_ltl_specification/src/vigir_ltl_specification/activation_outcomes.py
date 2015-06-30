@@ -61,8 +61,7 @@ class ActivationOutcomesFormula(GR1Formula):
         self.original_ts = ts
         self.ts = self._convert_ts_to_act_out(ts) # overwrites self.ts
 
-    @staticmethod
-    def _check_input_arguments(sys_props, outcomes, ts):
+    def _check_input_arguments(self, sys_props, outcomes, ts):
         """Check type of input arguments as well as adherence to conventions."""
 
         if any([type(pi) != str for pi in sys_props]):
@@ -488,6 +487,58 @@ class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
         fairness_formula = LTL.disj([completion_formula, change_formula])
 
         return [fairness_formula]
+
+# =============================================================================
+# System and environment initial condition formulas
+# =============================================================================
+
+class SystemInitialConditions(GR1Formula):
+    """..."""
+    
+    def __init__(self, sys_props, true_props):
+        super(SystemInitialConditions, self).__init__(sys_props = sys_props)
+        
+        self.formulas = self._gen_sys_init_from_true_props(sys_props,true_props)    
+        
+        self.type = 'sys_init'
+
+    def _gen_sys_init_from_true_props(self, sys_props, true_props):
+        
+        sys_init_props = list()
+
+        for pi_a in sys_props:
+
+            if pi_a in map(_get_act_prop, true_props):
+                sys_init_props.append(pi_a)
+            else:
+                not_pi_a = LTL.neg(pi_a)
+                sys_init_props.append(not_pi_a)
+
+        return sys_init_props
+
+class EnvironmentInitialConditions(GR1Formula):
+    """..."""
+
+    def __init__(self, env_props, true_props):
+        super(EnvironmentInitialConditions, self).__init__(env_props=env_props)
+        
+        self.formulas = self._gen_env_init_from_true_props(env_props,true_props) 
+        
+        self.type = 'env_init'
+
+    def _gen_env_init_from_true_props(self, env_props, true_props):
+        
+        env_init_props = list()
+
+        for pi_out in env_props:
+
+            if pi_out in map(_get_com_prop, true_props):
+                env_init_props.append(pi_out)
+            else:
+                not_pi_out = LTL.neg(pi_out)
+                env_init_props.append(not_pi_out)
+
+        return env_init_props
 
 # =============================================================================
 # Module-level helper functions

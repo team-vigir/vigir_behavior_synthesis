@@ -23,7 +23,7 @@ class ActionSpecificationTests(unittest.TestCase):
     def tearDown(self):
         """Gets called after every test case."""
 
-        del self.spec
+        del self.spec_name, self.spec
 
     def test_input_to_object(self):
 
@@ -122,7 +122,6 @@ class ActionSpecificationTests(unittest.TestCase):
                                               expected_formula_3])
         self.assertItemsEqual(actual_seq = self.spec.env_liveness,
                               expected_seq = [expected_formula_4])
-
 
 class ConfigurationTests(unittest.TestCase):
     """Test the construction of the RobotConfiguration class."""
