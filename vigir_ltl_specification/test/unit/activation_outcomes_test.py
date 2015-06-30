@@ -81,17 +81,63 @@ class ActionFormulaGenerationTests(unittest.TestCase):
 
         self.assertItemsEqual(list(), formula.formulas)
 
-    def test_action_deactivation_formula(self):
+    def test_action_deactivation_formula_single_outcome(self):
         
-        self.fail('Incomplete test!')
+        formula = PropositionDeactivationFormula(['dance', 'sleep'])
+
+        expected_formula_1 = '(dance_a & next(dance_c)) -> next(! dance_a)'
+        expected_formula_2 = '(sleep_a & next(sleep_c)) -> next(! sleep_a)'
+
+        expected_formulas = [expected_formula_1, expected_formula_2]
+
+        self.assertItemsEqual(expected_formulas, formula.formulas)
+
+    def test_action_deactivation_formula_multiple_outcomes(self):
+        
+        formula = PropositionDeactivationFormula(
+                                    sys_props = ['dance', 'sleep'],
+                                    outcomes = ['completed', 'failed'])
+
+        expected_formula_1 = '(dance_a & (next(dance_c) | next(dance_f))) -> next(! dance_a)'
+        expected_formula_2 = '(sleep_a & (next(sleep_c) | next(sleep_f))) -> next(! sleep_a)'
+
+        expected_formulas = [expected_formula_1, expected_formula_2]
+
+        self.assertItemsEqual(expected_formulas, formula.formulas)
 
     def test_action_outcome_constraints(self):
         
-        self.fail('Incomplete test!')
+        formula = ActionOutcomeConstraintsFormula(
+                                    actions = ['dance'],
+                                    outcomes = ['completed', 'failed'])
 
-    def test_action_fairness_conditions(self):
+        expected_formula_1 = '((dance_c | dance_f) & dance_a) -> (next(dance_c) | next(dance_f))'
+        expected_formula_2 = '(! dance_c & ! dance_a) -> next(! dance_c)'
+        expected_formula_3 = '(! dance_f & ! dance_a) -> next(! dance_f)'
+
+        expected_formulas = [expected_formula_1, expected_formula_2, expected_formula_3]
+
+        self.assertItemsEqual(expected_formulas, formula.formulas)
+
+    def test_action_fairness_conditions_multiple_outcomes(self):
         
-        self.fail('Incomplete test!')
+        formula = ActionFairnessConditionsFormula(
+                                    actions = ['dance'],
+                                    outcomes = ['completed', 'failed'])
+
+        expected_formula_1a = '(dance_a & (next(dance_c) | next(dance_f)))'
+        expected_formula_1b = '(! dance_a & (next(! dance_c) & next(! dance_f)))'
+        expected_formula_1  = '(' + expected_formula_1a + ' | ' + \
+                                 expected_formula_1b + ')'
+        expected_formula_2a = '(dance_a & next(! dance_a))'
+        expected_formula_2b = '(! dance_a & next(dance_a))' # change
+        expected_formula_2  = '(' + expected_formula_2a + ' | ' + \
+                                 expected_formula_2b + ')'
+        
+        expected_formula = '(' + expected_formula_1 + ' | ' + \
+                                 expected_formula_2 + ')'
+
+        self.assertItemsEqual([expected_formula], formula.formulas)
 
     def test_preconditions_formula(self):
         

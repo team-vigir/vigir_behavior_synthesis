@@ -65,12 +65,10 @@ class ActivationOutcomesFormula(GR1Formula):
     def _check_input_arguments(sys_props, outcomes, ts):
         """Check type of input arguments as well as adherence to conventions."""
 
-        # Check types
         if any([type(pi) != str for pi in sys_props]):
             raise TypeError('Invalid type of system props (expected str): {}'
                             .format(map(type, sys_props)))
 
-        # Check that the system propositions are not in activation format
         if any([_is_activation(pi) for pi in sys_props]):
             raise ValueError('Invalid system props (already activation): {}'
                             .format(sys_props))
@@ -535,10 +533,6 @@ def main(): #pragma: no cover
     formulas.append(PropositionDeactivationFormula(sys_props, outcomes))
 
     formulas.append(ActionFairnessConditionsFormula(sys_props, outcomes))
-
-    formulas.append(TransitionRelationFormula({})) # Pass TS here
-
-    # formulas.append(TopologyFairnessConditionsFormula(ts))
 
     for formula in formulas:
         print '---'
