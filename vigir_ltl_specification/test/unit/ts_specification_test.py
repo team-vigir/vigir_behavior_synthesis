@@ -18,12 +18,8 @@ class SpecificationConstructionTests(unittest.TestCase):
         self.spec = TransitionSystemSpecification(name = self.spec_name,
                                                   ts = self.ts)
 
-        print("Setting up a new specification construction test.")
-
     def tearDown(self):
         """Gets called after every test case."""
-
-        print("Cleaning up after latest test ...")
 
         del self.ts, self.spec
 
@@ -43,6 +39,66 @@ class SpecificationConstructionTests(unittest.TestCase):
         
         self.assertItemsEqual(ts_of_interest, self.spec.ts)
 
+    def test_formulas_in_env_trans(self):
+
+        expected_formula_1a = 'next(r1_c) <-> (! next(r2_c) & ! next(r3_c))'
+        expected_formula_1b = 'next(r2_c) <-> (! next(r1_c) & ! next(r3_c))'
+        expected_formula_1c = 'next(r3_c) <-> (! next(r1_c) & ! next(r2_c))'
+        expected_formulas_1 = [expected_formula_1a, expected_formula_1b, expected_formula_1c] # mutex
+
+        expected_formula_2a = '(r1_c & (r1_a & ! r2_a & ! r3_a)) -> next(r1_c)'
+        expected_formula_2b = '(r1_c & (r2_a & ! r1_a & ! r3_a)) -> (next(r1_c) | next(r2_c))'
+        expected_formula_2c = '(r1_c & (r3_a & ! r1_a & ! r2_a)) -> (next(r3_c) | next(r1_c))'
+        expected_formula_2d = '(r2_c & (r2_a & ! r1_a & ! r3_a)) -> next(r2_c)'
+        expected_formula_2e = '(r3_c & (r1_a & ! r2_a & ! r3_a)) -> (next(r3_c) | next(r1_c))'
+        expected_formula_2f = '(r3_c & (r3_a & ! r1_a & ! r2_a)) -> next(r3_c)'
+        expected_formulas_2 = [expected_formula_2a, expected_formula_2b,
+                               expected_formula_2c, expected_formula_2d,
+                               expected_formula_2e, expected_formula_2f] # single step
+
+        expected_env_trans = expected_formulas_1 + expected_formulas_2
+
+        self.assertItemsEqual(actual_seq = self.spec.env_trans,
+                              expected_seq = expected_env_trans)
+
+    def test_formulas_in_sys_trans(self):
+
+        expected_formula_1 = 'r1_c -> (next(r1_a & ! r2_a & ! r3_a) | ' + \
+                                      'next(r2_a & ! r1_a & ! r3_a) | ' + \
+                                      'next(r3_a & ! r1_a & ! r2_a) | ' + \
+                                      'next(! r1_a))'
+        expected_formula_2 = 'r2_c -> (next(r2_a & ! r1_a & ! r3_a) | ' + \
+                                      'next(! r2_a))'
+        expected_formula_3 = 'r3_c -> (next(r3_a & ! r1_a & ! r2_a) | ' + \
+                                      'next(r1_a & ! r2_a & ! r3_a) | ' + \
+                                      'next(! r3_a))'
+
+        expected_sys_trans = [expected_formula_1, expected_formula_2, expected_formula_3] # transition relation
+
+        self.assertItemsEqual(actual_seq = self.spec.sys_trans,
+                              expected_seq = expected_sys_trans)
+
+    def test_formulas_in_env_liveness(self):
+        
+        expected_formula_1a = '((r1_a & ! r2_a & ! r3_a) & next(r1_c))'
+        expected_formula_1b = '((r2_a & ! r1_a & ! r3_a) & next(r2_c))'
+        expected_formula_1c = '((r3_a & ! r1_a & ! r2_a) & next(r3_c))'
+        expected_formula_1  = '(' + expected_formula_1a + ' | ' + \
+                                    expected_formula_1b + ' | ' + \
+                                    expected_formula_1c + ')' # completion
+        
+        expected_formula_2a = '((r1_a & ! r2_a & ! r3_a) & ! next(r1_a & ! r2_a & ! r3_a))'
+        expected_formula_2b = '((r2_a & ! r1_a & ! r3_a) & ! next(r2_a & ! r1_a & ! r3_a))'
+        expected_formula_2c = '((r3_a & ! r1_a & ! r2_a) & ! next(r3_a & ! r1_a & ! r2_a))'
+        expected_formula_2  = '(' + expected_formula_2a + ' | ' + \
+                                    expected_formula_2b + ' | ' + \
+                                    expected_formula_2c + ')' # change
+        
+        expected_env_liveness = ['(' + expected_formula_1 + ' | ' + \
+                                 expected_formula_2 + ')']
+
+        self.assertItemsEqual(actual_seq = self.spec.env_liveness,
+                              expected_seq = expected_env_liveness)
 
 # =============================================================================
 # Entry point

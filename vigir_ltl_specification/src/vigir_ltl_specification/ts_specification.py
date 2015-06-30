@@ -25,11 +25,31 @@ class TransitionSystemSpecification(GR1Specification):
                                                             sys_props = [])
         
         self.ts = self._get_ts_of_interest(ts, props_of_interest)
+        self._prepare_formulas_from_ts()
 
-        #TODO: Also handle initial condition here [?] Maybe in other module ...
+    def _prepare_formulas_from_ts(self, act_out = True,
+                                  outcomes = ['completed']):
+        
+        if act_out:
+            formulas_from_ts = self._gen_act_out_topology_formulas()
+        else:
+            raise NotImplementedError('TS formulas for the vanilla GR(1) ' +
+                                      'paradigm have not been implemented yet!')
+        
+        # Finally, load the formulas (and props) into the GR1 Specification
+        self.load_formulas(formulas_from_ts)
 
-        #TODO: Generate the necessary ActivationOutcomes formulas
-        #TODO: Load formulas into specification
+    def _gen_act_out_topology_formulas(self):
+
+        trans_relation_formula = TransitionRelationFormula(ts = self.ts)
+        topology_mutex_formula = TopologyMutexFormula(ts = self.ts)
+        single_step_formula = SingleStepChangeFormula(ts = self.ts)
+        fairness_condition = TopologyFairnessConditionsFormula(ts = self.ts)
+
+        topology_formulas = [trans_relation_formula, topology_mutex_formula,
+                             single_step_formula, fairness_condition]
+
+        return topology_formulas
 
     @staticmethod
     def _get_ts_of_interest(original_ts, props_of_interest):
