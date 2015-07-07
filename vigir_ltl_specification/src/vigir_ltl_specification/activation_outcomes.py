@@ -488,6 +488,72 @@ class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
 
         return [fairness_formula]
 
+
+# =============================================================================
+# System liveness requirements (including memory formulas)
+# =============================================================================
+
+class SuccessfulOutcomeFormula(ActivationOutcomesFormula):
+    """
+    ...
+    """
+
+    def __init__(self, conditions, success = 'finished'):
+        super(SuccessfulOutcomeFormula, self).__init__(sys_props = [])
+
+        self.sys_props.append(success)
+
+        self.formulas = [self.gen_success_condition(conditions, success)]
+
+        self.type = 'sys_trans'
+
+
+class GoalMemoryFormula(ActivationOutcomesFormula):
+    """
+    System requirements that encode memory of a goal being achieved.
+    """
+
+    def __init__(self, goal, success = 'completed'):
+        super(GoalMemoryFormula, self).__init__(sys_props = [goal],
+                                                outcomes = [success])
+        
+        successful_outcome = _get_out_prop(goal, success)
+        memory_prop = self._gen_memory_prop(goal)
+
+        self.formulas = self._gen_memory_formulas(mem_prop = memory_prop, 
+                                                  goal = successful_outcome)
+        self.mem_props = [memory_prop] #FIX: Is this even necessary ?
+        self.type = 'sys_trans'
+
+    def _gen_memory_formulas(self, mem_prop, goal):
+        '''
+        For a proposition corresponding to a desired objective, creates a memory
+        proposition and formulas for remembering achievement of that objective.
+        '''
+
+        set_mem_formula = LTL.implication(goal, LTL.next(mem_prop))
+        remembrance_formula = LTL.implication(mem_prop, LTL.next(mem_prop))
+        precondition = LTL.conj([LTL.neg(mem_prop), LTL.neg(goal)])
+        guard_formula = LTL.implication(precondition, LTL.next(LTL.neg(mem_prop)))
+
+        goal_memory_formulas = [set_mem_formula,
+                                remembrance_formula,
+                                guard_formula]
+
+        return goal_memory_formulas
+
+    def _gen_memory_prop(self, prop):
+        '''
+        Creates a memory proposition from the given proposition
+        and adds the memory proposition to the system propositions.
+        '''
+
+        mem_prop = prop + '_m'
+
+        self.sys_props.append(mem_prop)
+
+        return mem_prop
+
 # =============================================================================
 # System and environment initial condition formulas
 # =============================================================================

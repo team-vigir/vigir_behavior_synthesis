@@ -347,6 +347,59 @@ class TSFormulaGenerationTests(unittest.TestCase):
 
         self.assertItemsEqual([expected_formula], formula.formulas)
 
+
+class GoalFormulaGenerationTests(unittest.TestCase):
+    """Test the generation of Activation-Outcomes liveness requirements"""
+
+    def setUp(self):
+        """Gets called before every test case."""
+
+        self.sys_props = ['dance', 'sleep', 'swim']
+
+    def tearDown(self):
+        """Gets called after every test case."""
+
+        del self.sys_props
+
+    def test_action_goal_memory_formulas(self):
+        
+        action_goal = 'dance'
+
+        formula = GoalMemoryFormula(goal = action_goal)
+
+        self.assertEqual('sys_trans', formula.type)
+
+        expected_sys_props = ['dance_a', 'dance_m']
+
+        self.assertItemsEqual(expected_sys_props, formula.sys_props)
+        self.assertItemsEqual(['dance_m'], formula.mem_props)
+
+        expected_formula_1 = 'dance_c -> next(dance_m)'
+        expected_formula_2 = 'dance_m -> next(dance_m)'
+        expected_formula_3 = '(! dance_m & ! dance_c) -> next(! dance_m)'
+
+        expected_formulas = [expected_formula_1, expected_formula_2, expected_formula_3]
+
+        self.assertItemsEqual(expected_formulas, formula.formulas)
+
+    def test_successful_outcome_formula(self):
+
+        formula = SuccessfulOutcomeFormula(conditions = ['dance_m', 'sleep_m'],
+                                           success = 'finished')
+
+        self.assertEqual('sys_trans', formula.type)
+
+        self.assertItemsEqual(['finished'], formula.sys_props)
+
+        expected_formula = 'finished <-> (dance_m & sleep_m)'
+
+        self.assertItemsEqual([expected_formula], formula.formulas)
+
+    def test_failed_outcome_formula(self):
+
+        self.fail('Incomplete test!')
+
+
 class ICFormulaGenerationTests(unittest.TestCase):
     """Test the generation of Activation-Outcomes initial condition formulas"""
 
