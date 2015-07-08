@@ -4,7 +4,7 @@ import rospy
 
 from vigir_synthesis_msgs.srv import LTLCompilation, LTLCompilationResponse
 from vigir_synthesis_msgs.msg import LTLSpecification, BSErrorCodes
-from vigir_ltl_specification.atlas_specification import ControlModeSpecification, VigirSpecification
+from vigir_ltl_specification.atlas_specification_old import ControlModeSpecification, VigirSpecification # OLD
 from vigir_ltl_specification.gr1_specification import GR1Specification
 
 def handle_ltl_compilation(request):
@@ -12,12 +12,33 @@ def handle_ltl_compilation(request):
 
     if request.system:
         if request.system == 'atlas':
-            ltl_specification, error_code = gen_ltl_spec_for_atlas('atlas_spec', request.initial_conditions, request.goals)
+            ltl_specification, error_code = gen_ltl_spec_from_request(request)
+            # ltl_specification, error_code = gen_ltl_spec_for_atlas('atlas_spec', request.initial_conditions, request.goals)
         else:
             error_code = BSErrorCodes(BSErrorCodes.LTL_SPEC_COMPILATION_FAILED)
             rospy.logerr('LTL Specification Compilation does not support %s' % request.system)
 
     return LTLCompilationResponse(ltl_specification, error_code)
+
+def gen_ltl_spec_from_request(request):
+    
+    module_to_import = ('vigir_ltl_specification.{system}_specification'
+                       .format(system = request.system))
+
+    robot_spec_module = __import__(name = module_to_import,
+                                   fromlist = ['CompleteSpecification'])
+
+    ltl_specification = robot_spec_module.CompleteSpecification(
+                                name = 'spec_from_request',
+                                initial_conditions = request.initial_conditions,
+                                goals = request.goals)
+
+    ltl_specification_msg = gen_msg_from_specification(ltl_specification)
+
+    # Behavior Synthesis error code
+    error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
+
+    return ltl_specification_msg, error_code
 
 def gen_ltl_spec_for_atlas(name, initial_conditions, goals):
     """OBSOLETE: This method is using the old atlas_specification module!"""
