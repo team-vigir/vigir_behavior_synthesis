@@ -367,8 +367,9 @@ class TransitionRelationFormula(ActivationOutcomesFormula):
                 right_hand_side.append(disjunct)
 
             # The last disjunct encodes the option to not activate anything next
+            #FIX: Revisit after figuring out falsification of fairness condition
             do_nothing_disjunct = LTL.next(LTL.neg(_get_act_prop(prop)))
-            right_hand_side.append(do_nothing_disjunct)
+            # right_hand_side.append(do_nothing_disjunct)
             
             right_hand_side = LTL.disj(right_hand_side)
             sys_trans_formulas.append(LTL.implication(left_hand_side,
