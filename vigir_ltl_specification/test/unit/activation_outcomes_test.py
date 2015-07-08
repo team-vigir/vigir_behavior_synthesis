@@ -397,7 +397,32 @@ class GoalFormulaGenerationTests(unittest.TestCase):
 
     def test_failed_outcome_formula(self):
 
-        self.fail('Incomplete test!')
+        formula = FailedOutcomeFormula(conditions = ['dance_f', 'sleep_f'],
+                                       failure = 'failed')
+
+        self.assertEqual('sys_trans', formula.type)
+
+        self.assertItemsEqual(['failed'], formula.sys_props)
+
+        expected_formula = 'failed <-> (dance_f | sleep_f)'
+
+        self.assertItemsEqual([expected_formula], formula.formulas)
+
+    def test_system_liveness_formula_single_goal(self):
+
+        formula = SystemLivenessFormula(goals = ['finished'])
+
+        self.assertEqual('sys_liveness', formula.type)
+
+        self.assertItemsEqual(['finished'], formula.formulas)
+
+    def test_system_liveness_formula_conjunction(self):
+
+        formula = SystemLivenessFormula(goals = ['finished', '! failed'])
+
+        self.assertEqual('sys_liveness', formula.type)
+
+        self.assertItemsEqual(['(finished & ! failed)'], formula.formulas)
 
 
 class ICFormulaGenerationTests(unittest.TestCase):

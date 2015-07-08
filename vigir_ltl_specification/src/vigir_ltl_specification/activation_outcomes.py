@@ -493,19 +493,69 @@ class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
 # System liveness requirements (including memory formulas)
 # =============================================================================
 
-class SuccessfulOutcomeFormula(ActivationOutcomesFormula):
+class SystemLivenessFormula(ActivationOutcomesFormula):
     """
     ...
+    """
+
+    def __init__(self, goals):
+        super(SystemLivenessFormula, self).__init__(sys_props = [])
+
+        #TODO: Conversion to activation-outcomes props should be done here
+        self.formulas = self._gen_liveness_formula(goals)
+
+        self.type = 'sys_liveness'
+
+    def _gen_liveness_formula(self, goals):
+        #TODO: Move to gr1_formulas [?]
+        
+        liveness_formula = LTL.conj(goals)
+
+        return [liveness_formula]
+
+
+class SuccessfulOutcomeFormula(ActivationOutcomesFormula):
+    """
+    System requirement for activating the successful outcome of the state
+    machine once all of the conditions have been met.
     """
 
     def __init__(self, conditions, success = 'finished'):
         super(SuccessfulOutcomeFormula, self).__init__(sys_props = [])
 
+        #TODO: Conversion to activation-outcomes props,
+        # or actually memory props, should be done here.
+        # Maybe include the memory formulas in this one.
         self.sys_props.append(success)
 
         self.formulas = [self.gen_success_condition(conditions, success)]
 
         self.type = 'sys_trans'
+
+
+class FailedOutcomeFormula(ActivationOutcomesFormula):
+    """
+    System requirement for activating the failure outcome of the state
+    machine once any of the conditions has been met.
+    """
+
+    def __init__(self, conditions, failure = 'failed'):
+        super(FailedOutcomeFormula, self).__init__(sys_props = [])
+
+        #TODO: Conversion to activation-outcomes props should be done here
+        self.sys_props.append(failure)
+
+        self.formulas = self._gen_failure_condition_formula(conditions, failure)
+
+        self.type = 'sys_trans'
+
+    def _gen_failure_condition_formula(self, conditions, failure):
+
+        disjunct = LTL.disj(conditions)
+
+        failure_condition = LTL.iff(failure, disjunct)
+
+        return [failure_condition]
 
 
 class GoalMemoryFormula(ActivationOutcomesFormula):

@@ -49,6 +49,8 @@ class GR1Formula(object):
 		# classes (subformulas) that inherit from GR1Formula
 		self.formulas = list()
 		self.type = str()
+		#TODO: Make formulas a property. Setter would work with
+		# either a single formula or a list of formulas.
 
 	
 	# =====================================================
