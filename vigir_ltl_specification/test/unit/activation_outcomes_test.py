@@ -359,41 +359,32 @@ class GoalFormulaGenerationTests(unittest.TestCase):
     def tearDown(self):
         """Gets called after every test case."""
 
-        del self.sys_props
-
-    def test_action_goal_memory_formulas(self):
-        
-        action_goal = 'dance'
-
-        formula = GoalMemoryFormula(goal = action_goal)
-
-        self.assertEqual('sys_trans', formula.type)
-
-        expected_sys_props = ['dance_a', 'dance_m']
-
-        self.assertItemsEqual(expected_sys_props, formula.sys_props)
-        self.assertItemsEqual(['dance_m'], formula.mem_props)
-
-        expected_formula_1 = 'dance_c -> next(dance_m)'
-        expected_formula_2 = 'dance_m -> next(dance_m)'
-        expected_formula_3 = '(! dance_m & ! dance_c) -> next(! dance_m)'
-
-        expected_formulas = [expected_formula_1, expected_formula_2, expected_formula_3]
-
-        self.assertItemsEqual(expected_formulas, formula.formulas)
+        del self.sys_props    
 
     def test_successful_outcome_formula(self):
 
-        formula = SuccessfulOutcomeFormula(conditions = ['dance_m', 'sleep_m'],
+        formula = SuccessfulOutcomeFormula(conditions = ['dance', 'sleep'],
                                            success = 'finished')
 
         self.assertEqual('sys_trans', formula.type)
 
-        self.assertItemsEqual(['finished'], formula.sys_props)
+        expected_sys_props = ['finished', 'dance_a', 'dance_m', 'sleep_a', 'sleep_m']
+        self.assertItemsEqual(expected_sys_props, formula.sys_props)
+        self.assertItemsEqual(['dance_c', 'sleep_c'], formula.env_props)
 
-        expected_formula = 'finished <-> (dance_m & sleep_m)'
+        expected_formula_0 = 'finished <-> (dance_m & sleep_m)'
+        expected_formula_1 = 'dance_c -> next(dance_m)'
+        expected_formula_2 = 'dance_m -> next(dance_m)'
+        expected_formula_3 = '(! dance_m & ! dance_c) -> next(! dance_m)'
+        expected_formula_4 = 'sleep_c -> next(sleep_m)'
+        expected_formula_5 = 'sleep_m -> next(sleep_m)'
+        expected_formula_6 = '(! sleep_m & ! sleep_c) -> next(! sleep_m)'
 
-        self.assertItemsEqual([expected_formula], formula.formulas)
+        expected_formulas = [expected_formula_0, expected_formula_1,
+                             expected_formula_2, expected_formula_3,
+                             expected_formula_4, expected_formula_5, expected_formula_6]
+
+        self.assertItemsEqual(expected_formulas, formula.formulas)
 
     def test_failed_outcome_formula(self):
 

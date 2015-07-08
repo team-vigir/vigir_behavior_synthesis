@@ -16,7 +16,6 @@ class ActionSpecification(GR1Specification):
     docstring for ActionSpecification
 
     Arguments:
-      ts            dict    Dictionary encoding a transition system (TS).
       preconditions dict    Dictionary encoding action preconditions.
 
     """

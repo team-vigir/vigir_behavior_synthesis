@@ -501,7 +501,8 @@ class SystemLivenessFormula(ActivationOutcomesFormula):
     def __init__(self, goals):
         super(SystemLivenessFormula, self).__init__(sys_props = [])
 
-        #TODO: Conversion to activation-outcomes props should be done here
+        #TODO: Add methods and input arg for also handling disjunction
+        # It's necessary for handling failure: []<> (finished | failed)
         self.formulas = self._gen_liveness_formula(goals)
 
         self.type = 'sys_liveness'
@@ -521,58 +522,25 @@ class SuccessfulOutcomeFormula(ActivationOutcomesFormula):
     """
 
     def __init__(self, conditions, success = 'finished'):
-        super(SuccessfulOutcomeFormula, self).__init__(sys_props = [])
+        super(SuccessfulOutcomeFormula, self).__init__(sys_props = conditions)
 
-        #TODO: Conversion to activation-outcomes props,
-        # or actually memory props, should be done here.
-        # Maybe include the memory formulas in this one.
+        memory_props = list()
+
+        for goal in conditions:
+            successful_outcome = _get_com_prop(goal) # Assume completion
+            memory_prop = self._gen_memory_prop(goal)
+            memory_props.append(memory_prop)
+        
+            memory_formula = self._gen_memory_formulas(mem_prop = memory_prop, 
+                                                       goal = successful_outcome)
+            self.formulas.extend(memory_formula)
+
         self.sys_props.append(success)
 
-        self.formulas = [self.gen_success_condition(conditions, success)]
+        success_condition = self.gen_success_condition(memory_props, success)
 
-        self.type = 'sys_trans'
+        self.formulas.append(success_condition)
 
-
-class FailedOutcomeFormula(ActivationOutcomesFormula):
-    """
-    System requirement for activating the failure outcome of the state
-    machine once any of the conditions has been met.
-    """
-
-    def __init__(self, conditions, failure = 'failed'):
-        super(FailedOutcomeFormula, self).__init__(sys_props = [])
-
-        #TODO: Conversion to activation-outcomes props should be done here
-        self.sys_props.append(failure)
-
-        self.formulas = self._gen_failure_condition_formula(conditions, failure)
-
-        self.type = 'sys_trans'
-
-    def _gen_failure_condition_formula(self, conditions, failure):
-
-        disjunct = LTL.disj(conditions)
-
-        failure_condition = LTL.iff(failure, disjunct)
-
-        return [failure_condition]
-
-
-class GoalMemoryFormula(ActivationOutcomesFormula):
-    """
-    System requirements that encode memory of a goal being achieved.
-    """
-
-    def __init__(self, goal, success = 'completed'):
-        super(GoalMemoryFormula, self).__init__(sys_props = [goal],
-                                                outcomes = [success])
-        
-        successful_outcome = _get_out_prop(goal, success)
-        memory_prop = self._gen_memory_prop(goal)
-
-        self.formulas = self._gen_memory_formulas(mem_prop = memory_prop, 
-                                                  goal = successful_outcome)
-        self.mem_props = [memory_prop] #FIX: Is this even necessary ?
         self.type = 'sys_trans'
 
     def _gen_memory_formulas(self, mem_prop, goal):
@@ -603,6 +571,31 @@ class GoalMemoryFormula(ActivationOutcomesFormula):
         self.sys_props.append(mem_prop)
 
         return mem_prop
+
+class FailedOutcomeFormula(ActivationOutcomesFormula):
+    """
+    System requirement for activating the failure outcome of the state
+    machine once any of the conditions has been met.
+    """
+
+    def __init__(self, conditions, failure = 'failed'):
+        super(FailedOutcomeFormula, self).__init__(sys_props = [])
+
+        #TODO: Conversion to activation-outcomes props should be done here
+        self.sys_props.append(failure)
+
+        self.formulas = self._gen_failure_condition_formula(conditions, failure)
+
+        self.type = 'sys_trans'
+
+    def _gen_failure_condition_formula(self, conditions, failure):
+
+        disjunct = LTL.disj(conditions)
+
+        failure_condition = LTL.iff(failure, disjunct)
+
+        return [failure_condition]
+    
 
 # =============================================================================
 # System and environment initial condition formulas
