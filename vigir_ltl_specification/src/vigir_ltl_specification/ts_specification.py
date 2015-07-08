@@ -45,9 +45,11 @@ class TransitionSystemSpecification(GR1Specification):
         topology_mutex_formula = TopologyMutexFormula(ts = self.ts)
         single_step_formula = SingleStepChangeFormula(ts = self.ts)
         fairness_condition = TopologyFairnessConditionsFormula(ts = self.ts)
+        constraints_formula = ActionOutcomeConstraintsFormula(actions = self.ts.keys())
 
         topology_formulas = [trans_relation_formula, topology_mutex_formula,
-                             single_step_formula, fairness_condition]
+                             single_step_formula, fairness_condition,
+                             constraints_formula]
 
         return topology_formulas
 

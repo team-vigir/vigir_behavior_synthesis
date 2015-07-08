@@ -195,8 +195,6 @@ class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
     def _gen_action_outcomes_formulas(self):
         """Equivalent of Equations (3) and (4)"""
 
-        #TODO: Eq. (3) treats completion outcome in a special way. Rethink.
-
         eq3_formulas = list()
         eq4_formulas = list()
 
@@ -355,6 +353,8 @@ class TransitionRelationFormula(ActivationOutcomesFormula):
         option to not activate any proposition in the next time step.
         """
 
+        activate_nothing = _get_act_nothing(ts.keys())
+
         sys_trans_formulas = list()
         for prop in ts.keys():
             left_hand_side = _get_com_prop(prop)
@@ -366,10 +366,8 @@ class TransitionRelationFormula(ActivationOutcomesFormula):
                 disjunct = LTL.next(adj_phi_prop)
                 right_hand_side.append(disjunct)
 
-            # The last disjunct encodes the option to not activate anything next
-            #FIX: Revisit after figuring out falsification of fairness condition
-            do_nothing_disjunct = LTL.next(LTL.neg(_get_act_prop(prop)))
-            # right_hand_side.append(do_nothing_disjunct)
+            activate_nothing_disjunct = LTL.next(activate_nothing)
+            right_hand_side.append(activate_nothing_disjunct)
             
             right_hand_side = LTL.disj(right_hand_side)
             sys_trans_formulas.append(LTL.implication(left_hand_side,
@@ -485,7 +483,10 @@ class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
 
         completion_formula = LTL.disj(completion_terms)
         change_formula = LTL.disj(change_terms)
-        fairness_formula = LTL.disj([completion_formula, change_formula])
+        activate_nothing = _get_act_nothing(ts.keys())
+        fairness_formula = LTL.disj([completion_formula,
+                                     change_formula,
+                                     activate_nothing])
 
         return [fairness_formula]
 
@@ -550,9 +551,9 @@ class SuccessfulOutcomeFormula(ActivationOutcomesFormula):
         proposition and formulas for remembering achievement of that objective.
         '''
 
-        set_mem_formula = LTL.implication(goal, LTL.next(mem_prop))
+        set_mem_formula = LTL.implication(LTL.next(goal), LTL.next(mem_prop))
         remembrance_formula = LTL.implication(mem_prop, LTL.next(mem_prop))
-        precondition = LTL.conj([LTL.neg(mem_prop), LTL.neg(goal)])
+        precondition = LTL.conj([LTL.neg(mem_prop), LTL.next(LTL.neg(goal))])
         guard_formula = LTL.implication(precondition, LTL.next(LTL.neg(mem_prop)))
 
         goal_memory_formulas = [set_mem_formula,
@@ -653,6 +654,10 @@ class EnvironmentInitialConditions(GR1Formula):
 # =============================================================================
 # Module-level helper functions
 # =============================================================================
+
+def _get_act_nothing(props):
+    """Conjunction stands for not activating any of the activation props."""
+    return LTL.conj(map(LTL.neg, map(_get_act_prop, props)))
 
 def _get_act_prop(prop):
     if _is_activation(prop):

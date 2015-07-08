@@ -251,12 +251,12 @@ class TSFormulaGenerationTests(unittest.TestCase):
         expected_formula_1 = 'r1_c -> (next(r1_a & ! r2_a & ! r3_a) | ' + \
                                       'next(r2_a & ! r1_a & ! r3_a) | ' + \
                                       'next(r3_a & ! r1_a & ! r2_a) | ' + \
-                                      'next(! r1_a))'
+                                      'next(! r1_a & ! r2_a & ! r3_a))'
         expected_formula_2 = 'r2_c -> (next(r2_a & ! r1_a & ! r3_a) | ' + \
-                                      'next(! r2_a))'
+                                      'next(! r1_a & ! r2_a & ! r3_a))'
         expected_formula_3 = 'r3_c -> (next(r3_a & ! r1_a & ! r2_a) | ' + \
                                       'next(r1_a & ! r2_a & ! r3_a) | ' + \
-                                      'next(! r3_a))'
+                                      'next(! r1_a & ! r2_a & ! r3_a))'
 
         expected_formulas = [expected_formula_1, expected_formula_2, expected_formula_3]
 
@@ -318,8 +318,11 @@ class TSFormulaGenerationTests(unittest.TestCase):
                                     expected_formula_2b + ' | ' + \
                                     expected_formula_2c + ')' # change
         
+        expected_formula_3 = '(! r1_a & ! r2_a & ! r3_a)' # activate nothing
+
         expected_formula = '(' + expected_formula_1 + ' | ' + \
-                                 expected_formula_2 + ')'
+                                 expected_formula_2 + ' | ' + \
+                                 expected_formula_3 + ')'
 
         self.assertItemsEqual([expected_formula], formula.formulas)
 
@@ -373,12 +376,12 @@ class GoalFormulaGenerationTests(unittest.TestCase):
         self.assertItemsEqual(['dance_c', 'sleep_c'], formula.env_props)
 
         expected_formula_0 = 'finished <-> (dance_m & sleep_m)'
-        expected_formula_1 = 'dance_c -> next(dance_m)'
+        expected_formula_1 = 'next(dance_c) -> next(dance_m)'
         expected_formula_2 = 'dance_m -> next(dance_m)'
-        expected_formula_3 = '(! dance_m & ! dance_c) -> next(! dance_m)'
-        expected_formula_4 = 'sleep_c -> next(sleep_m)'
+        expected_formula_3 = '(! dance_m & next(! dance_c)) -> next(! dance_m)'
+        expected_formula_4 = 'next(sleep_c) -> next(sleep_m)'
         expected_formula_5 = 'sleep_m -> next(sleep_m)'
-        expected_formula_6 = '(! sleep_m & ! sleep_c) -> next(! sleep_m)'
+        expected_formula_6 = '(! sleep_m & next(! sleep_c)) -> next(! sleep_m)'
 
         expected_formulas = [expected_formula_0, expected_formula_1,
                              expected_formula_2, expected_formula_3,

@@ -9,13 +9,20 @@ from goal_specification import GoalSpecification
 from ic_specification import InitialConditionsSpecification
 
 """
-Module's docstring #TODO
+The module defines the components that make up a LTL specification for ATLAS.
+
+The name of the class below, CompleteSpecification, should be the same for all
+robots to facilitate integration with ROS. Only the module's name and the 
+details of the class's constructor should change between robots.
 """
 
 
 class CompleteSpecification(GR1Specification):
     """
-    ...
+    Upon construction, this class generates LTL specifications for individual
+    subcomponents of ATLAS (BDI control mode transition system, action 
+    preconditions) as well as LTL specifications for the objective and the 
+    initial conditions. It then merges them onto the object itself.
     """
     
     def __init__(self, name, initial_conditions, goals):

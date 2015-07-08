@@ -56,7 +56,17 @@ class SpecificationConstructionTests(unittest.TestCase):
                                expected_formula_2c, expected_formula_2d,
                                expected_formula_2e, expected_formula_2f] # single step
 
-        expected_env_trans = expected_formulas_1 + expected_formulas_2
+        expected_formula_3a = '(r1_c & r1_a) -> next(r1_c)'
+        expected_formula_3b = '(r2_c & r2_a) -> next(r2_c)'
+        expected_formula_3c = '(r3_c & r3_a) -> next(r3_c)'
+        expected_formula_3d = '(! r1_c & ! r1_a) -> next(! r1_c)'
+        expected_formula_3e = '(! r2_c & ! r2_a) -> next(! r2_c)'
+        expected_formula_3f = '(! r3_c & ! r3_a) -> next(! r3_c)'
+
+        expected_formulas_3 = [expected_formula_3a, expected_formula_3b, expected_formula_3c,
+                               expected_formula_3d, expected_formula_3e, expected_formula_3f] # constrain outcomes
+
+        expected_env_trans = expected_formulas_1 + expected_formulas_2 + expected_formulas_3
 
         self.assertItemsEqual(actual_seq = self.spec.env_trans,
                               expected_seq = expected_env_trans)
@@ -66,12 +76,12 @@ class SpecificationConstructionTests(unittest.TestCase):
         expected_formula_1 = 'r1_c -> (next(r1_a & ! r2_a & ! r3_a) | ' + \
                                       'next(r2_a & ! r1_a & ! r3_a) | ' + \
                                       'next(r3_a & ! r1_a & ! r2_a) | ' + \
-                                      'next(! r1_a))'
+                                      'next(! r1_a & ! r2_a & ! r3_a))'
         expected_formula_2 = 'r2_c -> (next(r2_a & ! r1_a & ! r3_a) | ' + \
-                                      'next(! r2_a))'
+                                      'next(! r1_a & ! r2_a & ! r3_a))'
         expected_formula_3 = 'r3_c -> (next(r3_a & ! r1_a & ! r2_a) | ' + \
                                       'next(r1_a & ! r2_a & ! r3_a) | ' + \
-                                      'next(! r3_a))'
+                                      'next(! r1_a & ! r2_a & ! r3_a))'
 
         expected_sys_trans = [expected_formula_1, expected_formula_2, expected_formula_3] # transition relation
 
@@ -94,11 +104,14 @@ class SpecificationConstructionTests(unittest.TestCase):
                                     expected_formula_2b + ' | ' + \
                                     expected_formula_2c + ')' # change
         
-        expected_env_liveness = ['(' + expected_formula_1 + ' | ' + \
-                                 expected_formula_2 + ')']
+        expected_formula_3 = '(! r1_a & ! r2_a & ! r3_a)' # activate nothing
+
+        expected_env_liveness = '(' + expected_formula_1 + ' | ' + \
+                                 expected_formula_2 + ' | ' + \
+                                 expected_formula_3 + ')'
 
         self.assertItemsEqual(actual_seq = self.spec.env_liveness,
-                              expected_seq = expected_env_liveness)
+                              expected_seq = [expected_env_liveness])
 
 # =============================================================================
 # Entry point

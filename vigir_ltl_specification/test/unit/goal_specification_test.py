@@ -28,9 +28,9 @@ class SpecificationConstructionTests(unittest.TestCase):
         goal = 'dance'
         self.spec.handle_single_liveness(goals = [goal])
 
-        expected_formula_0 = 'dance_c -> next(dance_m)'
+        expected_formula_0 = 'next(dance_c) -> next(dance_m)'
         expected_formula_1 = 'dance_m -> next(dance_m)'
-        expected_formula_2 = '(! dance_m & ! dance_c) -> next(! dance_m)'
+        expected_formula_2 = '(! dance_m & next(! dance_c)) -> next(! dance_m)'
         expected_formula_3 = 'finished <-> dance_m'
 
         self.assertItemsEqual(actual_seq = self.spec.sys_trans,
