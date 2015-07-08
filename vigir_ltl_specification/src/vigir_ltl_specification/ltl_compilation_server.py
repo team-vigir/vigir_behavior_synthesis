@@ -8,7 +8,7 @@ from vigir_ltl_specification.atlas_specification import ControlModeSpecification
 from vigir_ltl_specification.gr1_specification import GR1Specification
 
 def handle_ltl_compilation(request):
-    '''Responsible for putting together a complete LTL specification.'''
+    """Responsible for putting together a complete LTL specification."""
 
     if request.system:
         if request.system == 'atlas':
@@ -20,7 +20,7 @@ def handle_ltl_compilation(request):
     return LTLCompilationResponse(ltl_specification, error_code)
 
 def gen_ltl_spec_for_atlas(name, initial_conditions, goals):
-    ''''''
+    """OBSOLETE: This method is using the old atlas_specification module!"""
 
     cm_spec = ControlModeSpecification('atlas_cm', initial_mode = initial_conditions[0],
                                        modes_of_interest = ['stand_prep', 'stand', 'manipulate'])
@@ -48,7 +48,7 @@ def gen_ltl_spec_for_atlas(name, initial_conditions, goals):
     return ltl_specification_msg, error_code
 
 def gen_msg_from_specification(spec):
-    '''Creates an LTLSpecification message from a structured slugs formatted specification.'''
+    """Creates an LTLSpecification message from a structured slugs formatted specification."""
 
     ltl_specification_msg = LTLSpecification()
 
@@ -67,7 +67,7 @@ def gen_msg_from_specification(spec):
     return ltl_specification_msg
 
 def ltl_compilation_server():
-    ''''The LTL Specification Compilation server/node.'''
+    """The LTL Specification Compilation server/node."""
     
     rospy.init_node('vigir_ltl_specification')
     
