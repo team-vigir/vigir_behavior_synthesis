@@ -1,9 +1,11 @@
 name: atlas
 
-# map from output proposition (of a state) to output for entire SM
+# Mapping from output propositions to outputs of the State Machine
 output:
     finished: finished
+    failed: failed
 
+# Mapping from activation propositions to parametrized states and their outcomes
 pickup_a:
     class_decl:
         name: ExecuteTrajectoryMsgState
@@ -13,7 +15,7 @@ pickup_a:
             - ExecuteTrajectoryMsgState.CONTROLLER_LEFT_ARM
     output_mapping:
         pickup_c: done
-        failed : failed
+        pickup_f : failed
     autonomy: 0
 grasp_a:
     class_decl:
@@ -22,7 +24,7 @@ grasp_a:
         param_values: []
     output_mapping:
         grasp_c: finished
-        failed : failed
+        grasp_f : failed
     autonomy: 0
 manipulate_a:
     class_decl:
@@ -33,7 +35,7 @@ manipulate_a:
             - ChangeControlModeActionState.MANIPULATE
     output_mapping:
         manipulate_c: changed
-        failed : failed
+        manipulate_f : failed
     autonomy: 0
 stand_prep_a:
     class_decl:
@@ -44,7 +46,7 @@ stand_prep_a:
             - ChangeControlModeActionState.STAND_PREP
     output_mapping:
         stand_prep_c: changed
-        failed : failed
+        stand_prep_f : failed
     autonomy: 0
 stand_a:
     class_decl:
@@ -55,7 +57,7 @@ stand_a:
             - ChangeControlModeActionState.STAND
     output_mapping:
         stand_c: changed
-        failed : failed
+        stand_f : failed
     autonomy: 0
 step_a:
     class_decl:
@@ -66,7 +68,7 @@ step_a:
             - ChangeControlModeActionState.STEP
     output_mapping:
         step_c: changed
-        failed : failed
+        step_f : failed
     autonomy: 0
 walk_a:
     class_decl:
@@ -74,10 +76,10 @@ walk_a:
         param_names:
             - target_mode
         param_values:
-            - ChangeControlModeActionState.WALk
+            - ChangeControlModeActionState.WALK
     output_mapping:
         walk_c: changed
-        failed : failed
+        walk_f : failed
     autonomy: 0
 obj_detected:
     class_decl:
