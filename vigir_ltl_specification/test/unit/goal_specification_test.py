@@ -17,7 +17,7 @@ class SpecificationConstructionTests(unittest.TestCase):
     def tearDown(self):
         """Gets called after every test case."""
 
-        del self.spec
+        del self.spec_name, self.spec
 
     def test_input_to_object(self):
 
@@ -38,3 +38,37 @@ class SpecificationConstructionTests(unittest.TestCase):
                                               expected_formula_2, expected_formula_3])
         self.assertItemsEqual(actual_seq = self.spec.sys_liveness,
                               expected_seq = ['finished'])
+
+    def test_handle_single_goal_failure_outcome(self):
+        
+        goal = 'dance'
+        self.spec.handle_single_liveness(goals = [goal],
+                                         outcomes = ['finished', 'failed'])
+
+        expected_formula_0 = 'next(dance_c) -> next(dance_m)'
+        expected_formula_1 = 'dance_m -> next(dance_m)'
+        expected_formula_2 = '(! dance_m & next(! dance_c)) -> next(! dance_m)'
+        
+        expected_formula_3 = 'finished <-> dance_m'
+        expected_formula_4 = 'next(failed) <-> (next(dance_f) | failed)'
+
+        self.assertItemsEqual(actual_seq = self.spec.sys_trans,
+                              expected_seq = [expected_formula_0, expected_formula_1,
+                                              expected_formula_2, expected_formula_3,
+                                              expected_formula_4])
+
+        self.assertItemsEqual(actual_seq = self.spec.sys_liveness,
+                              expected_seq = ['(finished | failed)'])
+
+    def test_unsupported_outcomes_raise_exception(self):
+        
+        goal = 'dance'
+
+        self.assertRaises(NotImplementedError, self.spec.handle_single_liveness,
+                                               goals = [goal], outcomes = []) #0
+
+        too_many_outcomes = ['finished', 'failed', 'thats_too_much'] # >2
+
+        self.assertRaises(NotImplementedError, self.spec.handle_single_liveness,
+                                               goals = [goal],
+                                               outcomes = too_many_outcomes)

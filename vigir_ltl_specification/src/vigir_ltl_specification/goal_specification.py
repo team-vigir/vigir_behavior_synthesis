@@ -19,24 +19,35 @@ class GoalSpecification(GR1Specification):
                                                 env_props = [],
                                                 sys_props = [])
 
-    def handle_single_liveness(self, goals, success = 'finished'):
+    def handle_single_liveness(self, goals, outcomes = ['finished']):
         """
         Create a single system liveness requirement (e.g. []<> finished) 
         from one or more goals. The method also generates the necessary 
-        formulas for triggerring this liveness.
+        formulas for triggerring the liveness(es).
         """
 
-        #FIX: This cannot handle failure: []<> (finished | failed)
+        goal_formulas = list()
 
-        success_formula = SuccessfulOutcomeFormula(conditions = goals,
-                                                   success = success)
-        liveness_formula = SystemLivenessFormula(goals = [success])
-
-        goal_formulas = [success_formula, liveness_formula]
+        #TODO: Refactor the hacky handling of outcomes below
+        if len(outcomes) == 0:
+            raise NotImplementedError('Cannot handle zero outcomes yet!') #FIX
+        else: # Assumes that the first outcome is success
+            liveness_formula = SystemLivenessFormula(goals = outcomes,
+                                                 disjunction = True)
+            success_formula = SuccessfulOutcomeFormula(conditions = goals,
+                                                       success = outcomes[0])     
+            goal_formulas.extend([liveness_formula, success_formula])
+        
+        if len(outcomes) >= 2: # Assumes that the second outcome is failure
+            failure_formula = FailedOutcomeFormula(goals, outcomes[1])
+            goal_formulas.append(failure_formula)
+        
+        if len(outcomes) > 2:
+            raise NotImplementedError('Only success and failure are supported!')
 
         # Finally, load the formulas (and props) into the GR1 Specification
         self.load_formulas(goal_formulas)
 
     def handle_liveness_conjunction(self):
-        #TODO
+        #TODO: Handle liveness requirements of the form []<> (a & b)
         pass

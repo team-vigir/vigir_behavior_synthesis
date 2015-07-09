@@ -46,11 +46,12 @@ class CompleteSpecification(GR1Specification):
         action_spec = ActionSpecification(preconditions = atlas_preconditions)
         action_spec.handle_new_action(action = goals[0],
         							  act_out = True,
-                          			  outcomes = ['completed'])
+                          			  outcomes = ['completed', 'failed'])
 
         # Generate LTL specification governing the achievement of goals
         goal_spec = GoalSpecification()
-        goal_spec.handle_single_liveness(goals = goals, success = 'finished')
+        goal_spec.handle_single_liveness(goals = goals,
+                                         outcomes = ['finished', 'failed'])
 
         # Merge these specifications. Initial conditions are still missing.
         self.merge_gr1_specifications([ts_spec, action_spec, goal_spec])

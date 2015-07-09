@@ -500,19 +500,19 @@ class SystemLivenessFormula(ActivationOutcomesFormula):
     ...
     """
 
-    def __init__(self, goals):
+    def __init__(self, goals, disjunction = False):
         super(SystemLivenessFormula, self).__init__(sys_props = [])
 
         #TODO: Add methods and input arg for also handling disjunction
         # It's necessary for handling failure: []<> (finished | failed)
-        self.formulas = self._gen_liveness_formula(goals)
+        self.formulas = self._gen_liveness_formula(goals, disjunction)
 
         self.type = 'sys_liveness'
 
-    def _gen_liveness_formula(self, goals):
+    def _gen_liveness_formula(self, goals, disjunction):
         #TODO: Move to gr1_formulas [?]
         
-        liveness_formula = LTL.conj(goals)
+        liveness_formula = LTL.disj(goals) if disjunction else LTL.conj(goals)
 
         return [liveness_formula]
 
@@ -593,9 +593,11 @@ class FailedOutcomeFormula(ActivationOutcomesFormula):
     def _gen_failure_condition_formula(self, failure):
         """Failure if and only if any of the conditions are met."""
 
-        disjunct = LTL.disj(self.env_props)
+        conditions = LTL.disj(map(LTL.next, self.env_props))
 
-        failure_condition = LTL.iff(failure, disjunct)
+        disjunction = LTL.disj([conditions, failure])
+
+        failure_condition = LTL.iff(LTL.next(failure), disjunction)
 
         return [failure_condition]
     

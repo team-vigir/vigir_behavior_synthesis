@@ -402,7 +402,7 @@ class GoalFormulaGenerationTests(unittest.TestCase):
         expected_env_props = ['dance_f', 'sleep_f']
         self.assertItemsEqual(expected_env_props, formula.env_props)
 
-        expected_formula = 'failed <-> (dance_f | sleep_f)'
+        expected_formula = 'next(failed) <-> ((next(dance_f) | next(sleep_f)) | failed)'
 
         self.assertItemsEqual([expected_formula], formula.formulas)
 
@@ -421,6 +421,15 @@ class GoalFormulaGenerationTests(unittest.TestCase):
         self.assertEqual('sys_liveness', formula.type)
 
         self.assertItemsEqual(['(finished & ! failed)'], formula.formulas)
+
+    def test_system_liveness_formula_disjunction(self):
+
+        formula = SystemLivenessFormula(goals = ['finished', 'failed'],
+                                        disjunction = True)
+
+        self.assertEqual('sys_liveness', formula.type)
+
+        self.assertItemsEqual(['(finished | failed)'], formula.formulas)
 
 
 class ICFormulaGenerationTests(unittest.TestCase):
