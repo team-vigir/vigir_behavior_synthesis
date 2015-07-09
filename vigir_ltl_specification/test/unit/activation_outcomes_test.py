@@ -391,12 +391,16 @@ class GoalFormulaGenerationTests(unittest.TestCase):
 
     def test_failed_outcome_formula(self):
 
-        formula = FailedOutcomeFormula(conditions = ['dance_f', 'sleep_f'],
+        formula = FailedOutcomeFormula(conditions = ['dance', 'sleep'],
                                        failure = 'failed')
 
         self.assertEqual('sys_trans', formula.type)
 
-        self.assertItemsEqual(['failed'], formula.sys_props)
+        expected_sys_props = ['failed', 'dance_a', 'sleep_a']
+        self.assertItemsEqual(expected_sys_props, formula.sys_props)
+
+        expected_env_props = ['dance_f', 'sleep_f']
+        self.assertItemsEqual(expected_env_props, formula.env_props)
 
         expected_formula = 'failed <-> (dance_f | sleep_f)'
 

@@ -581,18 +581,19 @@ class FailedOutcomeFormula(ActivationOutcomesFormula):
     """
 
     def __init__(self, conditions, failure = 'failed'):
-        super(FailedOutcomeFormula, self).__init__(sys_props = [])
+        super(FailedOutcomeFormula, self).__init__(sys_props = conditions,
+                                                   outcomes = [failure])
 
-        #TODO: Conversion to activation-outcomes props should be done here
         self.sys_props.append(failure)
 
-        self.formulas = self._gen_failure_condition_formula(conditions, failure)
+        self.formulas = self._gen_failure_condition_formula(failure)
 
         self.type = 'sys_trans'
 
-    def _gen_failure_condition_formula(self, conditions, failure):
+    def _gen_failure_condition_formula(self, failure):
+        """Failure if and only if any of the conditions are met."""
 
-        disjunct = LTL.disj(conditions)
+        disjunct = LTL.disj(self.env_props)
 
         failure_condition = LTL.iff(failure, disjunct)
 
