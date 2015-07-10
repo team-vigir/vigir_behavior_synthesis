@@ -27,8 +27,8 @@ class CompleteSpecification(GR1Specification):
     
     def __init__(self, name, initial_conditions, goals):
         super(CompleteSpecification, self).__init__(spec_name = name,
-                                                	env_props = [],
-                                                	sys_props = [])
+                                                    env_props = [],
+                                                    sys_props = [])
 
         # Load transition system and action preconditions from config file
         atlas_config = RobotConfiguration('atlas')
@@ -38,20 +38,28 @@ class CompleteSpecification(GR1Specification):
         # Generate a LTL specification governing BDI control modes
         #FIX: infer control modes of interest from input arguments
         modes_of_interest = ['stand_prep', 'stand', 'manipulate']
-        ts_spec = TransitionSystemSpecification(ts = control_mode_ts,
-        							  			props_of_interest = modes_of_interest)
+        ts_spec = TransitionSystemSpecification(
+                                    ts = control_mode_ts,
+                                    props_of_interest = modes_of_interest,
+                                    outcomes = ['completed', 'failed'])
 
         # Generate LTL specification governing action and preconditions
         #FIX: This needs to be executed for each goal in goals
         action_spec = ActionSpecification(preconditions = atlas_preconditions)
         action_spec.handle_new_action(action = goals[0],
-        							  act_out = True,
-                          			  outcomes = ['completed', 'failed'])
+                                      act_out = True,
+                                      outcomes = ['completed', 'failed'])
 
-        # Generate LTL specification governing the achievement of goals
+        # Generate LTL specification governing the achievement of goals ...
         goal_spec = GoalSpecification()
         goal_spec.handle_single_liveness(goals = goals,
                                          outcomes = ['finished', 'failed'])
+        
+        # ... as well as the reaction to failure and 'failed' SM outcome
+        failure_conditions = goals + ts_spec.ts.keys() + [] #FIX: preconditions!
+        failure_conditions = list(set(failure_conditions))
+        goal_spec.handle_any_failure(conditions = failure_conditions,
+                                     failure = 'failed')
 
         # Merge these specifications. Initial conditions are still missing.
         self.merge_gr1_specifications([ts_spec, action_spec, goal_spec])
@@ -59,7 +67,7 @@ class CompleteSpecification(GR1Specification):
         # Now generate LTL specification encoding the initial conditions
         ic_spec = InitialConditionsSpecification()
         ic_spec.set_ics_from_spec(spec = self,
-        						  true_props = initial_conditions)
+                                  true_props = initial_conditions)
 
         # Finally, also merge the initial conditions specification
         self.merge_gr1_specifications([ic_spec])
@@ -70,25 +78,25 @@ class CompleteSpecification(GR1Specification):
 # =========================================================
 
 def main(): #pragma: no cover
-	
-	specification = CompleteSpecification('test', ['stand'], ['grasp'])
-	
-	print "[INPUT]"
-	pprint.pprint(specification.env_props)
-	print "[OUTPUT]"
-	pprint.pprint(specification.sys_props)
-	print "[SYS_INIT]"
-	pprint.pprint(specification.sys_init)
-	print "[ENV_INIT]"
-	pprint.pprint(specification.env_init)
-	print "[SYS_TRANS]"
-	pprint.pprint(specification.sys_trans)
-	print "[ENV_TRANS]"
-	pprint.pprint(specification.env_trans)
-	print "[SYS_LIVENESS]"
-	pprint.pprint(specification.sys_liveness)
-	print "[ENV_LIVENESS]"
-	pprint.pprint(specification.env_liveness)
+    
+    specification = CompleteSpecification('test', ['stand'], ['grasp'])
+    
+    print "[INPUT]"
+    pprint.pprint(specification.env_props)
+    print "[OUTPUT]"
+    pprint.pprint(specification.sys_props)
+    print "[SYS_INIT]"
+    pprint.pprint(specification.sys_init)
+    print "[ENV_INIT]"
+    pprint.pprint(specification.env_init)
+    print "[SYS_TRANS]"
+    pprint.pprint(specification.sys_trans)
+    print "[ENV_TRANS]"
+    pprint.pprint(specification.env_trans)
+    print "[SYS_LIVENESS]"
+    pprint.pprint(specification.sys_liveness)
+    print "[ENV_LIVENESS]"
+    pprint.pprint(specification.env_liveness)
 
 if __name__ == "__main__": #pragma: no cover
-	main()
+    main()

@@ -38,10 +38,6 @@ class GoalSpecification(GR1Specification):
                                                        success = outcomes[0])     
             goal_formulas.extend([liveness_formula, success_formula])
         
-        if len(outcomes) >= 2: # Assumes that the second outcome is failure
-            failure_formula = FailedOutcomeFormula(goals, outcomes[1])
-            goal_formulas.append(failure_formula)
-        
         if len(outcomes) > 2:
             raise NotImplementedError('Only success and failure are supported!')
 
@@ -51,3 +47,9 @@ class GoalSpecification(GR1Specification):
     def handle_liveness_conjunction(self):
         #TODO: Handle liveness requirements of the form []<> (a & b)
         pass
+
+    def handle_any_failure(self, conditions, failure = 'failed'):
+        
+        failure_formula = FailedOutcomeFormula(conditions, failure)
+
+        self.load(failure_formula)

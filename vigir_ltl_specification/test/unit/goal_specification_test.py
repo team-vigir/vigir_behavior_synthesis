@@ -44,6 +44,9 @@ class SpecificationConstructionTests(unittest.TestCase):
         goal = 'dance'
         self.spec.handle_single_liveness(goals = [goal],
                                          outcomes = ['finished', 'failed'])
+        self.spec.handle_any_failure(conditions = [goal],
+                                     failure = 'failed')
+
 
         expected_formula_0 = 'next(dance_c) -> next(dance_m)'
         expected_formula_1 = 'dance_m -> next(dance_m)'
