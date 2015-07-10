@@ -1,5 +1,8 @@
-from sm_gen_util import class_decl_to_string, clean_variable
 import rospy
+
+from sm_gen_util import class_decl_to_string, clean_variable
+from sm_gen_error import SMGenError
+from vigir_synthesis_msgs.msg import BSErrorCodes
 
 class SMGenConfig():
     """
@@ -164,6 +167,9 @@ class SMGenConfig():
                         conditions.append(in_var)
             if len(conditions) > 0:
                 transitions[next_state_name] = conditions
+            else:
+                rospy.logwarn('Empty conditions for state: {} with next states: {}'
+                             .format(state.name, next_states))
         return transitions
 
     def get_substate_name(self, in_var):
