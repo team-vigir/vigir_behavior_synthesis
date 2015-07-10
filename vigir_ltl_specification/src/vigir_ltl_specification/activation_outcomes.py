@@ -471,11 +471,13 @@ class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
             pi_a = _get_act_prop(pi)
             phi = self._gen_phi_prop(pi_a)
 
-            pi_c = _get_com_prop(pi)
-            next_pi_c = LTL.next(pi_c)
             not_next_phi = LTL.neg(LTL.next(phi))
 
-            completion_term = LTL.conj([phi, next_pi_c])
+            pi_outcomes = self.outcome_props[pi]
+            next_pi_outs = map(LTL.next, pi_outcomes)
+            out_disjunct = LTL.disj(next_pi_outs)
+
+            completion_term = LTL.conj([phi, out_disjunct])
             completion_terms.append(completion_term)
             
             change_term = LTL.conj([phi, not_next_phi])

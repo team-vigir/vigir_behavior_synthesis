@@ -16,7 +16,8 @@ class SpecificationConstructionTests(unittest.TestCase):
                    'r3': ['r3', 'r1']}
 
         self.spec = TransitionSystemSpecification(name = self.spec_name,
-                                                  ts = self.ts)
+                                                  ts = self.ts,
+                                                  outcomes = ['completed', 'failed'])
 
     def tearDown(self):
         """Gets called after every test case."""
@@ -46,27 +47,42 @@ class SpecificationConstructionTests(unittest.TestCase):
         expected_formula_1c = 'next(r3_c) <-> (! next(r1_c) & ! next(r2_c))'
         expected_formulas_1 = [expected_formula_1a, expected_formula_1b, expected_formula_1c] # mutex
 
-        expected_formula_2a = '(r1_c & (r1_a & ! r2_a & ! r3_a)) -> next(r1_c)'
-        expected_formula_2b = '(r1_c & (r2_a & ! r1_a & ! r3_a)) -> (next(r1_c) | next(r2_c))'
-        expected_formula_2c = '(r1_c & (r3_a & ! r1_a & ! r2_a)) -> (next(r3_c) | next(r1_c))'
-        expected_formula_2d = '(r2_c & (r2_a & ! r1_a & ! r3_a)) -> next(r2_c)'
-        expected_formula_2e = '(r3_c & (r1_a & ! r2_a & ! r3_a)) -> (next(r3_c) | next(r1_c))'
-        expected_formula_2f = '(r3_c & (r3_a & ! r1_a & ! r2_a)) -> next(r3_c)'
+        expected_formula_2a = '(r1_c & (r1_a & ! r2_a & ! r3_a)) -> (next(r1_c) | next(r1_f))'
+        expected_formula_2b = '(r1_c & (r2_a & ! r1_a & ! r3_a)) -> (next(r1_c) | next(r2_f) | next(r2_c))'
+        expected_formula_2c = '(r1_c & (r3_a & ! r1_a & ! r2_a)) -> (next(r3_c) | next(r3_f) | next(r1_c))'
+        expected_formula_2d = '(r2_c & (r2_a & ! r1_a & ! r3_a)) -> (next(r2_f) | next(r2_c))'
+        expected_formula_2e = '(r3_c & (r1_a & ! r2_a & ! r3_a)) -> (next(r3_c) | next(r1_c) | next(r1_f))'
+        expected_formula_2f = '(r3_c & (r3_a & ! r1_a & ! r2_a)) -> (next(r3_c) | next(r3_f))'
         expected_formulas_2 = [expected_formula_2a, expected_formula_2b,
                                expected_formula_2c, expected_formula_2d,
                                expected_formula_2e, expected_formula_2f] # single step
 
-        expected_formula_3a = '(r1_c & r1_a) -> next(r1_c)'
-        expected_formula_3b = '(r2_c & r2_a) -> next(r2_c)'
-        expected_formula_3c = '(r3_c & r3_a) -> next(r3_c)'
+        expected_formula_3a = '((r1_c | r1_f) & r1_a) -> (next(r1_c) | next(r1_f))'
+        expected_formula_3b = '((r2_c | r2_f) & r2_a) -> (next(r2_c) | next(r2_f))'
+        expected_formula_3c = '((r3_c | r3_f) & r3_a) -> (next(r3_c) | next(r3_f))'
         expected_formula_3d = '(! r1_c & ! r1_a) -> next(! r1_c)'
         expected_formula_3e = '(! r2_c & ! r2_a) -> next(! r2_c)'
         expected_formula_3f = '(! r3_c & ! r3_a) -> next(! r3_c)'
+        expected_formula_3g = '(! r1_f & ! r1_a) -> next(! r1_f)'
+        expected_formula_3h = '(! r2_f & ! r2_a) -> next(! r2_f)'
+        expected_formula_3i = '(! r3_f & ! r3_a) -> next(! r3_f)'
 
-        expected_formulas_3 = [expected_formula_3a, expected_formula_3b, expected_formula_3c,
-                               expected_formula_3d, expected_formula_3e, expected_formula_3f] # constrain outcomes
+        expected_formulas_3 = [expected_formula_3a, expected_formula_3b, expected_formula_3c, # constrain outcomes
+                               expected_formula_3d, expected_formula_3e, expected_formula_3f, # constrain completion
+                               expected_formula_3g, expected_formula_3h, expected_formula_3i] # constrain failure
 
-        expected_env_trans = expected_formulas_1 + expected_formulas_2 + expected_formulas_3
+        expected_formula_4a = 'next(r1_c) -> next(! r1_f)'
+        expected_formula_4b = 'next(r1_f) -> next(! r1_c)'
+        expected_formula_4c = 'next(r2_c) -> next(! r2_f)'
+        expected_formula_4d = 'next(r2_f) -> next(! r2_c)'
+        expected_formula_4e = 'next(r3_c) -> next(! r3_f)'
+        expected_formula_4f = 'next(r3_f) -> next(! r3_c)'
+
+        expected_formulas_4 = [expected_formula_4a, expected_formula_4b, expected_formula_4c,
+                               expected_formula_4d, expected_formula_4e, expected_formula_4f]
+
+        expected_env_trans = expected_formulas_1 + expected_formulas_2 + \
+                             expected_formulas_3 + expected_formulas_4
 
         self.assertItemsEqual(actual_seq = self.spec.env_trans,
                               expected_seq = expected_env_trans)
@@ -83,16 +99,21 @@ class SpecificationConstructionTests(unittest.TestCase):
                                       'next(r1_a & ! r2_a & ! r3_a) | ' + \
                                       'next(! r1_a & ! r2_a & ! r3_a))'
 
-        expected_sys_trans = [expected_formula_1, expected_formula_2, expected_formula_3] # transition relation
+        expected_formula_4a = '(r1_a & (next(r1_c) | next(r1_f))) -> next(! r1_a)'
+        expected_formula_4b = '(r2_a & (next(r2_c) | next(r2_f))) -> next(! r2_a)'
+        expected_formula_4c = '(r3_a & (next(r3_c) | next(r3_f))) -> next(! r3_a)'
+
+        expected_sys_trans = [expected_formula_1, expected_formula_2, expected_formula_3, # transition relation
+                              expected_formula_4a, expected_formula_4b, expected_formula_4c] # deactivation
 
         self.assertItemsEqual(actual_seq = self.spec.sys_trans,
                               expected_seq = expected_sys_trans)
 
     def test_formulas_in_env_liveness(self):
         
-        expected_formula_1a = '((r1_a & ! r2_a & ! r3_a) & next(r1_c))'
-        expected_formula_1b = '((r2_a & ! r1_a & ! r3_a) & next(r2_c))'
-        expected_formula_1c = '((r3_a & ! r1_a & ! r2_a) & next(r3_c))'
+        expected_formula_1a = '((r1_a & ! r2_a & ! r3_a) & (next(r1_c) | next(r1_f)))'
+        expected_formula_1b = '((r2_a & ! r1_a & ! r3_a) & (next(r2_c) | next(r2_f)))'
+        expected_formula_1c = '((r3_a & ! r1_a & ! r2_a) & (next(r3_c) | next(r3_f)))'
         expected_formula_1  = '(' + expected_formula_1a + ' | ' + \
                                     expected_formula_1b + ' | ' + \
                                     expected_formula_1c + ')' # completion

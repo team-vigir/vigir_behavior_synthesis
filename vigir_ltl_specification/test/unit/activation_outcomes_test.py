@@ -328,7 +328,7 @@ class TSFormulaGenerationTests(unittest.TestCase):
 
     def test_topology_fairness_conditions_with_outcomes(self):
         
-        self.fail('Incomplete test!')
+        # self.fail('Incomplete test!')
 
         formula = TopologyFairnessConditionsFormula(
                                     ts = self.ts,
@@ -336,17 +336,25 @@ class TSFormulaGenerationTests(unittest.TestCase):
 
         self.assertEqual('env_liveness', formula.type)
 
-        expected_formula_1a = '(r1_a & (next(dance_c) | next(dance_f)))'
-        expected_formula_1b = '(! dance_a & (next(! dance_c) & next(! dance_f)))'
+        expected_formula_1a = '((r1_a & ! r2_a & ! r3_a) & (next(r1_c) | next(r1_f)))'
+        expected_formula_1b = '((r2_a & ! r1_a & ! r3_a) & (next(r2_c) | next(r2_f)))'
+        expected_formula_1c = '((r3_a & ! r1_a & ! r2_a) & (next(r3_c) | next(r3_f)))'
         expected_formula_1  = '(' + expected_formula_1a + ' | ' + \
-                                 expected_formula_1b + ')'
-        expected_formula_2a = '(dance_a & next(! dance_a))'
-        expected_formula_2b = '(! dance_a & next(dance_a))' # change
-        expected_formula_2  = '(' + expected_formula_2a + ' | ' + \
-                                 expected_formula_2b + ')'
+                                    expected_formula_1b + ' | ' + \
+                                    expected_formula_1c + ')' # completion
         
+        expected_formula_2a = '((r1_a & ! r2_a & ! r3_a) & ! next(r1_a & ! r2_a & ! r3_a))'
+        expected_formula_2b = '((r2_a & ! r1_a & ! r3_a) & ! next(r2_a & ! r1_a & ! r3_a))'
+        expected_formula_2c = '((r3_a & ! r1_a & ! r2_a) & ! next(r3_a & ! r1_a & ! r2_a))'
+        expected_formula_2  = '(' + expected_formula_2a + ' | ' + \
+                                    expected_formula_2b + ' | ' + \
+                                    expected_formula_2c + ')' # change (same)
+        
+        expected_formula_3 = '(! r1_a & ! r2_a & ! r3_a)' # activate nothing
+
         expected_formula = '(' + expected_formula_1 + ' | ' + \
-                                 expected_formula_2 + ')'
+                                 expected_formula_2 + ' | ' + \
+                                 expected_formula_3 + ')'
 
         self.assertItemsEqual([expected_formula], formula.formulas)
 
