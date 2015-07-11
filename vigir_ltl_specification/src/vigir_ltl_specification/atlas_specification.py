@@ -30,7 +30,7 @@ class CompleteSpecification(GR1Specification):
                                                     env_props = [],
                                                     sys_props = [])
 
-        # Load transition system and action preconditions from config file
+        # Load control modes and action preconditions from config file
         atlas_config = RobotConfiguration('atlas')
         control_mode_ts = atlas_config.ts
         atlas_preconditions = atlas_config.preconditions
@@ -44,20 +44,21 @@ class CompleteSpecification(GR1Specification):
                                     outcomes = ['completed', 'failed'])
 
         # Generate LTL specification governing action and preconditions
-        #FIX: This needs to be executed for each goal in goals
         action_spec = ActionSpecification(preconditions = atlas_preconditions)
-        action_spec.handle_new_action(action = goals[0],
-                                      act_out = True,
-                                      outcomes = ['completed', 'failed'])
+        for goal in goals:
+            if goal not in ts_spec.ts.keys():
+                action_spec.handle_new_action(action = goal,
+                                              act_out = True,
+                                              outcomes = ['completed', 'failed'])
 
         # Generate LTL specification governing the achievement of goals ...
         goal_spec = GoalSpecification()
         goal_spec.handle_single_liveness(goals = goals,
                                          outcomes = ['finished', 'failed'])
         
-        # ... as well as the reaction to failure and 'failed' SM outcome
-        failure_conditions = goals + ts_spec.ts.keys() + [] #FIX: preconditions!
-        failure_conditions = list(set(failure_conditions))
+        # Add LTL formula tying all the things that can fail to SM outcome
+        failure_conditions = ts_spec.ts.keys() + action_spec.all_actions
+        assert len(failure_conditions) == len(set(failure_conditions))
         goal_spec.handle_any_failure(conditions = failure_conditions,
                                      failure = 'failed')
 

@@ -7,16 +7,20 @@ from gr1_specification import GR1Specification
 from activation_outcomes import *
 
 """
-Module's docstring #TODO
-
+The module contains two classes: ActionSpecification and RobotConfiguration.
 """
 
 class ActionSpecification(GR1Specification):
     """
-    docstring for ActionSpecification
+    LTL Specification containing the robot safety requirements and environment
+    assumptions that govern the activation and completion of the robot actions.
+    It does not handle topology-type formulas. Those require special treatment.
 
     Arguments:
       preconditions dict    Dictionary encoding action preconditions.
+    Attributes:
+      preconditions dict    Dictionary encoding action preconditions.
+      all_actions   list    List of actions that have been added to this spec.
 
     """
     def __init__(self, name = '', preconditions = {}):
@@ -25,11 +29,12 @@ class ActionSpecification(GR1Specification):
                                                   sys_props = [])
 
         self.preconditions = preconditions
+        self.all_actions = list()
 
     def handle_new_action(self, action, act_out = True,
                           outcomes = ['completed']):
         """
-        ...
+        Generates formulas governing the activation and completion of actions.
 
         Arguments:
           action    string  The action's name (plan name, not activation prop)
@@ -54,8 +59,13 @@ class ActionSpecification(GR1Specification):
         # Finally, load the formulas (and props) into the GR1 Specification
         self.load_formulas(action_formulas)
 
+        self.all_actions.append(action)
+
     def _gen_preconditions_formula(self, action, act_out = True):
-        """..."""
+        """
+        Generates an action's preconditions formula and calls handle_new_action
+        on the preconditions of said action in a recursive fashion.
+        """
 
         action_preconditions = self.preconditions[action]
 
@@ -63,7 +73,8 @@ class ActionSpecification(GR1Specification):
         for pc in action_preconditions:
             # Check whether this precondition has preconditions of its own
             if pc in self.preconditions.keys():
-                #FIX: Actions that don't have preconditions should also be handled!
+                #FIX: Actions that don't have preconditions should 
+                # also be handled! But not the topology ones ...
                 self.handle_new_action(pc)
 
         if act_out:
@@ -88,12 +99,17 @@ class ActionSpecification(GR1Specification):
 
         return act_out_formulas
 
+
 class RobotConfiguration(object):
     """
-    docstring for RobotConfiguration
+    Loads a robot's configuration (action preconditions, internal 
+    transition system - if any) from a configuration yaml file.
 
     Arguments:
-      robot     string  The system / robot whose configuration will be loaded.
+      robot         string  The system whose configuration will be loaded.
+    Attributes:
+      ts            dict    ...
+      preconditions dict    ...
 
     """
     def __init__(self, robot):
