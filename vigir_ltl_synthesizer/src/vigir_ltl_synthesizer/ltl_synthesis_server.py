@@ -111,11 +111,11 @@ def determine_synthesizability(slugs_output):
     
     synthesizable = False
 
-    if 'realizable' in slugs_output:
+    if 'RESULT: Specification is realizable.' in slugs_output:
         synthesizable = True
         rospy.loginfo('\033[92mSuccessfully synthesized an automaton from the LTL specification.\033[0m')
     else:
-        rospy.logwarn('The LTL specification was unsynthesizable.\nSLUGS output: %s' % slugs_output)
+        rospy.logwarn('The LTL specification was unsynthesizable!\n%s' % slugs_output)
 
     return synthesizable
 
