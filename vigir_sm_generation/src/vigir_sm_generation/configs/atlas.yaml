@@ -26,6 +26,15 @@ grasp_a:
         grasp_c: finished
         grasp_f : failed
     autonomy: 0
+approach_object_a:
+    class_decl:
+        name: WalktoTemplateSM
+        param_names: []
+        param_values: []
+    output_mapping:
+        approach_object_c: finished
+        approach_object_f : failed
+    autonomy: 0
 manipulate_a:
     class_decl:
         name: ChangeControlModeActionState
