@@ -48,7 +48,8 @@ class ActionSpecification(GR1Specification):
         # First, handle the action's preconditions (recursively)
         if action in self.preconditions.keys() and self.preconditions[action]:
             preconditions_formula = self._gen_preconditions_formula(action,
-                                                                    act_out) 
+                                                                    act_out,
+                                                                    outcomes) 
             action_formulas.append(preconditions_formula)
 
         # Then, handle the action's outcomes (if activation-outcomes framework)
@@ -61,7 +62,7 @@ class ActionSpecification(GR1Specification):
 
         self.all_actions.append(action)
 
-    def _gen_preconditions_formula(self, action, act_out = True):
+    def _gen_preconditions_formula(self, action, act_out, outcomes):
         """
         Generates an action's preconditions formula and calls handle_new_action
         on the preconditions of said action in a recursive fashion.
@@ -75,7 +76,7 @@ class ActionSpecification(GR1Specification):
             if pc in self.preconditions.keys():
                 #FIX: Actions that don't have preconditions should 
                 # also be handled! But not the topology ones ...
-                self.handle_new_action(pc)
+                self.handle_new_action(pc, act_out, outcomes)
 
         if act_out:
             formula = PreconditionsFormula(action, action_preconditions)

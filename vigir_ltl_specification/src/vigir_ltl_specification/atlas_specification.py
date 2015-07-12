@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import pprint
-
 from gr1_specification import GR1Specification
 from robot_specification import RobotConfiguration, ActionSpecification
 from ts_specification import TransitionSystemSpecification
@@ -79,6 +77,8 @@ class CompleteSpecification(GR1Specification):
 # =========================================================
 
 def main(): #pragma: no cover
+    
+    import pprint
     
     specification = CompleteSpecification('test', ['stand'], ['grasp'])
     

@@ -33,7 +33,8 @@ class ActionSpecificationTests(unittest.TestCase):
     def test_formulas_from_preconditions(self):
         
         action = 'bar'
-        formula = self.spec._gen_preconditions_formula(action, act_out = True)
+        formula = self.spec._gen_preconditions_formula(action, act_out = True,
+                                                       outcomes = ['completed'])
 
         self.spec.handle_new_action(action)
 
@@ -46,7 +47,8 @@ class ActionSpecificationTests(unittest.TestCase):
 
         action = self.preconditions.keys()[0]
         self.assertRaises(NotImplementedError,
-                          self.spec._gen_preconditions_formula, action, False)
+                          self.spec._gen_preconditions_formula,
+                          action, False, ['completed'])
 
     def test_action_not_in_preconditions_config(self):
         
@@ -122,6 +124,10 @@ class ActionSpecificationTests(unittest.TestCase):
                                               expected_formula_3])
         self.assertItemsEqual(actual_seq = self.spec.env_liveness,
                               expected_seq = [expected_formula_4])
+
+
+    def test_handle_recursive_preconditions_with_multiple_outcomes(self):
+        self.fail('Incomplete test!')
 
 class ConfigurationTests(unittest.TestCase):
     """Test the construction of the RobotConfiguration class."""
