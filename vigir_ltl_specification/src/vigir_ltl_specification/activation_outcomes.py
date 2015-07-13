@@ -227,6 +227,39 @@ class ActionOutcomeConstraintsFormula(ActivationOutcomesFormula):
 
         return eq3_formulas + eq4_formulas
 
+
+class ActionOutcomePersistenceFormula(ActivationOutcomesFormula):
+    """
+    Formulas that force action outcomes to persist if they are not reactivated.
+    """
+
+    def __init__(self, actions, outcomes = ['completed']):
+        super(ActionOutcomePersistenceFormula, self).__init__(sys_props = actions,
+                                                              outcomes = outcomes)
+        
+        self.formulas = self._gen_outcome_persistence_formulas()
+        self.type = 'env_trans'
+
+    def _gen_outcome_persistence_formulas(self):
+        """New in activation-deactivation paradigm."""
+
+        persistence_formulas = list()
+
+        for pi in self.outcome_props.keys():
+
+            pi_a = _get_act_prop(pi)
+            pi_outcomes = self.outcome_props[pi]
+            not_pi_a = LTL.neg(pi_a)
+
+            for pi_out in pi_outcomes:
+
+                left_hand_side = LTL.conj([pi_out, not_pi_a])
+                formula = LTL.implication(left_hand_side, LTL.next(pi_out))
+                persistence_formulas.append(formula)
+
+        return persistence_formulas
+
+
 class PropositionDeactivationFormula(ActivationOutcomesFormula):
     """
     Turn action proposition OFF once an outcome is returned.
@@ -300,7 +333,10 @@ class ActionFairnessConditionsFormula(ActivationOutcomesFormula):
             
             outcomes_disjunct_1 = LTL.conj([pi_a, out_disjunct])
             outcomes_disjunct_2 = LTL.conj([not_pi_a, out_conjunct])
-            outcomes_formula = LTL.disj([outcomes_disjunct_1, outcomes_disjunct_2])
+            outcomes_disjunct_3 = LTL.conj([not_pi_a, out_disjunct])
+            outcomes_formula = LTL.disj([outcomes_disjunct_1,
+                                         outcomes_disjunct_2,
+                                         outcomes_disjunct_3])
 
             change_disjunt_1 = LTL.conj([pi_a, LTL.next(not_pi_a)])
             change_disjunt_2 = LTL.conj([not_pi_a, LTL.next(pi_a)])

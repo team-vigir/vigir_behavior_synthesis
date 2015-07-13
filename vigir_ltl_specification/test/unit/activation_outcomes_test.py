@@ -100,6 +100,8 @@ class ActionFormulaGenerationTests(unittest.TestCase):
                                     sys_props = ['dance', 'sleep'],
                                     outcomes = ['completed', 'failed'])
 
+        self.assertEqual('sys_trans', formula.type)
+
         expected_formula_1 = '(dance_a & (next(dance_c) | next(dance_f))) -> next(! dance_a)'
         expected_formula_2 = '(sleep_a & (next(sleep_c) | next(sleep_f))) -> next(! sleep_a)'
 
@@ -113,11 +115,29 @@ class ActionFormulaGenerationTests(unittest.TestCase):
                                     actions = ['dance'],
                                     outcomes = ['completed', 'failed'])
 
-        expected_formula_1 = '((dance_c | dance_f) & dance_a) -> (next(dance_c) | next(dance_f))'
-        expected_formula_2 = '(! dance_c & ! dance_a) -> next(! dance_c)'
-        expected_formula_3 = '(! dance_f & ! dance_a) -> next(! dance_f)'
+        self.assertEqual('env_trans', formula.type)
 
-        expected_formulas = [expected_formula_1, expected_formula_2, expected_formula_3]
+        expected_formula_1 = '((dance_c | dance_f) & dance_a) -> (next(dance_c) | next(dance_f))'
+        expected_formula_2a = '(! dance_c & ! dance_a) -> next(! dance_c)'
+        expected_formula_2b = '(! dance_f & ! dance_a) -> next(! dance_f)'
+
+        expected_formulas = [expected_formula_1,
+                             expected_formula_2a, expected_formula_2b]
+
+        self.assertItemsEqual(expected_formulas, formula.formulas)
+
+    def test_action_outcome_persistence(self):
+        
+        formula = ActionOutcomePersistenceFormula(
+                                    actions = ['dance'],
+                                    outcomes = ['completed', 'failed'])
+
+        self.assertEqual('env_trans', formula.type)
+
+        expected_formula_1 = '(dance_c & ! dance_a) -> next(dance_c)'
+        expected_formula_2 = '(dance_f & ! dance_a) -> next(dance_f)'
+
+        expected_formulas = [expected_formula_1, expected_formula_2]
 
         self.assertItemsEqual(expected_formulas, formula.formulas)
 
@@ -127,10 +147,12 @@ class ActionFormulaGenerationTests(unittest.TestCase):
                                     actions = ['dance'],
                                     outcomes = ['completed', 'failed'])
 
-        expected_formula_1a = '(dance_a & (next(dance_c) | next(dance_f)))'
-        expected_formula_1b = '(! dance_a & (next(! dance_c) & next(! dance_f)))'
+        expected_formula_1a = '(dance_a & (next(dance_c) | next(dance_f)))' # outcome
+        expected_formula_1b = '(! dance_a & (next(! dance_c) & next(! dance_f)))' # deactivation ??
+        expected_formula_1c = '(! dance_a & (next(dance_c) | next(dance_f)))' # persistence
         expected_formula_1  = '(' + expected_formula_1a + ' | ' + \
-                                 expected_formula_1b + ')'
+                                 expected_formula_1b + ' | ' + \
+                                 expected_formula_1c + ')'
         expected_formula_2a = '(dance_a & next(! dance_a))'
         expected_formula_2b = '(! dance_a & next(dance_a))' # change
         expected_formula_2  = '(' + expected_formula_2a + ' | ' + \

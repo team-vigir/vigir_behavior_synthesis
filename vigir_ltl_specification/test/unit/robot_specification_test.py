@@ -84,19 +84,23 @@ class ActionSpecificationTests(unittest.TestCase):
 
         expected_formula_0 = '(run_c & run_a) -> next(run_c)' # outcome
         expected_formula_1 = '(! run_c & ! run_a) -> next(! run_c)' # outcome
-        expected_formula_2 = '(run_a & next(run_c)) -> next(! run_a)' # deactivation
-        expected_formula_3 = '(! step_c | ! walk_c) -> ! run_a' # preconditions
-        expected_formula_4a = '((run_a & next(run_c)) | (! run_a & next(! run_c)))'
-        expected_formula_4b = '((run_a & next(! run_a)) | (! run_a & next(run_a)))'
-        expected_formula_4 = '(' + expected_formula_4a + ' | ' + \
-                              expected_formula_4b + ')' # fairness condition
+        expected_formula_2 = '(run_c & ! run_a) -> next(run_c)' # peristence
+        expected_formula_3 = '(run_a & next(run_c)) -> next(! run_a)' # deactivation
+        expected_formula_4 = '(! step_c | ! walk_c) -> ! run_a' # preconditions
+        
+        expected_formula_5a = '((run_a & next(run_c)) | (! run_a & next(! run_c)) | (! run_a & next(run_c)))'
+        expected_formula_5b = '((run_a & next(! run_a)) | (! run_a & next(run_a)))'
+        expected_formula_5  = '(' + expected_formula_5a + ' | ' + \
+                                    expected_formula_5b + ')' # fairness condition
 
         self.assertItemsEqual(actual_seq = self.spec.env_trans,
-                              expected_seq = [expected_formula_0, expected_formula_1])
+                              expected_seq = [expected_formula_0,
+                                              expected_formula_1,
+                                              expected_formula_2])
         self.assertItemsEqual(actual_seq = self.spec.sys_trans,
-                              expected_seq = [expected_formula_2, expected_formula_3])
+                              expected_seq = [expected_formula_3, expected_formula_4])
         self.assertItemsEqual(actual_seq = self.spec.env_liveness,
-                              expected_seq = [expected_formula_4])
+                              expected_seq = [expected_formula_5])
 
     def test_handle_multiple_outcomes(self):
         
@@ -106,18 +110,26 @@ class ActionSpecificationTests(unittest.TestCase):
         expected_formula_0 = '((run_c | run_f) & run_a) -> (next(run_c) | next(run_f))' # outcome
         expected_formula_1a = '(! run_c & ! run_a) -> next(! run_c)' # outcome
         expected_formula_1b = '(! run_f & ! run_a) -> next(! run_f)' # outcome
+        expected_formula_1c = '(run_c & ! run_a) -> next(run_c)' # persistence
+        expected_formula_1d = '(run_f & ! run_a) -> next(run_f)' # persistence
         expected_formula_2 = '(run_a & (next(run_c) | next(run_f))) -> next(! run_a)' # deactivation
         expected_formula_3 = '(! step_c | ! walk_c) -> ! run_a' # preconditions
-        expected_formula_4a = '((run_a & (next(run_c) | next(run_f))) | (! run_a & (next(! run_c) & next(! run_f))))'
-        expected_formula_4b = '((run_a & next(! run_a)) | (! run_a & next(run_a)))'
-        expected_formula_4 = '(' + expected_formula_4a + ' | ' + \
-                              expected_formula_4b + ')' # fairness condition
+        expected_formula_4a = '(run_a & (next(run_c) | next(run_f)))'
+        expected_formula_4b = '(! run_a & (next(! run_c) & next(! run_f)))'
+        expected_formula_4c = '(! run_a & (next(run_c) | next(run_f)))'
+        expected_formula_4  = '(' + expected_formula_4a + ' | ' + \
+                                 expected_formula_4b + ' | ' + \
+                                 expected_formula_4c + ')'
+        expected_formula_4d = '((run_a & next(! run_a)) | (! run_a & next(run_a)))'
+        expected_formula_4 = '(' + expected_formula_4 + ' | ' + \
+                              expected_formula_4d + ')' # fairness condition
         expected_formula_5a = 'next(run_c) -> next(! run_f)' # mutex
         expected_formula_5b = 'next(run_f) -> next(! run_c)' # mutex
 
         self.assertItemsEqual(actual_seq = self.spec.env_trans,
                               expected_seq = [expected_formula_0,
                                 expected_formula_1a, expected_formula_1b,
+                                expected_formula_1c, expected_formula_1d,
                                 expected_formula_5a, expected_formula_5b])
         self.assertItemsEqual(actual_seq = self.spec.sys_trans,
                               expected_seq = [expected_formula_2,

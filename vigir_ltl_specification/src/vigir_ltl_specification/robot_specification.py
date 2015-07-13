@@ -92,11 +92,13 @@ class ActionSpecification(GR1Specification):
 
         mutex_formula = OutcomeMutexFormula(actions, outcomes)
         outcomes_formula = ActionOutcomeConstraintsFormula(actions, outcomes)
+        persistence_formula = ActionOutcomePersistenceFormula(actions, outcomes)
         deactivation_formula = PropositionDeactivationFormula(actions, outcomes)
         fairness_formula = ActionFairnessConditionsFormula(actions, outcomes)
 
         act_out_formulas = [mutex_formula, outcomes_formula,
-                            deactivation_formula, fairness_formula]
+                            persistence_formula, deactivation_formula,
+                            fairness_formula]
 
         return act_out_formulas
 
