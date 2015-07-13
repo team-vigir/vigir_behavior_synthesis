@@ -31,7 +31,7 @@ from sm_gen_util import (
 from sm_gen_error import SMGenError
 
 VIGIR_REPO = os.environ['VIGIR_ROOT_DIR']
-INIT_STATE_NAME = "init_tmp_state"
+INIT_STATE_NAME = "ROOT_OF_INIT_STATES"
 
 def modify_names(all_out_vars, automata):
     """
@@ -72,7 +72,7 @@ def get_init_temp_state(init_states):
         initial_state = None,
         p_names = ["text"],
         p_vals = ['"Initial state"'],
-        autonomy = [0 for s in init_states] # autonomy
+        autonomy = [0 for s in init_states]
     )
 
 def generate_sm(request):
@@ -166,7 +166,7 @@ def generate_sm_handle(request):
 
     # Initialize list of StateInstantiation's with parent SI.
     SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
-           helper.get_sm_real_outputs(), [], INIT_STATE_NAME, [], [], [0])]
+           helper.get_sm_real_outputs(), [], INIT_STATE_NAME, [], [])]
     init_states = helper.get_init_states()
     SIs.append(get_init_temp_state(init_states))
 
@@ -182,8 +182,11 @@ def generate_sm_handle(request):
         for out_var in curr_state_output_vars:
             decl = helper.get_class_decl(out_var)
             csg.add_internal_state(out_var, decl)
+            csg.add_internal_userdata(helper.get_userdata_keys(out_var),
+                                      helper.get_userdata_remapping(out_var))
 
         transitions = helper.get_transitions(state)
+
         for next_state, conditions in transitions.items():
             substate_name_to_out = {} # i.e. condition mapping
             for in_var in conditions:
@@ -201,13 +204,13 @@ def generate_sm_handle(request):
             is_concurrent = csg.is_concurrent()
             csg.add_internal_outcome_and_transition(
                 helper.get_outcome_name(is_concurrent, next_state,
-                    substate_name_to_out),
+                                        substate_name_to_out),
                 helper.get_real_name(next_state),
                 helper.get_autonomy_list(substate_name_to_out)
             )
             csg.add_internal_outcome_maps({
                 'outcome': helper.get_outcome_name(is_concurrent, next_state,
-                    substate_name_to_out),
+                                                   substate_name_to_out),
                 'condition': substate_name_to_out
             })
             rospy.logdebug("{0} -> {1} if: {2}".format(name, next_state,

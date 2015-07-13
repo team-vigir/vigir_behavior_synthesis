@@ -28,6 +28,8 @@ class ConcurrentStateGenerator():
         self.internal_transitions = []
         self.internal_outcome_maps = []
         self.outcome_to_autonomy_list = {}
+        self.internal_userdata_keys = []
+        self.internal_userdata_remapping = []
 
     def add_internal_state(self, label, class_decl):
         """
@@ -42,8 +44,14 @@ class ConcurrentStateGenerator():
         if clean_label not in self.internal_states:
             self.internal_states[clean_label] = class_decl
 
+    def add_internal_userdata(self, userdata_keys, userdata_remapping):
+        """Add userdata_keys and userdata_remapping."""
+
+        self.internal_userdata_keys.extend(userdata_keys)
+        self.internal_userdata_remapping.extend(userdata_remapping)
+
     def add_internal_outcome_and_transition(self, outcome, transition,
-            autonomy_list):
+                                            autonomy_list):
         """
         Add an internal outcome and its correspond transition of the concurrent
         machine.
@@ -93,7 +101,16 @@ class ConcurrentStateGenerator():
         transitions = self.internal_transitions
         autonomy = [max(self.outcome_to_autonomy_list[o])
                     for o in self.internal_outcomes]
-
+        #TODO: Refactor/simplify once format is figured out:
+        if any(self.internal_userdata_keys):
+            userdata_keys = self.internal_userdata_keys
+        else:
+            userdata_keys = []
+        if any(self.internal_userdata_remapping):
+            userdata_remapping = self.internal_userdata_remapping
+        else:
+            userdata_remapping = []
+        
         return new_si("/" + self.name,
                        decl['name'],
                        outcomes,
@@ -101,7 +118,9 @@ class ConcurrentStateGenerator():
                        None,
                        decl['param_names'],
                        decl['param_values'],
-                       autonomy)
+                       autonomy = autonomy,
+                       userdata_keys = userdata_keys,
+                       userdata_remapping = userdata_remapping)
 
     def gen_states_str(self):
         """
@@ -133,6 +152,8 @@ class ConcurrentStateGenerator():
         autonomy = [max(self.outcome_to_autonomy_list[o])
                     for o in self.internal_outcomes]
         
+        #TODO: Handle userdata_keys and userdata_remapping for Concurrent state
+
         return new_si("/" + self.name,
                       "ConcurrentState",
                       concurrent_si_outcomes,
@@ -140,7 +161,8 @@ class ConcurrentStateGenerator():
                       None,
                       p_names,
                       p_vals,
-                      autonomy)
+                      autonomy = autonomy)
+
     def is_concurrent(self):
         """ Returns if this concurrent state generator will create a
         concurrent state or just degenerate to a single state. """

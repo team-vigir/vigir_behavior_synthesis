@@ -42,12 +42,14 @@ target_pose_a:
             - request
             - message
         param_values:
-            - InputState.FOOTSTEP_PLAN_HEADER
-            - '"Test"'
+            - InputState.WAYPOINT_GOAL_POSE
+            - '"Please provide a footsteps pose"'
     output_mapping:
         target_pose_c: received
         target_pose_f : aborted
     autonomy: 0
+    userdata_keys: ['data']
+    userdata_remapping: ['step_goal']
 footstep_goal_a:
     class_decl:
         name: CreateStepGoalState

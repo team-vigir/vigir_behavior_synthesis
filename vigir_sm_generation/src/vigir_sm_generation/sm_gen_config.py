@@ -254,6 +254,30 @@ class SMGenConfig():
                 .format(k.args[0]))
             raise SMGenError(BSErrorCodes.CONFIG_AUTONOMY_INVALID)
 
+    def get_userdata_keys(self, var):
+        try:
+            if var in self.config:
+                var_config = self.config[var]
+                if 'userdata_keys' in var_config:
+                    return var_config['userdata_keys']
+            return ''
+        except Exception as e:
+            rospy.logerr("Failed to get userdata_keys from config: {0}"\
+                         .format(e.args[0]))
+            raise SMGenError(BSErrorCodes.CONFIG_USERDATA_INVALID)
+
+    def get_userdata_remapping(self, var):
+        try:
+            if var in self.config:
+                var_config = self.config[var]
+                if 'userdata_remapping' in var_config:
+                    return var_config['userdata_remapping']
+            return ''
+        except Exception as e:
+            rospy.logerr("Failed to get userdata_remapping from config: {0}"\
+                         .format(e.args[0]))
+            raise SMGenError(BSErrorCodes.CONFIG_USERDATA_INVALID)
+
     def is_fake_state(self, name):
         """Returns if a state is a placeholder for an output."""
         return name in self.state_name_to_sm_output

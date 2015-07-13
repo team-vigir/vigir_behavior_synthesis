@@ -15,7 +15,8 @@ def remove_duplicate_pairs(lst1, lst2):
     return list(new_lists[0]), list(new_lists[1])
 
 def new_si(state_path, state_class, outcomes, transitions, initial_state,
-    p_names, p_vals, autonomy):
+           p_names, p_vals, autonomy = [],
+           userdata_keys = [], userdata_remapping = []):
     """ Create a new SI. """
     si = StateInstantiation()
     si.state_path = state_path
@@ -29,6 +30,8 @@ def new_si(state_path, state_class, outcomes, transitions, initial_state,
     si.parameter_names = p_names
     si.parameter_values = p_vals
     si.autonomy = [] # temporary until fix on FlexBE side
+    si.userdata_keys = userdata_keys
+    si.userdata_remapping = userdata_remapping
 
     return si
 
