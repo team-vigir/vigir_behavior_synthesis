@@ -25,13 +25,15 @@ action_preconditions:
         - grasp
         - manipulate
     grasp:
-        # - pregrasp
+        - approach_object
         - manipulate
-    # pregrasp:
-    #     - manipulate
+    approach_object:
+        - stand
     footstep_execution:
         - footstep_plan
         - stand
     footstep_plan:
-       - footstep_goal
+        - footstep_goal
     footstep_goal:
+        - target_pose
+    target_pose: []
