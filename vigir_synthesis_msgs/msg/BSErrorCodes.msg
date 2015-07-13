@@ -35,3 +35,4 @@ int32 AUTOMATON_NO_INITIAL_STATE = -38        # Unable to deduce the initial sta
 int32 AUTOMATON_NEXT_STATE_INVALID = -39       # The next states doesn't map to anything
 int32 AUTOMATON_INPUT_VALUATION_INVALID = -40  # Something is wrong with the input valuations
 int32 AUTOMATON_OUTPUT_VALUATION_INVALID = -41  # Something is wrong with the output valuations
+int32 CONFIG_USERDATA_INVALID = -42   	# The config file is invalid
