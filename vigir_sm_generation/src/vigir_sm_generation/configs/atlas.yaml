@@ -35,6 +35,50 @@ approach_object_a:
         approach_object_c: finished
         approach_object_f : failed
     autonomy: 0
+target_pose_a:
+    class_decl:
+        name: InputState
+        param_names:
+            - request
+            - message
+        param_values:
+            - InputState.FOOTSTEP_PLAN_HEADER
+            - '"Test"'
+    output_mapping:
+        target_pose_c: received
+        target_pose_f : aborted
+    autonomy: 0
+footstep_goal_a:
+    class_decl:
+        name: CreateStepGoalState
+        param_names:
+            - pose_is_pelvis
+        param_values:
+            - 'False'
+    output_mapping:
+        footstep_goal_c: done
+        footstep_goal_f : failed
+    autonomy: 0
+footstep_plan_a:
+    class_decl:
+        name: PlanFootstepsState
+        param_names:
+            - mode
+        param_values:
+            - PlanFootstepsState.MODE_STEP_2D
+    output_mapping:
+        footstep_plan_c: planned
+        footstep_plan_f : failed
+    autonomy: 0
+footstep_execution_a:
+    class_decl:
+        name: ExecuteStepPlanActionState
+        param_names: []
+        param_values: []
+    output_mapping:
+        footstep_execution_c: finished
+        footstep_execution_f : failed
+    autonomy: 0
 manipulate_a:
     class_decl:
         name: ChangeControlModeActionState
