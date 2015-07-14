@@ -33,7 +33,7 @@ class GoalSpecification(GR1Specification):
             raise NotImplementedError('Cannot handle zero outcomes yet!') #FIX
         else: # Assumes that the first outcome is success
             liveness_formula = SystemLivenessFormula(goals = outcomes,
-                                                 disjunction = True)
+                                                     disjunction = True)
             success_formula = SuccessfulOutcomeFormula(conditions = goals,
                                                        success = outcomes[0])     
             goal_formulas.extend([liveness_formula, success_formula])

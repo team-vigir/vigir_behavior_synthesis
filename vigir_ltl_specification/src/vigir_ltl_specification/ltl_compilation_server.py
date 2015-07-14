@@ -28,10 +28,15 @@ def gen_ltl_spec_from_request(request):
     robot_spec_module = __import__(name = module_to_import,
                                    fromlist = ['CompleteSpecification'])
 
-    ltl_specification = robot_spec_module.CompleteSpecification(
-                                name = 'spec_from_request',
-                                initial_conditions = request.initial_conditions,
-                                goals = request.goals)
+    try:
+        ltl_specification = robot_spec_module.CompleteSpecification(
+                                    name = 'spec_from_request',
+                                    initial_conditions = request.initial_conditions,
+                                    goals = request.goals)
+    except Exception as e:
+        rospy.logerr('LTL Specification Compilation srv failed:\n%s' % str(e))
+        error_code = BSErrorCodes(BSErrorCodes.LTL_SPEC_COMPILATION_FAILED)
+        return LTLSpecification(), error_code
 
     ltl_specification_msg = gen_msg_from_specification(ltl_specification)
 

@@ -29,7 +29,7 @@ class ActionSpecification(GR1Specification):
                                                   sys_props = [])
 
         self.preconditions = preconditions
-        self.all_actions = list()
+        self.all_actions = list() #TODO: Property?
 
     def handle_new_action(self, action, act_out = True,
                           outcomes = ['completed']):
@@ -60,7 +60,7 @@ class ActionSpecification(GR1Specification):
         # Finally, load the formulas (and props) into the GR1 Specification
         self.load_formulas(action_formulas)
 
-        self.all_actions.append(action)
+        self._add_action(action)
 
     def _gen_preconditions_formula(self, action, act_out, outcomes):
         """
@@ -101,6 +101,10 @@ class ActionSpecification(GR1Specification):
                             fairness_formula]
 
         return act_out_formulas
+
+    def _add_action(self, action):
+        self.all_actions.append(action)
+        self.all_actions = list(set(self.all_actions))
 
 
 class RobotConfiguration(object):
