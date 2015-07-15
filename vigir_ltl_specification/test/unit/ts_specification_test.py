@@ -78,11 +78,22 @@ class SpecificationConstructionTests(unittest.TestCase):
         expected_formula_4e = 'next(r3_c) -> next(! r3_f)'
         expected_formula_4f = 'next(r3_f) -> next(! r3_c)'
 
-        expected_formulas_4 = [expected_formula_4a, expected_formula_4b, expected_formula_4c,
+        expected_formulas_4 = [expected_formula_4a, expected_formula_4b, expected_formula_4c, # outcome mutex
                                expected_formula_4d, expected_formula_4e, expected_formula_4f]
 
+        expected_formula_5a = '(r1_c & (! r1_a & ! r2_a & ! r3_a)) -> next(r1_c)'
+        expected_formula_5b = '(r1_f & (! r1_a & ! r2_a & ! r3_a)) -> next(r1_f)'
+        expected_formula_5c = '(r2_c & (! r1_a & ! r2_a & ! r3_a)) -> next(r2_c)'
+        expected_formula_5d = '(r2_f & (! r1_a & ! r2_a & ! r3_a)) -> next(r2_f)'
+        expected_formula_5e = '(r3_c & (! r1_a & ! r2_a & ! r3_a)) -> next(r3_c)'
+        expected_formula_5f = '(r3_f & (! r1_a & ! r2_a & ! r3_a)) -> next(r3_f)'
+
+        expected_formulas_5 = [expected_formula_5a, expected_formula_5b, expected_formula_5c, # outcome persistence
+                               expected_formula_5d, expected_formula_5e, expected_formula_5f]
+
         expected_env_trans = expected_formulas_1 + expected_formulas_2 + \
-                             expected_formulas_3 + expected_formulas_4
+                             expected_formulas_3 + expected_formulas_4 + \
+                             expected_formulas_5
 
         self.assertItemsEqual(actual_seq = self.spec.env_trans,
                               expected_seq = expected_env_trans)

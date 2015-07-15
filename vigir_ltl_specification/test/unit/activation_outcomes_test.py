@@ -320,6 +320,24 @@ class TSFormulaGenerationTests(unittest.TestCase):
 
         self.assertItemsEqual(formula.formulas, expected_formulas)
 
+    def test_topology_outcome_persistence(self):
+        
+        formula = TopologyOutcomePersistenceFormula(self.ts, ['completed', 'failed'])
+
+        self.assertEqual('env_trans', formula.type)
+
+        expected_formula_1a = '(r1_c & (! r1_a & ! r2_a & ! r3_a)) -> next(r1_c)'
+        expected_formula_1b = '(r1_f & (! r1_a & ! r2_a & ! r3_a)) -> next(r1_f)'
+        expected_formula_2a = '(r2_c & (! r1_a & ! r2_a & ! r3_a)) -> next(r2_c)'
+        expected_formula_2b = '(r2_f & (! r1_a & ! r2_a & ! r3_a)) -> next(r2_f)'
+        expected_formula_3a = '(r3_c & (! r1_a & ! r2_a & ! r3_a)) -> next(r3_c)'
+        expected_formula_3b = '(r3_f & (! r1_a & ! r2_a & ! r3_a)) -> next(r3_f)'
+
+        expected_formulas = [expected_formula_1a, expected_formula_1b, expected_formula_2a,
+                             expected_formula_2b, expected_formula_3a, expected_formula_3b]
+
+        self.assertItemsEqual(formula.formulas, expected_formulas)
+
     def test_topology_fairness_conditions_single_outcome(self):
         
         formula = TopologyFairnessConditionsFormula(self.ts)

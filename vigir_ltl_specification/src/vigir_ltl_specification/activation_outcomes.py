@@ -480,6 +480,43 @@ class SingleStepChangeFormula(ActivationOutcomesFormula):
 
         return all_formulas
 
+
+class TopologyOutcomePersistenceFormula(ActivationOutcomesFormula):
+    """
+    Formulas that force topology transitions outcomes to persist
+    while no topology transitions are being activated.
+    """
+
+    def __init__(self, ts, outcomes = ['completed']):
+        super(TopologyOutcomePersistenceFormula, self).__init__(sys_props = [],
+                                                                outcomes = outcomes,
+                                                                ts = ts)
+        
+        self.formulas = self._gen_topo_outcome_persistence_formulas(ts)
+        self.type = 'env_trans'
+
+    def _gen_topo_outcome_persistence_formulas(self ,ts):
+        """
+        New due to multiple outcomes of a topological transition and
+        also due to the activation-deactivation paradigm."""
+
+        persistence_formulas = list()
+
+        activate_nothing = _get_act_nothing(ts.keys())
+
+        for pi in ts.keys():
+            
+            pi_outcomes = self.outcome_props[pi]
+
+            for pi_out in pi_outcomes:
+
+                left_hand_side = LTL.conj([pi_out, activate_nothing])
+                formula = LTL.implication(left_hand_side, LTL.next(pi_out))
+                persistence_formulas.append(formula)
+
+        return persistence_formulas
+
+
 class TopologyFairnessConditionsFormula(ActivationOutcomesFormula):
     """
     Environment liveness formulas that ensure that every transition on the
