@@ -6,16 +6,22 @@ Specification written in the GR(1) fragment of Linear Temporal Logic
 This module contains one class, GR1Specification.
 A GR(1) Specification consists of propositions and formulas.
 
-The class has methods for populating the 6 parts of a GR(1) formula:
+The class has (private) methods for populating the 6 parts of a GR(1) formula:
   * Environment initial conditions
   * Environment safety assumptions
-  * Environment fairness assumptions
+  * Environment fairness (liveness) assumptions (aka, environment goals)
   * System initial conditions
   * System safety requirements
-  * System liveness requirements (aka, goals)
+  * System liveness requirements (aka, system goals)
+From the outside, formulas can be added using the method(s) for loading.
 
-There are also methods for writing the specification in 
-a .structuredslugs file for use with the SLUGS synthesis tool.
+Multiple GR1Specification objects can be merged.
+Merging is both proposition-wise and formula-wise.
+
+There are also (public) methods for writing the specification in 
+a .structuredslugs file for use with the SLUGS synthesis tool:
+
+https://github.com/LTLMoP/slugs
 
 """
 
@@ -23,15 +29,9 @@ import os
 
 class GR1Specification(object):
 	"""
-	The class encodes the GR(1) fragment of LTL formulas, 
-	written in the structured slugs format.
-
-	* All methods that generate LTL formulas return a 
-	  list of formulas (each one a string), not one big string.
-	* There are separate methods for adding those lists
-	  to the various LTL subformulas (requirements, liveness, etc.)
-	* There are separate methods for writing those lists
-	  of subformulas to the appropriate section of a .structuredslugs file.
+	The class encodes the GR(1) fragment of LTL formulas. 
+	The formulas are written in the structured slugs format.
+	(See https://github.com/LTLMoP/slugs/blob/master/doc/input_formats.md)
 
 	Arguments:
 	  spec_name	(str)			The name of the specification.
@@ -106,7 +106,7 @@ class GR1Specification(object):
 		self.sys_props = self.merge_sys_propositions(formula.sys_props)
 
 		try:
-			self.add_to_list(formula.type, formula.formulas)
+			self._add_to_list(formula.type, formula.formulas)
 		except Exception as e:
 			print e
 			raise ValueError('The {formula} has type {type}. Loading failed!'
@@ -118,25 +118,27 @@ class GR1Specification(object):
 	# "Setter"-type methods for the 6 types of subformulas
 	# =====================================================
 
-	def add_to_sys_init(self, formulas):	
-		self.add_to_list('sys_init', formulas)
+	# The public setter methods have been replaced by load and load_formulas
 
-	def add_to_env_init(self, formulas):
-		self.add_to_list('env_init', formulas)
+	# def add_to_sys_init(self, formulas):	
+	# 	self._add_to_list('sys_init', formulas)
 
-	def add_to_sys_trans(self, formulas):	
-		self.add_to_list('sys_trans', formulas)
+	# def add_to_env_init(self, formulas):
+	# 	self._add_to_list('env_init', formulas)
 
-	def add_to_env_trans(self, formulas):
-		self.add_to_list('env_trans', formulas)
+	# def add_to_sys_trans(self, formulas):	
+	# 	self._add_to_list('sys_trans', formulas)
 
-	def add_to_sys_liveness(self, formulas):
-		self.add_to_list('sys_liveness', formulas)
+	# def add_to_env_trans(self, formulas):
+	# 	self._add_to_list('env_trans', formulas)
 
-	def add_to_env_liveness(self, formulas):
-		self.add_to_list('env_liveness', formulas)
+	# def add_to_sys_liveness(self, formulas):
+	# 	self._add_to_list('sys_liveness', formulas)
 
-	def add_to_list(self, desired_list, thing_to_add):
+	# def add_to_env_liveness(self, formulas):
+	# 	self._add_to_list('env_liveness', formulas)
+
+	def _add_to_list(self, desired_list, thing_to_add):
 		"""
 		Generic method for appending to, or extending,
 		a list attribute of the object (e.g. self.sys_liveness)
@@ -147,10 +149,10 @@ class GR1Specification(object):
 		elif type(thing_to_add) is list:
 			getattr(self, desired_list).extend(thing_to_add)
 		elif thing_to_add is None:
-			print("Warning: Nothing was added to %s!" % desired_list)
+			print("Warning: Nothing was added to {}!".format(desired_list))
 		else:
 			raise ValueError("Invalid input: {} \
-							  Add either a string \or a list of strings."
+							  Add either a string or a list of strings."
 							 .format(str(thing_to_add)))
 
 	# =====================================================
@@ -184,7 +186,8 @@ class GR1Specification(object):
 			self._write_sys_liveness(spec_file)
 			self._write_env_liveness(spec_file)
 
-		print("\nCreated specification file %s in %s \n" % (filename, folder_path))
+		print("\nCreated specification file {name} in {dir} \n"
+			  .format(name = filename, dir = folder_path))
 
 		return full_file_path, folder_path
 
@@ -243,10 +246,7 @@ class GR1Specification(object):
 
 def main(): #pragma: no cover
 	
-	my_spec = GR1Specification()
-
-	print 'Environment props:\t', my_spec.env_props
-	print 'System props:\t', my_spec.sys_props
+	pass
 
 if __name__ == "__main__": #pragma: no cover
 	main()
