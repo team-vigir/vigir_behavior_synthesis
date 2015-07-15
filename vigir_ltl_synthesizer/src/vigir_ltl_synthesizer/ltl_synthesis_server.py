@@ -69,7 +69,8 @@ def handle_slugs_output(synthesizable, automaton_file, input_vars, output_vars):
         # Parse JSON into SynthesizedAutomaton msg
         automaton = gen_automaton_msg_from_json(automaton_file, input_vars, output_vars)
         error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
-        rospy.loginfo('\033[92mSuccessfully created Automaton msg from the synthesized automaton.\033[0m')
+        rospy.loginfo('\033[92mSuccessfully created Automaton msg '\
+                      'from the synthesized automaton.\033[0m')
     
     elif not synthesizable:  
         automaton = SynthesizedAutomaton() # Return empty automaton
@@ -86,10 +87,9 @@ def call_slugs_synthesizer(name):
     '''
 
     options = ["--jsonOutput"]  # Do we need the '--sysInitRoboticsSemantics' option?
-    slugs_cmd = ['slugs'] + options + [name + ".slugsin", name + ".json"] # list for use with the subprocess module
+    slugs_cmd = ['slugs'] + options + [name + ".slugsin", name + ".json"]
     slugs_cmd = ' '.join(slugs_cmd) # convert to string for use with the commands module
 
-    # synthesis_process = subprocess.Popen(slugs_cmd, stdout=subprocess.PIPE)
     (status, slugs_output) = commands.getstatusoutput(slugs_cmd)
 
     if status == 0:
@@ -98,24 +98,26 @@ def call_slugs_synthesizer(name):
         automaton_file = name + ".json"
     else:
         # The command did not even run.
-        rospy.logerr("""SLUGS command failed with status: %s
-                     \nHave you installed slugs? Output: %s"""
-                     % (status, slugs_output))
+        rospy.logerr("""SLUGS command failed with status: {0}
+                     \nHave you installed slugs? Output: {1}"""
+                     .format(status, slugs_output))
         automaton_file = ''
         synthesizable = False
 
     return synthesizable, automaton_file
 
 def determine_synthesizability(slugs_output):
-    '''...'''
+    '''Determine synthesizability based on the terminal output of SLUGS.'''
     
     synthesizable = False
 
     if 'RESULT: Specification is realizable.' in slugs_output:
         synthesizable = True
-        rospy.loginfo('\033[92mSuccessfully synthesized an automaton from the LTL specification.\033[0m')
+        rospy.loginfo('\033[92mSuccessfully synthesized an automaton '\
+                      'from the LTL specification.\033[0m')
     else:
-        rospy.logwarn('The LTL specification was unsynthesizable!\n%s' % slugs_output)
+        rospy.logwarn('The LTL specification was unsynthesizable!\n{}'
+                      .format(slugs_output))
 
     return synthesizable
 
@@ -127,7 +129,8 @@ def convert_structured_slugs_to_slugsin(name):
     #TODO: update performConversion so we don't have to do stdout redirection
     with open(slugsin_file, "w") as sys.stdout:
         
-        slugs_compiler.performConversion(name + ".structuredslugs", thoroughly = True)
+        slugs_compiler.performConversion(name + ".structuredslugs",
+                                         thoroughly = True)
     
     sys.stdout = sys.__stdout__
 
@@ -187,7 +190,7 @@ def gen_automaton_msg_from_json(json_file, input_vars, output_vars):
     return automaton
 
 def write_structured_slugs_from_msg(ltl_spec, name):
-    '''...'''
+    """Create the structuredslugs file and write the 8 sections."""
 
     # The directory where specs and automata are saved:
     specs_folder_path = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/synthesis_byproducts') 
@@ -197,7 +200,6 @@ def write_structured_slugs_from_msg(ltl_spec, name):
     if not os.path.exists(this_folder_path):
         os.makedirs(this_folder_path)
 
-    """Create, or open, the structuredslugs file and write the 8 sections."""
     structured_slugs_file = name + ".structuredslugs"
 
     full_file_path = os.path.join(this_folder_path, structured_slugs_file)
@@ -216,7 +218,8 @@ def write_structured_slugs_from_msg(ltl_spec, name):
         _write_sys_liveness(ltl_spec, spec_file)
         _write_env_liveness(ltl_spec, spec_file)
 
-    rospy.loginfo("\n\033[92mSuccessfully created specification file\033[0m %s in %s \n" % (structured_slugs_file, this_folder_path))
+    rospy.loginfo(' \033[92mSuccessfully created specification file:\033[0m\n'\
+                  '{} in {}\n'.format(structured_slugs_file, this_folder_path))
 
     return structured_slugs_file, this_folder_path
 
@@ -277,11 +280,12 @@ def ltl_synthesis_server():
     slugs_exec_path = find_executable('slugs')
 
     if not slugs_exec_path:
-        rospy.logwarn('The synthesizer (SLUGS) is NOT installed.')
-        rospy.logwarn('Please use the install_slugs.sh script.')
-        rospy.logwarn('The LTL Synthesis service will not be available.')
+        rospy.logwarn('The synthesizer (SLUGS) is NOT installed. '\
+                      'Please use the install_slugs.sh script. '\
+                      'The LTL Synthesis service will not be available.')
     else:
-        rospy.loginfo('The synthesizer (SLUGS) is installed in: %s' % slugs_exec_path)
+        rospy.loginfo('The synthesizer (SLUGS) is installed: {dir}'
+                      .format(dir = slugs_exec_path))
     
         s = rospy.Service('ltl_synthesis', LTLSynthesis, handle_ltl_synthesis)
         
