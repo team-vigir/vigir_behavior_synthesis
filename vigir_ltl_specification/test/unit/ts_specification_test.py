@@ -57,9 +57,6 @@ class SpecificationConstructionTests(unittest.TestCase):
                                expected_formula_2c, expected_formula_2d,
                                expected_formula_2e, expected_formula_2f] # single step
 
-        expected_formula_3a = '((r1_c | r1_f) & r1_a) -> (next(r1_c) | next(r1_f))'
-        expected_formula_3b = '((r2_c | r2_f) & r2_a) -> (next(r2_c) | next(r2_f))'
-        expected_formula_3c = '((r3_c | r3_f) & r3_a) -> (next(r3_c) | next(r3_f))'
         expected_formula_3d = '(! r1_c & ! r1_a) -> next(! r1_c)'
         expected_formula_3e = '(! r2_c & ! r2_a) -> next(! r2_c)'
         expected_formula_3f = '(! r3_c & ! r3_a) -> next(! r3_c)'
@@ -67,8 +64,7 @@ class SpecificationConstructionTests(unittest.TestCase):
         expected_formula_3h = '(! r2_f & ! r2_a) -> next(! r2_f)'
         expected_formula_3i = '(! r3_f & ! r3_a) -> next(! r3_f)'
 
-        expected_formulas_3 = [expected_formula_3a, expected_formula_3b, expected_formula_3c, # constrain outcomes
-                               expected_formula_3d, expected_formula_3e, expected_formula_3f, # constrain completion
+        expected_formulas_3 = [expected_formula_3d, expected_formula_3e, expected_formula_3f, # constrain completion
                                expected_formula_3g, expected_formula_3h, expected_formula_3i] # constrain failure
 
         expected_formula_4a = 'next(r1_c) -> next(! r1_f)'

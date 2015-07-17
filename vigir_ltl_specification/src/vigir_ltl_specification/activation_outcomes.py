@@ -481,6 +481,43 @@ class SingleStepChangeFormula(ActivationOutcomesFormula):
         return all_formulas
 
 
+class TopologyOutcomeConstraintFormula(ActivationOutcomesFormula):
+    """Safety formulas that constrain the outcomes of topology transitions."""
+
+    def __init__(self, ts, outcomes = ['completed']):
+        super(TopologyOutcomeConstraintFormula, self).__init__(
+                                                        sys_props = [],
+                                                        outcomes = outcomes,
+                                                        ts = ts)
+        
+        self.formulas = self._gen_topology_outcomes_formulas(ts)
+        self.type = 'env_trans'
+
+    def _gen_topology_outcomes_formulas(self, ts):
+        """Equivalent of Equation (4)"""
+
+        eq4_formulas = list()
+
+        for pi in ts.keys():
+
+            pi_a = _get_act_prop(pi)
+            pi_outcomes = self.outcome_props[pi]
+
+            # Generate Eq. (4)
+            not_pi_a = LTL.neg(pi_a)
+
+            for pi_out in pi_outcomes:
+                
+                not_pi_out = LTL.neg(pi_out)
+                left_hand_side = LTL.conj([not_pi_out, not_pi_a])
+                right_hand_side = LTL.next(not_pi_out)
+                
+                formula = LTL.implication(left_hand_side, right_hand_side)
+                eq4_formulas.append(formula)
+
+        return eq4_formulas
+
+
 class TopologyOutcomePersistenceFormula(ActivationOutcomesFormula):
     """
     Formulas that force topology transitions outcomes to persist

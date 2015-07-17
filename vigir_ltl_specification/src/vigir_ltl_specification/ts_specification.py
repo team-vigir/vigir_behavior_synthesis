@@ -54,8 +54,8 @@ class TransitionSystemSpecification(GR1Specification):
         fairness_condition = TopologyFairnessConditionsFormula(
                                             ts = self.ts,
                                             outcomes = outcomes)
-        constraints_formula = ActionOutcomeConstraintsFormula(
-                                            actions = self.ts.keys(),
+        constraints_formula = TopologyOutcomeConstraintFormula(
+                                            ts = self.ts,
                                             outcomes = outcomes)
         mutex_formula = OutcomeMutexFormula(sys_props = self.ts.keys(),
                                             outcomes = outcomes)
