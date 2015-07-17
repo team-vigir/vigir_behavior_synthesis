@@ -22,13 +22,17 @@ transition_system:
 # Action Pre-conditions (ATLAS and ViGIR software specific)
 action_preconditions:
     pickup:
-        - grasp
+        - approach_object
+        - object_template
         - manipulate
     grasp:
         - approach_object
+        - object_template
         - manipulate
     approach_object:
+        - object_template
         - stand
+    object_template: []
     footstep_execution:
         - footstep_plan
         - stand

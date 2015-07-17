@@ -6,15 +6,15 @@ output:
     failed: failed
 
 # Mapping from activation propositions to parametrized states and their outcomes
+
+### Various robot actions
 pickup_a:
     class_decl:
-        name: ExecuteTrajectoryMsgState
-        param_names:
-            - controller
-        param_values:
-            - ExecuteTrajectoryMsgState.CONTROLLER_LEFT_ARM
+        name: PickupObjectSM
+        param_names: []
+        param_values: []
     output_mapping:
-        pickup_c: [done]
+        pickup_c: [finished]
         pickup_f: [failed]
     autonomy: 0
 grasp_a:
@@ -35,21 +35,6 @@ approach_object_a:
         approach_object_c: [finished]
         approach_object_f: [failed, aborted]
     autonomy: 0
-target_pose_a:
-    class_decl:
-        name: InputState
-        param_names:
-            - request
-            - message
-        param_values:
-            - InputState.WAYPOINT_GOAL_POSE
-            - '"Please provide a footsteps pose"'
-    output_mapping:
-        target_pose_c: [received]
-        target_pose_f: [aborted, no_connection, data_error]
-    autonomy: 0
-    userdata_keys: [data]
-    userdata_remapping: [step_goal]
 footstep_goal_a:
     class_decl:
         name: CreateStepGoalState
@@ -81,6 +66,40 @@ footstep_execution_a:
         footstep_execution_c: [finished]
         footstep_execution_f: [failed]
     autonomy: 0
+
+### Operator Inputs
+object_template_a:
+    class_decl:
+        name: InputState
+        param_names:
+            - request
+            - message
+        param_values:
+            - InputState.SELECTED_OBJECT_ID
+            - '"Specify desired object template"'
+    output_mapping:
+        object_template_c: [received]
+        object_template_f: [aborted, no_connection, data_error]
+    autonomy: 0
+    userdata_keys: [data]
+    userdata_remapping: [template_id]
+target_pose_a:
+    class_decl:
+        name: InputState
+        param_names:
+            - request
+            - message
+        param_values:
+            - InputState.WAYPOINT_GOAL_POSE
+            - '"Provide a target pose for locomotion"'
+    output_mapping:
+        target_pose_c: [received]
+        target_pose_f: [aborted, no_connection, data_error]
+    autonomy: 0
+    userdata_keys: [data]
+    userdata_remapping: [step_goal]
+
+### BDI Control Modes
 manipulate_a:
     class_decl:
         name: ChangeControlModeActionState
@@ -136,6 +155,8 @@ walk_a:
         walk_c: [changed]
         walk_f: [failed]
     autonomy: 0
+
+### External sensors
 obj_detected:
     class_decl:
         name: SensorReading
