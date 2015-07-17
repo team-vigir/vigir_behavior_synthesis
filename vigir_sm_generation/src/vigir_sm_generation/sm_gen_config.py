@@ -244,8 +244,8 @@ class SMGenConfig():
             return state_name
 
     def get_autonomy_list(self, conditions):
-        return [self.config[out_var]["autonomy"]
-                for out_var, _ in conditions.items()]
+        # return [self.config[out_var]["autonomy"]
+        #         for out_var, _ in conditions.items()]
         try:
             return [self.config[out_var]["autonomy"]
                     for out_var, _ in conditions.items()]

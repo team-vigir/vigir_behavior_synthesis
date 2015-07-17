@@ -50,7 +50,7 @@ class ConcurrentStateGenerator():
         self.internal_userdata_keys.extend(userdata_keys)
         self.internal_userdata_remapping.extend(userdata_remapping)
 
-    def add_internal_outcome_and_transition(self, outcome, transition,
+    def add_internal_outcome_and_transition(self, outcomes, transition,
                                             autonomy_list):
         """
         Add an internal outcome and its correspond transition of the concurrent
@@ -60,15 +60,16 @@ class ConcurrentStateGenerator():
         transition: a string
         autonomy_list: a list of autonomies (integers)
         """
-        if outcome not in self.internal_outcomes:
-            self.internal_outcomes.append(outcome)
-            self.internal_transitions.append(transition)
+        for outcome in outcomes:
+            if outcome not in self.internal_outcomes:
+                self.internal_outcomes.append(outcome)
+                self.internal_transitions.append(transition)
 
-            # Add autonomy
-            if outcome in self.outcome_to_autonomy_list:
-                self.outcome_to_autonomy_list[outcome] += autonomy_list
-            else:
-                self.outcome_to_autonomy_list[outcome] = autonomy_list
+                # Add autonomy
+                if outcome in self.outcome_to_autonomy_list:
+                    self.outcome_to_autonomy_list[outcome] += autonomy_list
+                else:
+                    self.outcome_to_autonomy_list[outcome] = autonomy_list
 
     def clean_out_map(self, out_map):
         clean_out_map = {}
