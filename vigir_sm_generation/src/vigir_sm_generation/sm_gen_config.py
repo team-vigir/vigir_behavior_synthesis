@@ -70,9 +70,17 @@ class SMGenConfig():
             rospy.logerr("The configuration file is invalid.")
             raise SMGenError(BSErrorCodes.CONFIG_FILE_INVALID)
 
+        #TEMP: Remove initial state if it doesn't activate anything
+        self.removed_states = list()
+        for state in self.automata:
+            if not any(state.output_valuation):
+                self.automata.remove(state)
+                self.removed_states.append(state)
+                print 'Removed state:', state.name
+
     def get_init_states(self):
         """
-        Return the initial states.  For now, an state is an initial state if it
+        Return the initial states.  For now, a state is an initial state if it
         has nothing transitioning to it.
         """
         transitioned_to = set()
@@ -85,8 +93,11 @@ class SMGenConfig():
                 not_transitioned_to.append(state)
 
         if len(not_transitioned_to) == 0:
-            rospy.logerr("Could not figure out the (real) initial state(s).")
-            raise SMGenError(BSErrorCodes.AUTOMATON_NO_INITIAL_STATE)
+            rospy.logwarn("Could not figure out the (real) initial state(s).")
+            # raise SMGenError(BSErrorCodes.AUTOMATON_NO_INITIAL_STATE)
+            #TEMP: The set above is empty because the init state was removed:
+            not_transitioned_to = self.removed_states[0].transitions
+            print 'New init states:', not_transitioned_to
 
         return not_transitioned_to
 

@@ -22,7 +22,9 @@ class InitialConditionsSpecification(GR1Specification):
         and environment initial condition formulas for this specification.
         """
 
+        #Activation props should all be False in new IC paradigm:
         self.sys_init = SystemInitialConditions(spec.sys_props,
-                                                true_props).formulas
+                                                true_props = []).formulas
+        
         self.env_init = EnvironmentInitialConditions(spec.env_props,
                                                      true_props).formulas

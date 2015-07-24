@@ -33,7 +33,7 @@ def handle_ltl_synthesis(request):
         path_name = spec_name
 
     # Parse LTL specification msg and write .structuredslugs file
-    structured_slugs_file, folder_path = write_structured_slugs_from_msg(ltl_spec, path_name)
+    structured_slugs_file, folder_path = write_structured_slugs_from_msg(ltl_spec, path_name, spec_name)
     
     # First, step inside the specification's directory
     initial_dir = os.getcwd()
@@ -189,14 +189,14 @@ def gen_automaton_msg_from_json(json_file, input_vars, output_vars):
 
     return automaton
 
-def write_structured_slugs_from_msg(ltl_spec, name):
+def write_structured_slugs_from_msg(ltl_spec, path, name):
     """Create the structuredslugs file and write the 8 sections."""
 
     # The directory where specs and automata are saved:
     specs_folder_path = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/synthesis_byproducts') 
 
     # The directory where this spec will be saved:
-    this_folder_path = os.path.join(specs_folder_path, name)
+    this_folder_path = os.path.join(specs_folder_path, path)
     if not os.path.exists(this_folder_path):
         os.makedirs(this_folder_path)
 

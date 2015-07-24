@@ -40,7 +40,7 @@ def modify_names(all_out_vars, automata):
     We append "_X" to the state name for each output variable X that is true.
     """
     for state in automata:
-        state.name = str(state.name) # sometime they're ints
+        state.name = str(state.name) # sometimes they're ints
 
     old_name_to_new_name = {}
     for state in automata:
@@ -165,10 +165,14 @@ def generate_sm_handle(request):
     helper = SMGenConfig(config, all_in_vars, all_out_vars, automata)
 
     # Initialize list of StateInstantiation's with parent SI.
-    SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
-           helper.get_sm_real_outputs(), [], INIT_STATE_NAME, [], [])]
+    # SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
+    #        helper.get_sm_real_outputs(), [], INIT_STATE_NAME, [], [])]
     init_states = helper.get_init_states()
-    SIs.append(get_init_temp_state(init_states))
+    # SIs.append(get_init_temp_state(init_states))
+
+    #TEMP: Assume single initial state for July experiments:
+    SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
+           helper.get_sm_real_outputs(), [], init_states[0], [], [])]
 
     for state in automata:
         name = state.name
@@ -186,6 +190,9 @@ def generate_sm_handle(request):
                                       helper.get_userdata_remapping(out_var))
 
         transitions = helper.get_transitions(state)
+        #TEMP: Ignore states where everything is False [?]
+        if not transitions:
+            continue
 
         for next_state, conditions in transitions.items():
             substate_name_to_out = {} # i.e. condition mapping

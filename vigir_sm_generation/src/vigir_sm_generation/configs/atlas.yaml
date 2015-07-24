@@ -8,24 +8,57 @@ output:
 # Mapping from activation propositions to parametrized states and their outcomes
 
 ### Various robot actions
-pickup_a:
+pickup_object_a:
     class_decl:
         name: PickupObjectSM
         param_names: []
         param_values: []
     output_mapping:
-        pickup_c: [finished]
-        pickup_f: [failed]
+        pickup_object_c: [finished]
+        pickup_object_f: [failed]
     autonomy: 0
-grasp_a:
+grasp_object_a:
     class_decl:
         name: GraspObjectSM
         param_names: []
         param_values: []
     output_mapping:
-        grasp_c: [finished]
-        grasp_f: [failed]
+        grasp_object_c: [finished]
+        grasp_object_f: [failed]
     autonomy: 0
+pregrasp_a:
+    class_decl:
+        name: ExecuteTrajectoryMsgState
+        param_names:
+            - controller
+        param_values:
+            - ExecuteTrajectoryMsgState.CONTROLLER_RIGHT_ARM
+    output_mapping:
+        pregrasp_c: [done]
+        pregrasp_f: [failed]
+    autonomy: 0
+pregrasp_plan_a:
+    class_decl:
+        name: PlanEndeffectorPoseState
+        param_names: []
+        param_values: []
+    output_mapping:
+        pregrasp_plan_c: [planned]
+        pregrasp_plan_f: [failed]
+    autonomy: 0
+    userdata_keys: [target_pose, hand]
+    userdata_remapping: [pregrasp_pose, hand_side]
+pregrasp_pose_a:
+    class_decl:
+        name: GetTemplatePregraspState
+        param_names: []
+        param_values: []
+    output_mapping:
+        pregrasp_pose_c: [done]
+        pregrasp_pose_f: [failed, not_available]
+    autonomy: 0
+    userdata_keys: [preference, pre_grasp]
+    userdata_remapping: [grasp_preference, pregrasp_pose]
 approach_object_a:
     class_decl:
         name: WalktoTemplateSM
@@ -66,6 +99,17 @@ footstep_execution_a:
         footstep_execution_c: [finished]
         footstep_execution_f: [failed]
     autonomy: 0
+look_down_a:
+    class_decl:
+        name: TiltHeadState
+        param_names:
+            - desired_tilt
+        param_values:
+            - TiltHeadState.DOWN_45
+    output_mapping:
+        look_down_c: [done]
+        look_down_f: [failed]
+    autonomy: 0
 
 ### Operator Inputs
 object_template_a:
@@ -97,7 +141,7 @@ target_pose_a:
         target_pose_f: [aborted, no_connection, data_error]
     autonomy: 0
     userdata_keys: [data]
-    userdata_remapping: [step_goal]
+    userdata_remapping: [target_pose]
 
 ### BDI Control Modes
 manipulate_a:
