@@ -10,7 +10,6 @@ CMakeLists.txt.user
 *.pyc
 
 # Synthesis-specific
-temp_bs_files
 synthesis_byproducts
 
 # Other

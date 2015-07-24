@@ -193,7 +193,7 @@ def write_structured_slugs_from_msg(ltl_spec, path, name):
     """Create the structuredslugs file and write the 8 sections."""
 
     # The directory where specs and automata are saved:
-    specs_folder_path = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/synthesis_byproducts') 
+    specs_folder_path = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/vigir_ltl_synthesizer/synthesis_byproducts') 
 
     # The directory where this spec will be saved:
     this_folder_path = os.path.join(specs_folder_path, path)

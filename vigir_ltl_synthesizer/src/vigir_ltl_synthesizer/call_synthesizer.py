@@ -21,7 +21,8 @@ my_mode_spec = ControlModeSpecification(name, initial_mode = 'stand_prep',
 my_mode_spec.add_control_mode_goal("manipulate")
 
 # Write specification in .structuredslugs file in synthesis_byproducts folder
-specs_folder = os.path.join(vigir_repo, 'catkin_ws/src/vigir_behavior_synthesis/synthesis_byproducts')
+specs_folder = os.path.join(vigir_repo, 
+							'catkin_ws/src/vigir_behavior_synthesis/vigir_ltl_synthesizer/synthesis_byproducts')
 structured_slugs_file, folder_path = my_mode_spec.write_structured_slugs_file(specs_folder)
 
 # Prepare for conversion and synthesis using slugs
