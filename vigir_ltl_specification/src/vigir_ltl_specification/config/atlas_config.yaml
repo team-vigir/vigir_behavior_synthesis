@@ -4,7 +4,6 @@ transition_system:
         - stand_prep
         - stand
     stand:
-        - stand_prep
         - stand
         - manipulate
         - step
