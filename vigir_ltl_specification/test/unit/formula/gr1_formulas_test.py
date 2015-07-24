@@ -3,8 +3,8 @@
 import os, sys
 import subprocess
 
-from vigir_ltl_specification.gr1_specification import GR1Specification
-from vigir_ltl_specification.gr1_formulas import GR1Formula, FastSlowFormula
+from vigir_ltl_specification.spec.gr1_specification import GR1Specification
+from vigir_ltl_specification.formula.gr1_formulas import GR1Formula, FastSlowFormula
 
 import unittest
 

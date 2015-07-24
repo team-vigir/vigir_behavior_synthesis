@@ -2,7 +2,7 @@
 
 import unittest
 
-from vigir_ltl_specification.ts_specification import *
+from vigir_ltl_specification.spec.ts_specification import *
 
 class SpecificationConstructionTests(unittest.TestCase):
     """Test the generation of Activation-Outcomes formulas"""

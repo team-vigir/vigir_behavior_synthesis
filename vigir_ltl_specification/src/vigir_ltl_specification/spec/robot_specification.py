@@ -4,7 +4,7 @@ import os
 import yaml
 
 from gr1_specification import GR1Specification
-from activation_outcomes import *
+from ..formula import *
 
 """
 The module contains two classes: ActionSpecification and RobotConfiguration.
@@ -134,7 +134,7 @@ class RobotConfiguration(object):
         config_file = ('%s_config.yaml' % robot)
         rel_config_path = 'config/' + config_file
 
-        config_file_path = os.path.join(module_path, rel_config_path)
+        config_file_path = os.path.join(module_path, '..', rel_config_path)
 
         try:
             with open(config_file_path, 'r') as stream:

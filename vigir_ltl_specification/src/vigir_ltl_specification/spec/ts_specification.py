@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from gr1_specification import GR1Specification
-from activation_outcomes import *
+from ..formula import *
 
 """
 Module's docstring #TODO

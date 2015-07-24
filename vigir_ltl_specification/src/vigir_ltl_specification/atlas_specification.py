@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 
-from gr1_specification import GR1Specification
-from robot_specification import RobotConfiguration, ActionSpecification
-from ts_specification import TransitionSystemSpecification
-from goal_specification import GoalSpecification
-from ic_specification import InitialConditionsSpecification
+from spec import *
 
 """
 The module defines the components that make up a LTL specification for ATLAS.

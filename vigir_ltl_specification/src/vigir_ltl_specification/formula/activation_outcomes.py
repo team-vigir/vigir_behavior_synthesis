@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import ltl as LTL
+from ..ltl import ltl as LTL
 from gr1_formulas import GR1Formula
 
 """

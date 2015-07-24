@@ -4,8 +4,6 @@ import rospy
 
 from vigir_synthesis_msgs.srv import LTLCompilation, LTLCompilationResponse
 from vigir_synthesis_msgs.msg import LTLSpecification, BSErrorCodes
-from vigir_ltl_specification.atlas_specification_old import ControlModeSpecification, VigirSpecification # OLD
-from vigir_ltl_specification.gr1_specification import GR1Specification
 
 def handle_ltl_compilation(request):
     """Responsible for putting together a complete LTL specification."""
@@ -13,7 +11,6 @@ def handle_ltl_compilation(request):
     if request.system:
         if request.system == 'atlas':
             ltl_specification, error_code = gen_ltl_spec_from_request(request)
-            # ltl_specification, error_code = gen_ltl_spec_for_atlas('atlas_spec', request.initial_conditions, request.goals)
         else:
             error_code = BSErrorCodes(BSErrorCodes.LTL_SPEC_COMPILATION_FAILED)
             rospy.logerr('LTL Specification Compilation does not support %s' % request.system)
@@ -39,34 +36,6 @@ def gen_ltl_spec_from_request(request):
         return LTLSpecification(), error_code
 
     ltl_specification_msg = gen_msg_from_specification(ltl_specification)
-
-    # Behavior Synthesis error code
-    error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
-
-    return ltl_specification_msg, error_code
-
-def gen_ltl_spec_for_atlas(name, initial_conditions, goals):
-    """OBSOLETE: This method is using the old atlas_specification module!"""
-
-    cm_spec = ControlModeSpecification('atlas_cm', initial_mode = initial_conditions[0],
-                                       modes_of_interest = ['stand_prep', 'stand', 'manipulate'])
-    # Optional argument example: modes_of_interest = ['stand_prep', 'stand', 'manipulate']
-    
-    vigir_spec = VigirSpecification()
-
-    for goal in goals:
-        # FIX: Not all goals are going to be action!
-        # For control modes, check 'if goal in spec.control_modes'
-        # spec.add_control_mode_goal(goal)
-        vigir_spec.handle_new_action_goal(goal)
-
-    complete_spec = GR1Specification(name)
-    individual_specs = [cm_spec, vigir_spec]
-
-    complete_spec.merge_gr1_specifications(individual_specs)
-
-    # Compile an LTL specification that fulfills the request
-    ltl_specification_msg = gen_msg_from_specification(complete_spec)
 
     # Behavior Synthesis error code
     error_code = BSErrorCodes(BSErrorCodes.SUCCESS)

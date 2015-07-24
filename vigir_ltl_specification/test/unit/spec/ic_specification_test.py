@@ -2,8 +2,8 @@
 
 import unittest
 
-from vigir_ltl_specification.ic_specification import *
-from vigir_ltl_specification.robot_specification import *
+from vigir_ltl_specification.spec.ic_specification import *
+from vigir_ltl_specification.spec.robot_specification import *
 
 class ICSpecificationTests(unittest.TestCase):
     """The calls to the method(s) handling new actions."""

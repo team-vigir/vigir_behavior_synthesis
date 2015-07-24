@@ -2,7 +2,7 @@
 
 import unittest
 
-from vigir_ltl_specification.robot_specification import *
+from vigir_ltl_specification.spec.robot_specification import *
 
 
 class ActionSpecificationTests(unittest.TestCase):

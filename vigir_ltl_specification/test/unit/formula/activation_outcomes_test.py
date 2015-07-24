@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from vigir_ltl_specification.activation_outcomes import *
+from vigir_ltl_specification.formula.activation_outcomes import *
 
 import unittest
 
@@ -53,13 +53,13 @@ class ActionFormulaGenerationTests(unittest.TestCase):
 
     def test_bad_activation_prop_request_raises_exception(self):
         
-        from vigir_ltl_specification.activation_outcomes import _get_act_prop
+        from vigir_ltl_specification.formula.activation_outcomes import _get_act_prop
 
         self.assertRaises(ValueError, _get_act_prop, 'dance_a')
 
     def test_outcome_prop_from_activation(self):
         
-        from vigir_ltl_specification.activation_outcomes import _get_out_prop
+        from vigir_ltl_specification.formula.activation_outcomes import _get_out_prop
 
         self.assertEqual(_get_out_prop('dance_a', 'failed'), 'dance_f')
 
