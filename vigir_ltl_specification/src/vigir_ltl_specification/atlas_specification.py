@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from spec import *
+from respec.spec import *
 
 """
 The module defines the components that make up a LTL specification for ATLAS.
