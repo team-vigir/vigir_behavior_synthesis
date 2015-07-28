@@ -9,7 +9,7 @@ Currently, it only supports `slugs`, a synthesis tool for the GR(1) fragment of 
 
 > Slugs is a stand-alone reactive synthesis tool for generalized reactivity(1) synthesis.
 
-> ['https://github.com/LTLMoP/slugs'](https://github.com/LTLMoP/slugs)
+> [`https://github.com/LTLMoP/slugs`](https://github.com/LTLMoP/slugs)
 
 > Copyright (c) 2013, Ruediger Ehlers, Vasumathi Raman, and Cameron Finucane
 
