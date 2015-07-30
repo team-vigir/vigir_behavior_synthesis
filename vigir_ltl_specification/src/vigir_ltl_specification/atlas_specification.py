@@ -96,7 +96,9 @@ def main(): #pragma: no cover
     
     import pprint
     
-    specification = CompleteSpecification('test', ['stand'], ['grasp'])
+    specification = CompleteSpecification(name = 'atlas_example',
+                                          initial_conditions = ['stand'],
+                                          goals = ['grasp_object'])
     
     print "[INPUT]"
     pprint.pprint(specification.env_props)
