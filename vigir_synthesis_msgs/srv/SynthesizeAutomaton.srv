@@ -15,7 +15,7 @@ bool synthesizable
 
 # If the specification is synthesizable, 
 # the result of synthesis is an automaton
-SynthesizedAutomaton automaton
+FSAutomaton automaton
 
 # Errors besides unsynthesizability
-BSErrorCodes error_code
+SynthesisErrorCodes error_code

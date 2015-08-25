@@ -3,7 +3,7 @@
 import rospy
 import actionlib
 
-from vigir_synthesis_msgs.msg import BehaviorSynthesisAction, BehaviorSynthesisGoal, BehaviorSynthesisRequest, SynthesisOptions
+from vigir_synthesis_msgs.msg import *
 
 def behavior_synthesis_client(system, goals, initial_conditions):
     '''...'''

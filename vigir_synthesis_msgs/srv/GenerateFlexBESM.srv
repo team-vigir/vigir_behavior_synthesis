@@ -1,4 +1,6 @@
-SynthesizedAutomaton automaton
+# Generate a message that FlexBE will use to instantiate the State Machine
+
+FSAutomaton automaton
 
 # System name, e.g. "atlas"
 string system
@@ -8,4 +10,4 @@ string system
 vigir_be_msgs/StateInstantiation[] state_definition
 
 # Errors when trying to generating StateInstantiations
-BSErrorCodes error_code
+SynthesisErrorCodes error_code

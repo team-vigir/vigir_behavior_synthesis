@@ -8,8 +8,8 @@ import json
 
 import rospy
 
-from vigir_synthesis_msgs.srv import LTLSynthesis, LTLSynthesisResponse
-from vigir_synthesis_msgs.msg import AutomatonState, SynthesizedAutomaton, BSErrorCodes
+from vigir_synthesis_msgs.srv import SynthesizeAutomaton, SynthesizeAutomatonResponse
+from vigir_synthesis_msgs.msg import AutomatonState, FSAutomaton, SynthesisErrorCodes
 from vigir_ltl_synthesizer.StructuredSlugsParser import compiler as slugs_compiler
 
 VIGIR_ROOT_DIR = os.environ['VIGIR_ROOT_DIR']
@@ -49,8 +49,8 @@ def handle_ltl_synthesis(request):
     
     except Exception as e:
         synthesizable = False
-        automaton = SynthesizedAutomaton() # Return empty automaton
-        error_code = BSErrorCodes(BSErrorCodes.SYNTHESIS_FAILED)
+        automaton = FSAutomaton() # Return empty automaton
+        error_code = SynthesisErrorCodes(SynthesisErrorCodes.SYNTHESIS_FAILED)
         rospy.logerr('Could not infer synthesizability from SLUGS output!\n %s' % str(e))
 
     #TODO: Find a way to visualize automata without relying on LTLMoP
@@ -60,21 +60,21 @@ def handle_ltl_synthesis(request):
 
     #FIX: Having synthesizable as a separate field is redundant since there's an error_code for that
 
-    return LTLSynthesisResponse(synthesizable, automaton, error_code)
+    return SynthesizeAutomatonResponse(synthesizable, automaton, error_code)
 
 def handle_slugs_output(synthesizable, automaton_file, input_vars, output_vars):
     '''...'''
     # TODO: The output is handled elsewhere. Make this be about the Automaton msg only (get name.json here instead)
     if synthesizable:
-        # Parse JSON into SynthesizedAutomaton msg
+        # Parse JSON into FSAutomaton msg
         automaton = gen_automaton_msg_from_json(automaton_file, input_vars, output_vars)
-        error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
+        error_code = SynthesisErrorCodes(SynthesisErrorCodes.SUCCESS)
         rospy.loginfo('\033[92mSuccessfully created Automaton msg '\
                       'from the synthesized automaton.\033[0m')
     
     elif not synthesizable:  
-        automaton = SynthesizedAutomaton() # Return empty automaton
-        error_code = BSErrorCodes(BSErrorCodes.SPEC_UNSYNTHESIZABLE)
+        automaton = FSAutomaton() # Return empty automaton
+        error_code = SynthesisErrorCodes(SynthesisErrorCodes.SPEC_UNSYNTHESIZABLE)
         rospy.logwarn('The LTL specification was unsynthesizable!')
 
     return automaton, error_code
@@ -163,7 +163,7 @@ def automaton_state_from_node_info(name, info, n_in_vars, mem_idxs):
 
 def gen_automaton_msg_from_json(json_file, input_vars, output_vars):
     '''
-    Generate a SynthesizedAutomaton file from a synthesized json automaton
+    Generate a FSAutomaton file from a synthesized json automaton
     file.
     @param json_file   string The synthesized json automaton description.
     @param input_vars  list   Strings of the name of the input variables.
@@ -175,7 +175,7 @@ def gen_automaton_msg_from_json(json_file, input_vars, output_vars):
 
     mem_idxs = [i for i, x in enumerate(output_vars) if "_m" == x[-2:]]
     
-    automaton = SynthesizedAutomaton()
+    automaton = FSAutomaton()
     # Only keep an output variable if it is not a memory proposition
     automaton.output_variables = [x for i, x in enumerate(output_vars)
                                     if i not in mem_idxs]
@@ -287,7 +287,7 @@ def ltl_synthesis_server():
         rospy.loginfo('The synthesizer (SLUGS) is installed: {dir}'
                       .format(dir = slugs_exec_path))
     
-        s = rospy.Service('ltl_synthesis', LTLSynthesis, handle_ltl_synthesis)
+        s = rospy.Service('ltl_synthesis', SynthesizeAutomaton, handle_ltl_synthesis)
         
         rospy.loginfo("Ready to receive LTL Synthesis requests.")
     

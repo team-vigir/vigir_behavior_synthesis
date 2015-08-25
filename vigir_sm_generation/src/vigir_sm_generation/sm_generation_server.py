@@ -18,8 +18,8 @@ import yaml
 import rospy
 import sys
 
-from vigir_synthesis_msgs.srv import SMGenerate, SMGenerateResponse
-from vigir_synthesis_msgs.msg import BSErrorCodes
+from vigir_synthesis_msgs.srv import GenerateFlexBESM, GenerateFlexBESMResponse
+from vigir_synthesis_msgs.msg import SynthesisErrorCodes
 from vigir_be_msgs.msg import StateInstantiation
 from concurrent_state_generator import ConcurrentStateGenerator
 from sm_gen_config import SMGenConfig
@@ -78,22 +78,22 @@ def get_init_temp_state(init_states):
 def generate_sm(request):
     """
     A wrapper around generate_sm_handle. This catches any exception and
-    converts it to an appropriate BSErrorCodes.
+    converts it to an appropriate SynthesisErrorCodes.
     """
     try:
         return generate_sm_handle(request)
     except SMGenError as e:
         rospy.logerr("There was an SMGenError: {0}".format(e.error_code))
-        return SMGenerateResponse([], BSErrorCodes(e.error_code))
+        return GenerateFlexBESMResponse([], SynthesisErrorCodes(e.error_code))
     except Exception as e:
         rospy.logerr("Something went wrong:\n\t{0}\n\t{1}"\
             .format(e.__doc__, e.message))
-        return SMGenerateResponse([],
-            BSErrorCodes(BSErrorCodes.SM_GENERATION_FAILED))
+        return GenerateFlexBESMResponse([],
+            SynthesisErrorCodes(SynthesisErrorCodes.SM_GENERATION_FAILED))
 
 def generate_sm_handle(request):
     """
-    This method handles the SMGenerate service. It creates StateInstantiations
+    This method handles the GenerateFlexBESM service. It creates StateInstantiations
     given a system name and an automaton.
 
     Broadly speaking, there are two types of input variables, and two types
@@ -130,8 +130,8 @@ def generate_sm_handle(request):
         c. Otherwise, it's a completion variable. Connect it to the
            corresponding SM.
 
-    @param request An instance of SMGenerateRequest
-    @return A SMGenerateResponse with generated StateInstantiation.
+    @param request An instance of GenerateFlexBESMRequest
+    @return A GenerateFlexBESMResponse with generated StateInstantiation.
     """
     yaml_file = os.path.join(VIGIR_REPO, 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/src/vigir_sm_generation/configs/systems.yaml')
     try:
@@ -140,9 +140,9 @@ def generate_sm_handle(request):
     except IOError:
         rospy.logerr("System file could not be loaded from {0}."
             .format(yaml_file))
-        raise SMGenError(BSErrorCodes(error_code))
+        raise SMGenError(SynthesisErrorCodes(error_code))
         
-    sa = request.automaton # SynthesizedAutomaton
+    sa = request.automaton # FSAutomaton
     all_out_vars = sa.output_variables
     all_in_vars = sa.input_variables
     automata = modify_names(all_out_vars, sa.automaton)
@@ -152,7 +152,7 @@ def generate_sm_handle(request):
     if system_name not in systems:
         rospy.logerr("System {0} is not in the systems file ({1})."\
             .format(system_name, yaml_file))
-        raise SMGenError(BSErrorCodes.NO_SYSTEM_CONFIG)
+        raise SMGenError(SynthesisErrorCodes.NO_SYSTEM_CONFIG)
     yaml_sys_file = os.path.join(VIGIR_REPO, systems[system_name])
     try:
         with open(yaml_sys_file) as yf:
@@ -160,7 +160,7 @@ def generate_sm_handle(request):
     except IOError:
         rospy.logerr("System {0} could not be loaded from {1}."\
             .format(system_name, yaml_sys_file))
-        raise SMGenError(BSErrorCodes.SYSTEM_CONFIG_NOT_FOUND)
+        raise SMGenError(SynthesisErrorCodes.SYSTEM_CONFIG_NOT_FOUND)
 
     helper = SMGenConfig(config, all_in_vars, all_out_vars, automata)
 
@@ -225,12 +225,12 @@ def generate_sm_handle(request):
 
         SIs.append(csg.gen())
 
-    return SMGenerateResponse(SIs, BSErrorCodes(BSErrorCodes.SUCCESS))
+    return GenerateFlexBESMResponse(SIs, SynthesisErrorCodes(SynthesisErrorCodes.SUCCESS))
 
 def sm_gen_server():
     '''Start the SM Generation server.'''
-    rospy.init_node('sm_generation')
-    s = rospy.Service('sm_generate', SMGenerate, generate_sm)
+    rospy.init_node('vigir_sm_generation')
+    s = rospy.Service('sm_generate', GenerateFlexBESM, generate_sm)
     rospy.loginfo("Ready to receive SM Generation requests.")
     rospy.spin()
 

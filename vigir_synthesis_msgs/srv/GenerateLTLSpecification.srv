@@ -16,4 +16,4 @@ string[] initial_conditions
 
 LTLSpecification ltl_specification
 
-BSErrorCodes error_code
+SynthesisErrorCodes error_code

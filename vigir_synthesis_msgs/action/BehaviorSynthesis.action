@@ -11,7 +11,7 @@ SynthesisOptions synthesis_options
 # RESULT
 
 # An error code reflecting what went wrong
-BSErrorCodes error_code
+SynthesisErrorCodes error_code
 
 # The synthesized behavior as a list of state instantiation descriptions
 vigir_be_msgs/StateInstantiation[] states

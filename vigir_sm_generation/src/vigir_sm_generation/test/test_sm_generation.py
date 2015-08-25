@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 from vigir_sm_generation.sm_generation import generate_sm
-from vigir_synthesis_msgs.srv import SMGenerateRequest
+from vigir_synthesis_msgs.srv import GenerateFlexBESMRequest
 from vigir_synthesis_msgs.msg import (
-    BSErrorCodes,
-    SynthesizedAutomaton,
+    SynthesisErrorCodes,
+    FSAutomaton,
     AutomatonState
 )
 from vigir_be_msgs.msg import StateInstantiation
@@ -45,7 +45,7 @@ def load_synthesized_automaton(fpath):
                  for a in sa['automaton']]
     return (sa['output_variables'], sa['input_variables'], automaton)
 
-class TestSmGeneration(unittest.TestCase):
+class TestGenerateFlexBESM(unittest.TestCase):
     """
     Test the generation of a simple state machine. Throughout this program,
     SI = StateInstantiation.
@@ -57,10 +57,10 @@ class TestSmGeneration(unittest.TestCase):
         #        'src/vigir_sm_generation/test/test_sm_gen_request.yaml'
         (self.out_vars, self.in_vars, self.automata) =\
             load_synthesized_automaton(fpath)
-        automaton = SynthesizedAutomaton(self.out_vars,
+        automaton = FSAutomaton(self.out_vars,
                                          self.in_vars,
                                          self.automata)
-        self.request = SMGenerateRequest(automaton, "test")
+        self.request = GenerateFlexBESMRequest(automaton, "test")
 
         response = generate_sm(self.request)
         self.SIs = response.state_definition
@@ -69,7 +69,7 @@ class TestSmGeneration(unittest.TestCase):
     ## Test Error Codes ###
     def test_success(self):
         """ Test that a generation succeeds.  """
-        self.assertEqual(self.error_code.value, BSErrorCodes.SUCCESS,
+        self.assertEqual(self.error_code.value, SynthesisErrorCodes.SUCCESS,
             "Generation did not succeed as expected. Error code: {0}"\
                 .format(self.error_code))
 
@@ -79,7 +79,7 @@ class TestSmGeneration(unittest.TestCase):
         SIs = response.state_definition
         error_code = response.error_code
 
-        self.assertEqual(error_code.value, BSErrorCodes.NO_SYSTEM_CONFIG,
+        self.assertEqual(error_code.value, SynthesisErrorCodes.NO_SYSTEM_CONFIG,
             "Unhandled case: No system configuration in system.yaml."+\
             "Error code: {0}".format(error_code.value))
 
@@ -90,7 +90,7 @@ class TestSmGeneration(unittest.TestCase):
         error_code = response.error_code
 
         self.assertEqual(error_code.value,
-            BSErrorCodes.SYSTEM_CONFIG_NOT_FOUND,
+            SynthesisErrorCodes.SYSTEM_CONFIG_NOT_FOUND,
             "Unhandled case: System configuration not found after looking "+\
             "up in system.yaml. Error code: {0}".format(error_code.value))
 

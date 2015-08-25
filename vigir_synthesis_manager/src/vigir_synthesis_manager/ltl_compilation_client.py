@@ -2,8 +2,8 @@
 
 import rospy
 
-from vigir_synthesis_msgs.srv import LTLCompilation
-# from vigir_synthesis_msgs.msg import LTLSpecification, BSErrorCodes
+from vigir_synthesis_msgs.srv import GenerateLTLSpecification
+
 
 def ltl_compilation_client(system, goals, initial_conditions, custom_ltl = None):
     '''Client'''
@@ -11,7 +11,7 @@ def ltl_compilation_client(system, goals, initial_conditions, custom_ltl = None)
     rospy.wait_for_service('ltl_compilation')
     
     try:
-        ltl_compilation_srv = rospy.ServiceProxy('ltl_compilation', LTLCompilation)
+        ltl_compilation_srv = rospy.ServiceProxy('ltl_compilation', GenerateLTLSpecification)
         response = ltl_compilation_srv(system, goals, initial_conditions)
         
         #DEBUG

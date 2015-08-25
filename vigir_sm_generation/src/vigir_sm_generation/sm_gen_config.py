@@ -2,7 +2,7 @@ import rospy
 
 from sm_gen_util import class_decl_to_string, clean_variable
 from sm_gen_error import SMGenError
-from vigir_synthesis_msgs.msg import BSErrorCodes
+from vigir_synthesis_msgs.msg import SynthesisErrorCodes
 
 class SMGenConfig():
     """
@@ -68,7 +68,7 @@ class SMGenConfig():
                     self.class_decl_to_out_map[class_decl_str] = out_map
         except KeyError:
             rospy.logerr("The configuration file is invalid.")
-            raise SMGenError(BSErrorCodes.CONFIG_FILE_INVALID)
+            raise SMGenError(SynthesisErrorCodes.CONFIG_FILE_INVALID)
 
         #TEMP: Remove initial state if it doesn't activate anything
         self.removed_states = list()
@@ -94,7 +94,7 @@ class SMGenConfig():
 
         if len(not_transitioned_to) == 0:
             rospy.logwarn("Could not figure out the (real) initial state(s).")
-            # raise SMGenError(BSErrorCodes.AUTOMATON_NO_INITIAL_STATE)
+            # raise SMGenError(SynthesisErrorCodes.AUTOMATON_NO_INITIAL_STATE)
             #TEMP: The set above is empty because the init state was removed:
             not_transitioned_to = self.removed_states[0].transitions
             print 'New init states:', not_transitioned_to
@@ -113,11 +113,11 @@ class SMGenConfig():
                 if len(in_both) > 1:
                     rospy.logerr("This substate represent multiple final"+\
                         " outputs.")
-                    raise SMGenError(BSErrorCodes.AUTOMATON_INVALID)
+                    raise SMGenError(SynthesisErrorCodes.AUTOMATON_INVALID)
                 if len(in_both) == 0:
                     rospy.logerr("This substate represent no final outputs,"+\
                         " but expected it to.")
-                    raise SMGenError(BSErrorCodes.AUTOMATON_INVALID)
+                    raise SMGenError(SynthesisErrorCodes.AUTOMATON_INVALID)
                 d[state.name] = in_both[0]
 
         return d
@@ -163,7 +163,7 @@ class SMGenConfig():
             if next_state == None:
                 rospy.logerr("Problem trying to get the next state: {0}."\
                     .format(next_state_name))
-                raise SMGenError(BSErrorCodes.AUTOMATON_NEXT_STATE_INVALID)
+                raise SMGenError(SynthesisErrorCodes.AUTOMATON_NEXT_STATE_INVALID)
             input_vals = next_state.input_valuation
             conditions = []
             for idx, val in enumerate(input_vals):
@@ -201,14 +201,14 @@ class SMGenConfig():
         """Get the input variable name at index [i] in [in_vars] dict."""
         if i >= len(self.all_in_vars):
             rospy.logerr("There are not {0} input variables.".format(i))
-            raise SMGenError(BSErrorCodes.AUTOMATON_INPUT_VALUATION_INVALID)
+            raise SMGenError(SynthesisErrorCodes.AUTOMATON_INPUT_VALUATION_INVALID)
         return self.all_in_vars[i]
 
     def get_out_var_name(self, i):
         """Get the output variable name at index [i] in [out_vars] dict."""
         if i >= len(self.all_out_vars):
             rospy.logerr("There are not {0} output variables.".format(i))
-            raise SMGenError(BSErrorCodes.AUTOMATON_OUTPUT_VALUATION_INVALID)
+            raise SMGenError(SynthesisErrorCodes.AUTOMATON_OUTPUT_VALUATION_INVALID)
         return self.all_out_vars[i]
 
     def get_state_output_vars(self, state):
@@ -263,7 +263,7 @@ class SMGenConfig():
         except KeyError as k:
             rospy.logerr("{0} is not in config or variable config dictionary"\
                 .format(k.args[0]))
-            raise SMGenError(BSErrorCodes.CONFIG_AUTONOMY_INVALID)
+            raise SMGenError(SynthesisErrorCodes.CONFIG_AUTONOMY_INVALID)
 
     def get_userdata_keys(self, var):
         try:
@@ -275,7 +275,7 @@ class SMGenConfig():
         except Exception as e:
             rospy.logerr("Failed to get userdata_keys from config: {0}"\
                          .format(e.args[0]))
-            raise SMGenError(BSErrorCodes.CONFIG_USERDATA_INVALID)
+            raise SMGenError(SynthesisErrorCodes.CONFIG_USERDATA_INVALID)
 
     def get_userdata_remapping(self, var):
         try:
@@ -287,7 +287,7 @@ class SMGenConfig():
         except Exception as e:
             rospy.logerr("Failed to get userdata_remapping from config: {0}"\
                          .format(e.args[0]))
-            raise SMGenError(BSErrorCodes.CONFIG_USERDATA_INVALID)
+            raise SMGenError(SynthesisErrorCodes.CONFIG_USERDATA_INVALID)
 
     def is_fake_state(self, name):
         """Returns if a state is a placeholder for an output."""
@@ -306,7 +306,7 @@ class SMGenConfig():
         out_map = var_config['output_mapping']
         if 'class_decl' not in var_config or 'output_mapping' not in var_config:
             rospy.logerr("'class_decl' or 'output_mapping' not in var_config")
-            raise SMGenError(BSErrorCodes.CONFIG_VARIABLE_CONFIG_INVALID)
+            raise SMGenError(SynthesisErrorCodes.CONFIG_VARIABLE_CONFIG_INVALID)
         return any([in_var in self.all_in_vars
                     for in_var, _ in out_map.items()])
 
@@ -321,7 +321,7 @@ class SMGenConfig():
             var_config = self.config[var]
             if 'class_decl' not in var_config:
                 rospy.logerr("'class_decl' not in var_config")
-                raise SMGenError(BSErrorCodes.CONFIG_VARIABLE_CONFIG_INVALID)
+                raise SMGenError(SynthesisErrorCodes.CONFIG_VARIABLE_CONFIG_INVALID)
             return var_config['class_decl']
         elif var in self.in_var_to_class_decl:
             return self.in_var_to_class_decl[var]

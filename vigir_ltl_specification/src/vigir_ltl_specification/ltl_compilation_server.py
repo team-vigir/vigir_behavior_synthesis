@@ -2,8 +2,10 @@
 
 import rospy
 
-from vigir_synthesis_msgs.srv import LTLCompilation, LTLCompilationResponse
-from vigir_synthesis_msgs.msg import LTLSpecification, BSErrorCodes
+from vigir_synthesis_msgs.srv import (
+        GenerateLTLSpecification,
+        GenerateLTLSpecificationResponse)
+from vigir_synthesis_msgs.msg import LTLSpecification, SynthesisErrorCodes
 
 def handle_ltl_compilation(request):
     """Responsible for putting together a complete LTL specification."""
@@ -12,10 +14,10 @@ def handle_ltl_compilation(request):
         if request.system == 'atlas':
             ltl_specification, error_code = gen_ltl_spec_from_request(request)
         else:
-            error_code = BSErrorCodes(BSErrorCodes.LTL_SPEC_COMPILATION_FAILED)
+            error_code = SynthesisErrorCodes(SynthesisErrorCodes.LTL_SPEC_COMPILATION_FAILED)
             rospy.logerr('LTL Specification Compilation does not support %s' % request.system)
 
-    return LTLCompilationResponse(ltl_specification, error_code)
+    return GenerateLTLSpecificationResponse(ltl_specification, error_code)
 
 def gen_ltl_spec_from_request(request):
     
@@ -32,13 +34,13 @@ def gen_ltl_spec_from_request(request):
                                     goals = request.goals)
     except Exception as e:
         rospy.logerr('LTL Specification Compilation srv failed:\n%s' % str(e))
-        error_code = BSErrorCodes(BSErrorCodes.LTL_SPEC_COMPILATION_FAILED)
+        error_code = SynthesisErrorCodes(SynthesisErrorCodes.LTL_SPEC_COMPILATION_FAILED)
         return LTLSpecification(), error_code
 
     ltl_specification_msg = gen_msg_from_specification(ltl_specification)
 
     # Behavior Synthesis error code
-    error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
+    error_code = SynthesisErrorCodes(SynthesisErrorCodes.SUCCESS)
 
     return ltl_specification_msg, error_code
 
@@ -66,7 +68,7 @@ def ltl_compilation_server():
     
     rospy.init_node('vigir_ltl_specification')
     
-    s = rospy.Service('ltl_compilation', LTLCompilation, handle_ltl_compilation)
+    s = rospy.Service('ltl_compilation', GenerateLTLSpecification, handle_ltl_compilation)
     
     rospy.loginfo("Ready to receive LTL Specification Compilation requests.")
     rospy.spin()

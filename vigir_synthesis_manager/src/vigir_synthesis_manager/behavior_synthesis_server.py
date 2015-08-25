@@ -68,12 +68,12 @@ class BehaviorSynthesisActionServer(object):
             sm, error_code_value, success = self.handle_sm_generation_request(automaton, synthesis_goal.system)
 
         if success:
-            self._result.error_code = BSErrorCodes(BSErrorCodes.SUCCESS)
+            self._result.error_code = SynthesisErrorCodes(SynthesisErrorCodes.SUCCESS)
             self._result.states = sm
             rospy.loginfo('\033[92m%s: Succeeded\033[0m' % self._action_name)
             self._as.set_succeeded(self._result)
         else:
-            self._result.error_code = BSErrorCodes(error_code_value)
+            self._result.error_code = SynthesisErrorCodes(error_code_value)
             rospy.logerr('%s: Failed' % self._action_name)
             self._as.set_aborted(self._result)
     
@@ -95,7 +95,7 @@ class BehaviorSynthesisActionServer(object):
                                                                  initial_conditions)
         
         # Update success and publish feedback based on response
-        if response.error_code.value is BSErrorCodes.SUCCESS:
+        if response.error_code.value is SynthesisErrorCodes.SUCCESS:
             self.set_and_publish_feedback("Received LTL specification")
             success = True
         else:
@@ -128,13 +128,13 @@ class BehaviorSynthesisActionServer(object):
         Generate State Machine definitions for a given 
         robotic system based on a synthesized automaton.
 
-        @param synthesized_automata SynthesizedAutomaton    The automaton to instantiate as a SM.
+        @param synthesized_automata FSAutomaton    The automaton to instantiate as a SM.
         @param system               string                  System name. e.g. "atlas"
         '''
         response = sm_generate_client.sm_generate_client(synthesized_automata, system)
 
         # Update success and publish feedback based on response
-        if response.error_code.value is BSErrorCodes.SUCCESS:
+        if response.error_code.value is SynthesisErrorCodes.SUCCESS:
             self.set_and_publish_feedback("Generated State Machine definitions")
             success = True
         else:

@@ -2,7 +2,7 @@
 
 import rospy
 
-from vigir_synthesis_msgs.srv import LTLSynthesis
+from vigir_synthesis_msgs.srv import SynthesizeAutomaton
 
 def ltl_synthesis_client(ltl_spec, name = ''):
     '''Client'''
@@ -10,7 +10,7 @@ def ltl_synthesis_client(ltl_spec, name = ''):
     rospy.wait_for_service('ltl_synthesis')
     
     try:
-        ltl_synthesis_srv = rospy.ServiceProxy('ltl_synthesis', LTLSynthesis)
+        ltl_synthesis_srv = rospy.ServiceProxy('ltl_synthesis', SynthesizeAutomaton)
         response = ltl_synthesis_srv(ltl_spec, name)
         
         #DEBUG

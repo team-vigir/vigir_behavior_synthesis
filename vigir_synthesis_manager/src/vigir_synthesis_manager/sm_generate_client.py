@@ -2,15 +2,15 @@
 
 import rospy
 
-from vigir_synthesis_msgs.srv import SMGenerate
+from vigir_synthesis_msgs.srv import GenerateFlexBESM
 
 def sm_generate_client(synthesized_automata, system):
-    '''A wrapper for a call to the SMGenerate service.'''
+    '''A wrapper for a call to the GenerateFlexBESM service.'''
 
     rospy.wait_for_service('sm_generate')
     
     try:
-        sm_generate_srv = rospy.ServiceProxy('sm_generate', SMGenerate)
+        sm_generate_srv = rospy.ServiceProxy('sm_generate', GenerateFlexBESM)
         response = sm_generate_srv(synthesized_automata, system)
         
         #DEBUG
