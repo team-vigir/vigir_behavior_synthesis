@@ -31,7 +31,10 @@ def gen_ltl_spec_from_request(request):
         ltl_specification = robot_spec_module.CompleteSpecification(
                                     name = 'spec_from_request',
                                     initial_conditions = request.initial_conditions,
-                                    goals = request.goals)
+                                    goals = request.goals,
+                                    action_outcomes = ['completed', 'failed'],
+                                    sm_outcomes = request.sm_outcomes,
+                                    strict_order = True)
     except Exception as e:
         rospy.logerr('LTL Specification Compilation srv failed:\n%s' % str(e))
         error_code = SynthesisErrorCodes(SynthesisErrorCodes.LTL_SPEC_COMPILATION_FAILED)

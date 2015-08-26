@@ -87,12 +87,14 @@ class BehaviorSynthesisActionServer(object):
 
         system = synthesis_goal.system
         goals = synthesis_goal.goals
-        initial_conditions = synthesis_goal.initial_conditions
-        custom_ltl = synthesis_goal.ltl_specification #TODO: handle this (currently ignored)
+        ics = synthesis_goal.initial_conditions
+        sm_outcomes = synthesis_goal.sm_outcomes
+        custom_ltl = synthesis_goal.ltl_specification #TODO: Handle this field
 
         response = ltl_compilation_client.ltl_compilation_client(system,
                                                                  goals,
-                                                                 initial_conditions)
+                                                                 ics,
+                                                                 sm_outcomes)
         
         # Update success and publish feedback based on response
         if response.error_code.value is SynthesisErrorCodes.SUCCESS:

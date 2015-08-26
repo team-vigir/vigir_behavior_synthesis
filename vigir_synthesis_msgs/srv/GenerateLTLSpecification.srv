@@ -9,8 +9,11 @@ string system
 # The system's goals, usually provided by the user
 string[] goals
 
-# The system's initial conditions.
+# The system's initial conditions
 string[] initial_conditions
+
+# The outcomes of the resulting synthesized state machine, if any
+string[] sm_outcomes
 
 ---
 

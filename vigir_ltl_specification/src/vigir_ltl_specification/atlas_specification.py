@@ -12,6 +12,7 @@ details of the class's constructor should change between robots.
 
 SM_OUTCOME_SUCCESS = 'finished'
 SM_OUTCOME_FAILURE = 'failed'
+ALL_SM_OUTCOMES = [SM_OUTCOME_SUCCESS, SM_OUTCOME_FAILURE]
 
 class CompleteSpecification(GR1Specification):
     """
@@ -82,11 +83,16 @@ class CompleteSpecification(GR1Specification):
     def _check_input_arguments(self, initial_conditions, goals,
                                action_outcomes, sm_outcomes):
         
-        if len(action_outcomes) > len(sm_outcomes):
-            raise NotImplementedError('The specification cannot handle ' \
-                                      'more action outcomes {0} ' \
-                                      'than State Machine outcomes {1}'
-                                      .format(action_outcomes, sm_outcomes))
+        # if len(action_outcomes) > len(sm_outcomes):
+        #     raise NotImplementedError('The specification cannot handle ' \
+        #                               'more action outcomes {0} ' \
+        #                               'than State Machine outcomes {1}'
+        #                               .format(action_outcomes, sm_outcomes))
+
+        if any([out not in ALL_SM_OUTCOMES for out in sm_outcomes]):
+            raise NotImplementedError('Some SM outcomes: {0} are unknown.' \
+                                      'Expected them to be subseteq of {1}'
+                                      .format(sm_outcomes, ALL_SM_OUTCOMES))
 
 # =========================================================
 # Entry point
