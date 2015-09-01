@@ -70,24 +70,27 @@ class SMGenConfig():
             rospy.logerr("The configuration file is invalid.")
             raise SMGenError(SynthesisErrorCodes.CONFIG_FILE_INVALID)
 
-        #TEMP: Remove initial state if it doesn't activate anything
-        self.removed_states = list()
-        for state in self.automata:
-            if not any(state.output_valuation):
-                self.automata.remove(state)
-                self.removed_states.append(state)
-                print 'Removed state:', state.name
-
     def get_init_states(self):
         """
-        Return the initial states.  For now, a state is an initial state if it
-        has nothing transitioning to it.
+        Return the initial states. For now, a state is an initial state if it
+        has nothing no incoming transitions.
         """
+
+        # States that do have incoming transitions
         transitioned_to = set()
         for state in self.automata:
             transitioned_to = transitioned_to.union(state.transitions)
 
-        not_transitioned_to = []
+        # Remove any initial states that have no True output valuation
+        self.removed_states = list()
+        for state in self.automata:
+            if state.name not in transitioned_to and not any(state.output_valuation):
+                self.automata.remove(state)
+                self.removed_states.append(state)
+                print 'Removing state:', state.name
+
+        # States of the (possibly reduced) automaton with no incoming transitions
+        not_transitioned_to = list()
         for state in self.automata:
             if state.name not in transitioned_to:
                 not_transitioned_to.append(state)
