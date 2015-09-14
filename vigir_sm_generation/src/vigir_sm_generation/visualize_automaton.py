@@ -26,8 +26,8 @@ def get_DOT_from_fsautomaton(fsautomaton, config):
     for a in helper.automata:
         name = str(a.name)
         out_val = a.output_valuation
-        true_out_val = [out_vars[i] for i, v in enumerate(out_val)
-                                  if v or out_vars[i][-2:] == "_m"]
+        true_out_val = [out_vars[i] for i, v in enumerate(out_val)]
+                                  #if v or out_vars[i][-2:] == "_m"]
         node_name_to_label[name] = "\n".join(true_out_val)
 
     label_to_canonical_node_name = {}
@@ -159,8 +159,8 @@ def get_DOT_from_fsautomaton_simple(fsautomaton):
         name = str(a.name)
         out_val = a.output_valuation
 
-        true_out_val = [out_vars[i] for i, v in enumerate(out_val)
-                            if v or out_vars[i][-2:] == "_m"]
+        true_out_val = [out_vars[i] for i, v in enumerate(out_val) if v]
+                            #if v or out_vars[i][-2:] == "_m"]
         label = "\n".join(true_out_val)
         if label == "":
             label = "INIT"
@@ -168,7 +168,7 @@ def get_DOT_from_fsautomaton_simple(fsautomaton):
 
         in_val = a.input_valuation
         node_to_true_in_vals[name] = [in_vars[i] for i, v in enumerate(in_val)
-                                        if v or in_vars[i][-2:] == "_m"]
+                                        if v]# or in_vars[i][-2:] == "_m"]
 
     # Add edges
     for a in automata:
