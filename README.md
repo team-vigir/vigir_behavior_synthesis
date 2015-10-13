@@ -1,6 +1,6 @@
 # Team ViGIR's Behavior Synthesis stack
 
-ROS Python packages for automatically synthesizing *behaviors* (executable state machines) from a high-level user specification via reactive Linear Temporal Logic (LTL) synthesis.
+ROS Python packages for automatically synthesizing *high-level robot behaviors* (executable state machines) from the user's task specifications via reactive Linear Temporal Logic (LTL) synthesis.
 
 ## About
 
@@ -10,7 +10,7 @@ The nominal workflow is depicted in the diagram below:
 
 ![img](https://dl.dropboxusercontent.com/s/qi8zcg187lal0td/behavior_synthesis_packages.png)
 
-### Dependecies
+### Dependencies
 
 For `vigir_ltl_specification`, you need:
 - [`ReSpeC`](https://github.com/team-vigir/ReSpeC) for compiling LTL specifications from the high-level user requests
