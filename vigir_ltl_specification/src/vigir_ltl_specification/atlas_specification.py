@@ -61,12 +61,17 @@ class CompleteSpecification(GR1Specification):
                                          outcomes = sm_outcomes,
                                          strict_order = True)
         
+        # All the things that can fail:
+        failure_conditions = ts_spec.ts.keys() + action_spec.all_actions
+        assert len(failure_conditions) == len(set(failure_conditions))
+
         if SM_OUTCOME_FAILURE in sm_outcomes:
             # Add LTL formula tying all the things that can fail to SM outcome
-            failure_conditions = ts_spec.ts.keys() + action_spec.all_actions
-            assert len(failure_conditions) == len(set(failure_conditions))
             goal_spec.handle_any_failure(conditions = failure_conditions,
                                          failure = SM_OUTCOME_FAILURE)
+        else:
+            # If anything fails, retry (re-activate) until it succeeds
+            goal_spec.handle_retry_after_failure(failures = failure_conditions)
 
         # Merge these specifications. Initial conditions are still missing.
         self.merge_gr1_specifications([ts_spec, action_spec, goal_spec])
