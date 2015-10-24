@@ -8,7 +8,7 @@ ROS Python packages for automatically synthesizing *high-level robot behaviors* 
 
 The nominal workflow is depicted in the diagram below:
 
-![img](https://dl.dropboxusercontent.com/s/qi8zcg187lal0td/behavior_synthesis_packages.png)
+![img](https://dl.dropboxusercontent.com/u/43993203/behavior_synthesis_packages.png)
 
 ### Dependencies
 
