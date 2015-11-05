@@ -86,8 +86,8 @@ class BehaviorSynthesisActionServer(object):
         '''
 
         system = synthesis_goal.system
-        goals = synthesis_goal.goals
-        ics = synthesis_goal.initial_conditions
+        goals = synthesis_goal.goal.replace(' ', '').split(',')
+        ics = synthesis_goal.initial_condition.replace(' ', '').split(',')
         sm_outcomes = synthesis_goal.sm_outcomes
         custom_ltl = synthesis_goal.ltl_specification #TODO: Handle this field
 
