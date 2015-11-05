@@ -14,7 +14,7 @@ SynthesisOptions synthesis_options
 SynthesisErrorCodes error_code
 
 # The synthesized behavior as a list of state instantiation descriptions
-vigir_be_msgs/StateInstantiation[] states
+flexbe_msgs/StateInstantiation[] states
 
 ---
 
@@ -22,3 +22,6 @@ vigir_be_msgs/StateInstantiation[] states
 
 # The internal state that the Behavior Synthesis action currently is in
 string status
+
+# The progress of the synthesis process, from 0 (started) to 1 (completed)
+float32 progress

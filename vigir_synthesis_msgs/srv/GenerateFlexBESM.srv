@@ -7,7 +7,7 @@ string system
 
 ---
 
-vigir_be_msgs/StateInstantiation[] state_definition
+flexbe_msgs/StateInstantiation[] state_definition
 
 # Errors when trying to generating StateInstantiations
 SynthesisErrorCodes error_code

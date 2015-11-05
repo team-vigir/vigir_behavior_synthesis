@@ -5,11 +5,11 @@
 # The system's initial conditions
 # Provided by the user when offline.
 # Can be inferred when the system is online (not implemented)
-string[] initial_conditions
+string initial_condition
 
 # The system's objective(s)
 # All have to be achieved for a state machine's run to be successsful.
-string[] goals
+string goal
 
 # The outcomes of the resulting synthesized state machine
 # Empty for vanilla synthesized automata (infinite execution)
