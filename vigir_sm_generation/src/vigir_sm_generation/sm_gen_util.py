@@ -2,7 +2,7 @@
 Useful functions for state machine generation.
 """
 
-from vigir_be_msgs.msg import StateInstantiation
+from flexbe_msgs.msg import StateInstantiation
 
 def remove_duplicate_pairs(lst1, lst2):
     """Remove duplicates in two lists. Visually, put the two lists on top of

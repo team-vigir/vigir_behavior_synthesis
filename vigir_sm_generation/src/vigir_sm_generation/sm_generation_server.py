@@ -20,7 +20,7 @@ import sys
 
 from vigir_synthesis_msgs.srv import GenerateFlexBESM, GenerateFlexBESMResponse
 from vigir_synthesis_msgs.msg import SynthesisErrorCodes
-from vigir_be_msgs.msg import StateInstantiation
+from flexbe_msgs.msg import StateInstantiation
 from concurrent_state_generator import ConcurrentStateGenerator
 from sm_gen_config import SMGenConfig
 from sm_gen_util import (

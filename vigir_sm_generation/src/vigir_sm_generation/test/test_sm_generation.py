@@ -7,7 +7,7 @@ from vigir_synthesis_msgs.msg import (
     FSAutomaton,
     AutomatonState
 )
-from vigir_be_msgs.msg import StateInstantiation
+from flexbe_msgs.msg import StateInstantiation
 
 import unittest
 import yaml
