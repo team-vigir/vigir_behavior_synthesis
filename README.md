@@ -1,10 +1,16 @@
 # Team ViGIR's Behavior Synthesis stack
 
-ROS Python packages for automatically synthesizing *high-level robot behaviors* (executable state machines) from the user's task specifications via reactive Linear Temporal Logic (LTL) synthesis.
+ROS Python packages for automatically synthesizing *high-level robot behaviors* (in the form of executable SMACH-based state machines) from the user's task specifications via reactive Linear Temporal Logic (LTL) synthesis.
 
 ## About
 
-### Workflow
+### Experimental Demonstration on ATLAS
+
+Click on the image below to watch a demonstration of Behavior Synthesis on ATLAS.
+
+[![ICRA 2016 video attachment](https://dl.dropboxusercontent.com/u/43993203/ATLAS_synthesis_demo.png)](http://www.youtube.com/watch?v=mez-7pegxuE)
+
+### Synthesis Workflow
 
 The nominal workflow is depicted in the diagram below:
 
@@ -21,6 +27,10 @@ For `vigir_ltl_synthesizer`, you need:
 For using the full stack, you also need:
 - [`flexbe_behavior_engine`](https://github.com/team-vigir/flexbe_behavior_engine) for sending synthesis requests via the FlexBE app's GUI and for access to the `StateInstantiation.msg`
 - [`vigir_behaviors`](https://github.com/team-vigir/vigir_behaviors) for access to the library of states and for saving the synthesized behaviors
+
+### Publications
+
+- Spyros Maniatopoulos, Philipp Schillinger, Vitchyr Pong, David C. Conner, and Hadas Kress-Gazit, "Reactive High-level Behavior Synthesis for an Atlas Humanoid Robot", IEEE International Conference on Robotics and Automation (ICRA), Stockholm, Sweden, May 2016 (to appear).
 
 ### Maintainers:
 - Spyros Maniatopoulos ([@spmaniato](https://github.com/spmaniato), sm2296@cornell.edu)
