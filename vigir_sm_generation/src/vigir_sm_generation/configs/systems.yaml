@@ -1,3 +1,3 @@
-atlas: 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/src/vigir_sm_generation/configs/atlas.yaml'
-test: 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/src/vigir_sm_generation/configs/test.yaml'
-test_nonexistent: 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/src/vigir_sm_generation/configs/test_nonexistent.yaml'
+atlas: 'atlas.yaml'
+test: 'test.yaml'
+test_nonexistent: 'test_nonexistent.yaml'

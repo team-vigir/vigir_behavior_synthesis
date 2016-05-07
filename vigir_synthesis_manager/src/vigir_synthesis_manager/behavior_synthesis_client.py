@@ -20,10 +20,11 @@ def behavior_synthesis_client(system, goals, initial_conditions):
     # Fill out the request part of the message.
     action_goal.request = BehaviorSynthesisRequest()
     action_goal.request.system = system
-    action_goal.request.goals = goals
-    action_goal.request.initial_conditions = initial_conditions
+    action_goal.request.goal = ','.join(goals)
+    action_goal.request.initial_condition = ','.join(initial_conditions)
+    action_goal.request.sm_outcomes = ['finished', 'failed']
     action_goal.request.name = 'client_request'
-    
+
     # Fill ot any options (all False by default).
     action_goal.synthesis_options = SynthesisOptions()
 
@@ -36,22 +37,21 @@ def behavior_synthesis_client(system, goals, initial_conditions):
     return client.get_result()
 
 if __name__ == '__main__':
-    
+
     try:
-        # Initialize a rospy node so that the SimpleActionClient can publish and subscribe over ROS.
         rospy.init_node('behavior_synthesis_client_py')
-        
+
         # Request arguments:
         system = BehaviorSynthesisRequest.ATLAS
-        goals = ['pickup']
+        goals = ['pickup_object']
         initial_conditions = ['stand_prep']
-        
+
         result = behavior_synthesis_client(system, goals, initial_conditions)
 
         print('Behavior Synthesis result: %s \n' % str(result.error_code.value))
         print('State Instantiation:')
         print(result.states)
     except rospy.ROSInterruptException:
-        print "Client interrupted before completion"
+        print("Client interrupted before completion")
 
     rospy.sleep(1.0) # Dirty way of avoiding a ROSHandshakeException

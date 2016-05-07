@@ -16,7 +16,7 @@ class BehaviorSynthesisActionServer(object):
     * LTL Synthesis (resulting in an automaton)
     * State Machine Generation/Instantiation
 
-    Depending on the synthesis request's options, all 
+    Depending on the synthesis request's options, all
     or a subset of the above step will be carried out.
     '''
 
@@ -51,7 +51,7 @@ class BehaviorSynthesisActionServer(object):
             self._as.set_preempted()
             success = False
 
-        if success:  
+        if success:
             # Request LTL Specification Compilation from the corresponding server
             # and also update and publish the appropriate feedback
             ltl_spec, error_code_value, success = self.handle_ltl_specification_request(synthesis_goal)
@@ -76,10 +76,10 @@ class BehaviorSynthesisActionServer(object):
             self._result.error_code = SynthesisErrorCodes(error_code_value)
             rospy.logerr('%s: Failed' % self._action_name)
             self._as.set_aborted(self._result)
-    
+
     def handle_ltl_specification_request(self, synthesis_goal):
         '''
-        Makes a LTL Specification Compilation request 
+        Makes a LTL Specification Compilation request
         to the corresponding service and handles the response.
 
         synthesis_goal: BehaviorSynthesisRequest    A partial specification.
@@ -95,7 +95,7 @@ class BehaviorSynthesisActionServer(object):
                                                                  goals,
                                                                  ics,
                                                                  sm_outcomes)
-        
+
         # Update success and publish feedback based on response
         if response.error_code.value is SynthesisErrorCodes.SUCCESS:
             self.set_and_publish_feedback("Received LTL specification")
@@ -108,13 +108,18 @@ class BehaviorSynthesisActionServer(object):
 
     def handle_ltl_synthesis_request(self, ltl_spec, path_name):
         '''
-        Makes a LTL Synthesis request 
+        Makes a LTL Synthesis request
         to the corresponding service and handles the response.
 
         ltl_spec:   LTLSpecification    A complete LTL specification.
         '''
 
         response = ltl_synthesis_client.ltl_synthesis_client(ltl_spec, path_name)
+
+        if not response:
+            self.set_and_publish_feedback("The LTL Synthesis service failed!")
+            success = False
+            return None, SynthesisErrorCodes.SYNTHESIS_FAILED, success
 
         if response.synthesizable:
             self.set_and_publish_feedback("The LTL Specification is synthesizable")
@@ -127,7 +132,7 @@ class BehaviorSynthesisActionServer(object):
 
     def handle_sm_generation_request(self, synthesized_automata, system):
         '''
-        Generate State Machine definitions for a given 
+        Generate State Machine definitions for a given
         robotic system based on a synthesized automaton.
 
         @param synthesized_automata FSAutomaton    The automaton to instantiate as a SM.
@@ -146,8 +151,8 @@ class BehaviorSynthesisActionServer(object):
         return response.state_definition, response.error_code.value, success
 
     def set_and_publish_feedback(self, status):
-        '''Helper method for updating and publishing feedback.''' 
-        
+        '''Helper method for updating and publishing feedback.'''
+
         self._feedback.status = status
         self._as.publish_feedback(self._feedback)
 

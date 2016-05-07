@@ -13,7 +13,6 @@ import unittest
 import yaml
 import os
 import ast
-vigir_repo = os.environ['VIGIR_ROOT_DIR']
 
 def load_synthesized_automaton(fpath):
     """
@@ -29,12 +28,14 @@ def load_synthesized_automaton(fpath):
     Initial Condition: 'stand_prep'
     Preconditions:
         pickup:
-            - grasp                                                                     
-            - manipulate                                                                
-        grasp:                                                                          
+            - grasp
+            - manipulate
+        grasp:
             - manipulate
     """
+    # FIXME: Remove dependency on VIGIR_ROOT_DIR
     yaml_file = os.path.join(vigir_repo, fpath)
+
     with open(yaml_file) as yf:
         sa = yaml.load(yf)
     automaton = [AutomatonState(a['name'],

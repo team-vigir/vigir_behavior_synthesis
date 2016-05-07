@@ -44,8 +44,8 @@ class SMGenConfig():
 
         try:
             for out_var, var_config in self.config.items():
-                # If class_decl isn't in var_config, it's not configuration for a
-                # state
+                # If class_decl isn't in var_config,
+                # it's not configuration for a state
                 if 'class_decl' not in var_config:
                     continue
                 class_decl = var_config['class_decl']
@@ -58,14 +58,16 @@ class SMGenConfig():
                         self.in_var_to_class_decl[in_var] = class_decl
                         self.in_var_to_out_var[in_var] = out_var
 
-            # Make one more pass to handle sensor variables
+            # Make one more pass to handle environment propositions
             for in_var in self.all_in_vars:
-                if not self.is_response_var(in_var): # it's a sensor variable
+
+                if not self.is_response_var(in_var): # it's a sensor prop
                     var_config = self.config[in_var]
                     class_decl = var_config['class_decl']
                     out_map = var_config['output_mapping']
                     class_decl_str = class_decl_to_string(class_decl)
                     self.class_decl_to_out_map[class_decl_str] = out_map
+
         except KeyError:
             rospy.logerr("The configuration file is invalid.")
             raise SMGenError(SynthesisErrorCodes.CONFIG_FILE_INVALID)
@@ -339,4 +341,3 @@ class SMGenConfig():
         out_var = self.in_var_to_out_var[in_var]
         state_out_vars = self.get_state_output_vars(state)
         return out_var in state_out_vars
-

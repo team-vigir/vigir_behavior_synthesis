@@ -7,16 +7,16 @@ from distutils.spawn import find_executable
 import json
 
 import rospy
+import rospkg
 
 from vigir_synthesis_msgs.srv import SynthesizeAutomaton, SynthesizeAutomatonResponse
 from vigir_synthesis_msgs.msg import AutomatonState, FSAutomaton, SynthesisErrorCodes
 from vigir_ltl_synthesizer.StructuredSlugsParser import compiler as slugs_compiler
 
-VIGIR_ROOT_DIR = os.environ['VIGIR_ROOT_DIR']
 
 def handle_ltl_synthesis(request):
     '''Handles a request to synthesize an automaton from a LTL specification.'''
-    
+
     ltl_spec = request.ltl_specification
     output_vars = ltl_spec.sys_props
     input_vars = ltl_spec.env_props
@@ -34,7 +34,7 @@ def handle_ltl_synthesis(request):
 
     # Parse LTL specification msg and write .structuredslugs file
     structured_slugs_file, folder_path = write_structured_slugs_from_msg(ltl_spec, path_name, spec_name)
-    
+
     # First, step inside the specification's directory
     initial_dir = os.getcwd()
     os.chdir(folder_path)
@@ -46,7 +46,7 @@ def handle_ltl_synthesis(request):
         # Call slugs executable on .slugsin file and return output
         synthesizable, automaton_file = call_slugs_synthesizer(spec_name)
         automaton, error_code = handle_slugs_output(synthesizable, automaton_file, input_vars, output_vars)
-    
+
     except Exception as e:
         synthesizable = False
         automaton = FSAutomaton() # Return empty automaton
@@ -71,8 +71,8 @@ def handle_slugs_output(synthesizable, automaton_file, input_vars, output_vars):
         error_code = SynthesisErrorCodes(SynthesisErrorCodes.SUCCESS)
         rospy.loginfo('\033[92mSuccessfully created Automaton msg '\
                       'from the synthesized automaton.\033[0m')
-    
-    elif not synthesizable:  
+
+    elif not synthesizable:
         automaton = FSAutomaton() # Return empty automaton
         error_code = SynthesisErrorCodes(SynthesisErrorCodes.SPEC_UNSYNTHESIZABLE)
         rospy.logwarn('The LTL specification was unsynthesizable!')
@@ -94,7 +94,7 @@ def call_slugs_synthesizer(name):
 
     if status == 0:
         # The command ran successfully. Analyze output.
-        synthesizable = determine_synthesizability(slugs_output)   
+        synthesizable = determine_synthesizability(slugs_output)
         automaton_file = name + ".json"
     else:
         # The command did not even run.
@@ -108,7 +108,7 @@ def call_slugs_synthesizer(name):
 
 def determine_synthesizability(slugs_output):
     '''Determine synthesizability based on the terminal output of SLUGS.'''
-    
+
     synthesizable = False
 
     if 'RESULT: Specification is realizable.' in slugs_output:
@@ -123,15 +123,15 @@ def determine_synthesizability(slugs_output):
 
 def convert_structured_slugs_to_slugsin(name):
     '''Call function from StructuredSlugsParser to get slugsin file.'''
-    
+
     slugsin_file = name + ".slugsin"
 
     #TODO: update performConversion so we don't have to do stdout redirection
     with open(slugsin_file, "w") as sys.stdout:
-        
+
         slugs_compiler.performConversion(name + ".structuredslugs",
                                          thoroughly = True)
-    
+
     sys.stdout = sys.__stdout__
 
     return slugsin_file
@@ -174,7 +174,7 @@ def gen_automaton_msg_from_json(json_file, input_vars, output_vars):
         data = json.load(data_file)
 
     mem_idxs = [i for i, x in enumerate(output_vars) if "_m" == x[-2:]]
-    
+
     automaton = FSAutomaton()
     # Only keep an output variable if it is not a memory proposition
     automaton.output_variables = [x for i, x in enumerate(output_vars)
@@ -193,17 +193,18 @@ def write_structured_slugs_from_msg(ltl_spec, path, name):
     """Create the structuredslugs file and write the 8 sections."""
 
     # The directory where specs and automata are saved:
-    specs_folder_path = os.path.join(VIGIR_ROOT_DIR, 'catkin_ws/src/vigir_behavior_synthesis/vigir_ltl_synthesizer/synthesis_byproducts') 
+    synthesizer_pkg_dir = rospkg.RosPack().get_path('vigir_ltl_synthesizer')
+    specs_dir_path = os.path.join(synthesizer_pkg_dir, 'synthesis_byproducts')
 
     # The directory where this spec will be saved:
-    this_folder_path = os.path.join(specs_folder_path, path)
+    this_folder_path = os.path.join(specs_dir_path, path)
     if not os.path.exists(this_folder_path):
         os.makedirs(this_folder_path)
 
     structured_slugs_file = name + ".structuredslugs"
 
     full_file_path = os.path.join(this_folder_path, structured_slugs_file)
-    
+
     with open(full_file_path, 'w') as spec_file:
         # System and environment propositions
         _write_input(ltl_spec, spec_file)
@@ -273,10 +274,10 @@ def _write_env_liveness(ltl_spec, spec_file):
 
 def ltl_synthesis_server():
     ''''Server'''
-    
+
     rospy.init_node('vigir_ltl_synthesizer')
 
-    # Check whether the synthesizer (slugs executable) is installed 
+    # Check whether the synthesizer (slugs executable) is installed
     slugs_exec_path = find_executable('slugs')
 
     if not slugs_exec_path:
@@ -286,11 +287,11 @@ def ltl_synthesis_server():
     else:
         rospy.loginfo('The synthesizer (SLUGS) is installed: {dir}'
                       .format(dir = slugs_exec_path))
-    
+
         s = rospy.Service('ltl_synthesis', SynthesizeAutomaton, handle_ltl_synthesis)
-        
+
         rospy.loginfo("Ready to receive LTL Synthesis requests.")
-    
+
     rospy.spin()
 
 if __name__ == "__main__":

@@ -14,9 +14,11 @@ real output = From above, it would be "finished". Always referred to as real
 """
 
 import os
-import yaml
-import rospy
 import sys
+import yaml
+
+import rospy
+import rospkg
 
 from vigir_synthesis_msgs.srv import GenerateFlexBESM, GenerateFlexBESMResponse
 from vigir_synthesis_msgs.msg import SynthesisErrorCodes
@@ -30,7 +32,6 @@ from sm_gen_util import (
 )
 from sm_gen_error import SMGenError
 
-VIGIR_REPO = os.environ['VIGIR_ROOT_DIR']
 INIT_STATE_NAME = "ROOT_OF_INIT_STATES"
 
 def modify_names(all_out_vars, automata):
@@ -133,7 +134,12 @@ def generate_sm_handle(request):
     @param request An instance of GenerateFlexBESMRequest
     @return A GenerateFlexBESMResponse with generated StateInstantiation.
     """
-    yaml_file = os.path.join(VIGIR_REPO, 'catkin_ws/src/vigir_behavior_synthesis/vigir_sm_generation/src/vigir_sm_generation/configs/systems.yaml')
+
+    sm_generation_pkg_dir = rospkg.RosPack().get_path('vigir_sm_generation')
+    config_dir = os.path.join(sm_generation_pkg_dir,
+                             'src/vigir_sm_generation/configs')
+    yaml_file = os.path.join(config_dir, 'systems.yaml')
+
     try:
         with open(yaml_file) as yf:
             systems = yaml.load(yf)
@@ -141,7 +147,7 @@ def generate_sm_handle(request):
         rospy.logerr("System file could not be loaded from {0}."
             .format(yaml_file))
         raise SMGenError(SynthesisErrorCodes(error_code))
-        
+
     sa = request.automaton # FSAutomaton
     all_out_vars = sa.output_variables
     all_in_vars = sa.input_variables
@@ -153,7 +159,9 @@ def generate_sm_handle(request):
         rospy.logerr("System {0} is not in the systems file ({1})."\
             .format(system_name, yaml_file))
         raise SMGenError(SynthesisErrorCodes.NO_SYSTEM_CONFIG)
-    yaml_sys_file = os.path.join(VIGIR_REPO, systems[system_name])
+
+    yaml_sys_file = os.path.join(config_dir, systems[system_name])
+
     try:
         with open(yaml_sys_file) as yf:
             config = yaml.load(yf)

@@ -36,6 +36,6 @@ string system
 # Does not affect the server's response.
 string name
 
-# User-specified LTL formulas to be 
+# User-specified LTL formulas to be
 # included in the LTL compilation process
 LTLSpecification ltl_specification
