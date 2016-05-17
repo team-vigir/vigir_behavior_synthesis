@@ -44,7 +44,7 @@ gdb -v
 
 # fetch slugs
 if ! [ -d "slugs" ] ; then
-	git clone https://github.com/LTLMoP/slugs
+	git clone https://github.com/VerifiableRobotics/slugs.git
 fi
 cd slugs/
 
