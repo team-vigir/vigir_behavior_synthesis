@@ -1,11 +1,12 @@
-# installation script for slugs
-# on Linux and Darwin
+# Installation script for slugs
+# on Linux and Darwin (Mac OS X)
 #
-# https://github.com/LTLMoP/slugs
+# https://github.com/VerifiableRobotics/slugs
 #
-# This script is an extension of 
-# the one written by https://github.com/johnyf
-# for https://github.com/johnyf/openpromela/
+# This script is an extension of the
+# one written by https://github.com/johnyf
+#
+
 set -e
 
 INSTALL=/usr/local/bin
@@ -67,7 +68,6 @@ cd ../
 # build slugs
 cd src/
 if ! [ -e "slugs" ] ; then
-	qmake Tool.pro
 	make
 fi
 sudo cp slugs "${INSTALL}/slugs"
