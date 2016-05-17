@@ -86,9 +86,12 @@ def call_slugs_synthesizer(name):
     Handles potential failures, such as the specification being unrealizable.
     '''
 
-    options = ["--jsonOutput"]  # Do we need the '--sysInitRoboticsSemantics' option?
+    options = ["--explicitStrategy",
+               "--jsonOutput",
+               "--sysInitRoboticsSemantics"]
     slugs_cmd = ['slugs'] + options + [name + ".slugsin", name + ".json"]
     slugs_cmd = ' '.join(slugs_cmd) # convert to string for use with the commands module
+    rospy.loginfo("[vigir_ltl_synthesizer] Calling SLUGS: \n\t%s", slugs_cmd)
 
     (status, slugs_output) = commands.getstatusoutput(slugs_cmd)
 
