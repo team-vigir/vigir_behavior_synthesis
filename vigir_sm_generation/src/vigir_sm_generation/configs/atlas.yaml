@@ -10,7 +10,8 @@ output:
 ### Various robot actions
 pickup_object_a:
     class_decl:
-        name: PickupObjectSM
+        name: :BEHAVIOR
+        behavior_class: Pickup Object
         param_names: []
         param_values: []
     output_mapping:
@@ -19,7 +20,8 @@ pickup_object_a:
     autonomy: 0
 grasp_object_a:
     class_decl:
-        name: GraspObjectSM
+        name: :BEHAVIOR
+        behavior_class: Grasp Object
         param_names: []
         param_values: []
     output_mapping:

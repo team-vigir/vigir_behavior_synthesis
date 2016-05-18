@@ -68,6 +68,7 @@ def get_init_temp_state(init_states):
     return new_si(
         state_path = "/{0}".format(INIT_STATE_NAME),
         state_class = "LogState",
+        behavior_class = '',
         outcomes = ["done" for s in init_state_names], # outcomes and
         transitions = init_state_names, # transitions are the same
         initial_state = None,
@@ -179,7 +180,7 @@ def generate_sm_handle(request):
     # SIs.append(get_init_temp_state(init_states))
 
     #TEMP: Assume single initial state for July experiments:
-    SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE,
+    SIs = [new_si("/", StateInstantiation.CLASS_STATEMACHINE, '',
            helper.get_sm_real_outputs(), [], init_states[0], [], [])]
 
     for state in automata:

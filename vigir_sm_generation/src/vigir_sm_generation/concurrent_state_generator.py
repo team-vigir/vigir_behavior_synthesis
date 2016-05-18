@@ -111,9 +111,13 @@ class ConcurrentStateGenerator():
             userdata_remapping = self.internal_userdata_remapping
         else:
             userdata_remapping = []
-        
+
+        state_class = decl['name']
+        behavior_class = decl.get('behavior_class', '')
+
         return new_si("/" + self.name,
-                       decl['name'],
+                       state_class,
+                       behavior_class,
                        outcomes,
                        transitions,
                        None,
@@ -152,7 +156,7 @@ class ConcurrentStateGenerator():
         concurrent_si_transitions = self.internal_transitions
         autonomy = [max(self.outcome_to_autonomy_list[o])
                     for o in self.internal_outcomes]
-        
+
         #TODO: Handle userdata_keys and userdata_remapping for Concurrent state
 
         return new_si("/" + self.name,

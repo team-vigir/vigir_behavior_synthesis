@@ -14,13 +14,14 @@ def remove_duplicate_pairs(lst1, lst2):
     new_lists = zip(*pairs)
     return list(new_lists[0]), list(new_lists[1])
 
-def new_si(state_path, state_class, outcomes, transitions, initial_state,
+def new_si(state_path, state_class, behavior_class, outcomes, transitions, initial_state,
            p_names, p_vals, autonomy = [],
            userdata_keys = [], userdata_remapping = []):
     """ Create a new SI. """
     si = StateInstantiation()
     si.state_path = state_path
     si.state_class = state_class
+    si.behavior_class = behavior_class
     if len(transitions) > 0: # it's not the top level SM
         outcomes, transitions = remove_duplicate_pairs(outcomes, transitions)
     si.outcomes = outcomes
@@ -49,4 +50,3 @@ def clean_variable(var):
     if var[-2] == "_":
         return var[:-2]
     return var
-
