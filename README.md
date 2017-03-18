@@ -8,13 +8,13 @@ ROS Python packages for automatically synthesizing *high-level robot behaviors* 
 
 Click on the image below to watch a demonstration of Behavior Synthesis on ATLAS.
 
-[![ICRA 2016 video attachment](https://dl.dropboxusercontent.com/u/43993203/ATLAS_synthesis_demo.png)](http://www.youtube.com/watch?v=mez-7pegxuE)
+[![ICRA 2016 video attachment](https://dl.dropboxusercontent.com/s/tqggkyx7e1ryabj/ATLAS_synthesis_demo.png)](http://www.youtube.com/watch?v=mez-7pegxuE)
 
 ### Synthesis Workflow
 
 The nominal workflow is depicted in the diagram below:
 
-![img](https://dl.dropboxusercontent.com/u/43993203/behavior_synthesis_packages.png)
+![img](https://dl.dropboxusercontent.com/s/ctxjcrm061ouu5o/behavior_synthesis_packages.png)
 
 ### Dependencies
 
